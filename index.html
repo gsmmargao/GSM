@@ -191,15 +191,15 @@
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         
-        // Initialize Supabase Client exactly once
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        // RENAMED TO supabaseClient TO PREVENT COLLISION
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // Run fetch and set up real-time on initial page load
         document.addEventListener("DOMContentLoaded", () => {
             fetchOrders();
 
             // Set up Realtime listener for cross-device live updates
-            supabase
+            supabaseClient
                 .channel('public:repairOrders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => {
                     fetchOrders();
@@ -210,7 +210,7 @@
         // Function: Fetch orders from Supabase table and render them
         async function fetchOrders() {
             try {
-                const { data: repairOrders, error } = await supabase
+                const { data: repairOrders, error } = await supabaseClient
                     .from('repairOrders')
                     .select('*')
                     .order('date', { ascending: false });
@@ -285,7 +285,7 @@
             }
 
             try {
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('repairOrders')
                     .insert([orderData]);
 
@@ -313,7 +313,7 @@
         // Function: Update the status of an existing order
         window.updateOrderStatus = async function(orderId, newStatus) {
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('repairOrders')
                     .update({ status: newStatus })
                     .eq('id', orderId);
@@ -333,7 +333,7 @@
             }
 
             try {
-                const { error } = await supabase
+                const { error } = await supabaseClient
                     .from('repairOrders')
                     .delete()
                     .eq('id', orderId);
