@@ -1,1 +1,233 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Billing</title>
+    <style>
+        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
+        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar */
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
 
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
+        .btn-primary { background: black; color: white; border: none; }
+        .dashboard-padding { padding: 20px 30px; }
+
+        /* Form */
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+
+        /* Table */
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
+
+        /* Pagination */
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
+    </style>
+</head>
+<body>
+
+    <div class="sidebar">
+        <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+        <a href="index.html" class="nav-item">Order Details</a>
+        <a href="estimate.html" class="nav-item">Estimate Letter</a>
+        <a href="billing.html" class="nav-item active">Billing</a>
+        <div class="nav-item">Store Plus</div>
+        <div class="nav-item">Accessories</div>
+        <div class="nav-item">Sales Report</div>
+        <div class="nav-item">UPI Book</div>
+        <div class="nav-item">Cashbook</div>
+        <div style="flex-grow: 1;"></div> 
+        <div class="nav-item" onclick="logOut()" style="color: #dc2626; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">🚪 Log Out</div>
+    </div>
+
+    <div class="main-content">
+        <div class="header">
+            <div><h1 style="margin:0; font-size:1.5rem;">Billing & Invoices</h1></div>
+            <div>
+                <button class="btn" onclick="fetchBilling()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Invoice</button>
+            </div>
+        </div>
+
+        <div class="dashboard-padding">
+            
+            <div class="form-card" id="billingForm">
+                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW BILL</div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Invoice No. (Auto)</label>
+                        <input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold;">
+                    </div>
+                    <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
+                    <div class="form-group">
+                        <label>Job Number (Optional)</label>
+                        <input type="text" id="b-jobNo" placeholder="e.g. JOB-001" onblur="fetchAdvancePaid()">
+                    </div>
+                    <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="b-advance" value="0"></div>
+                    <div class="form-group"><label>Final Amount Paid (₹)</label><input type="number" id="b-amount" value="0"></div>
+                    <div class="form-group">
+                        <label>Payment Mode</label>
+                        <select id="b-mode">
+                            <option value="Cash">Cash</option>
+                            <option value="UPI">UPI</option>
+                            <option value="Card">Card</option>
+                        </select>
+                    </div>
+                </div>
+                <div style="margin-top:15px;">
+                    <button class="btn btn-primary" style="background:#10b981;" onclick="saveBill()">💾 Save Bill</button>
+                    <button class="btn" onclick="toggleForm()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Invoice No.</th>
+                            <th>Created By</th>
+                            <th>Date</th>
+                            <th>Job Number</th>
+                            <th>Advance Paid</th>
+                            <th>Amount Paid</th>
+                            <th>Mode</th>
+                        </tr>
+                    </thead>
+                    <tbody id="billingTableBody"></tbody>
+                </table>
+                <div class="pagination">
+                    <button class="btn" onclick="prevPage()">Previous</button>
+                    <span id="pageInfo" style="font-size:0.9rem; font-weight:bold;">Page 1</span>
+                    <button class="btn" onclick="nextPage()">Next</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+        
+        let allBillingData = [];
+        let currentPage = 1;
+        const rowsPerPage = 10;
+
+        async function checkAuth() {
+            const { data } = await db.auth.getSession();
+            if (!data.session) window.location.href = 'login.html';
+        }
+
+        async function logOut() {
+            await db.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAuth();
+            document.getElementById('b-date').value = new Date().toISOString().split('T')[0];
+            fetchBilling();
+        });
+
+        function toggleForm() {
+            const form = document.getElementById('billingForm');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                document.getElementById('b-invoice').value = 'INV' + Date.now().toString().slice(-4);
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
+        // Fetch advance paid from order details automatically if Job No matches
+        async function fetchAdvancePaid() {
+            const jobNo = document.getElementById('b-jobNo').value;
+            if(!jobNo) return;
+            const { data } = await db.from('repairOrders').select('advancePaid').eq('jobNo', jobNo).single();
+            if(data && data.advancePaid) {
+                document.getElementById('b-advance').value = data.advancePaid;
+            }
+        }
+
+        async function fetchBilling() {
+            const { data, error } = await db.from('billing').select('*').order('created_at', { ascending: false });
+            if (!error && data) {
+                allBillingData = data;
+                currentPage = 1;
+                renderTable();
+            }
+        }
+
+        function renderTable() {
+            const tbody = document.getElementById('billingTableBody');
+            tbody.innerHTML = '';
+            
+            const start = (currentPage - 1) * rowsPerPage;
+            const end = start + rowsPerPage;
+            const paginatedItems = allBillingData.slice(start, end);
+
+            paginatedItems.forEach(bill => {
+                tbody.innerHTML += `
+                    <tr>
+                        <td><strong>${bill.invoiceNo}</strong></td>
+                        <td>${bill.createdBy}</td>
+                        <td>${bill.date}</td>
+                        <td style="color:#2563eb; font-weight:bold;">${bill.jobNo || '-'}</td>
+                        <td>₹${bill.advancePaid || 0}</td>
+                        <td style="color:#10b981; font-weight:bold;">₹${bill.amountPaid || 0}</td>
+                        <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px;">${bill.paymentMode}</span></td>
+                    </tr>
+                `;
+            });
+
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allBillingData.length / rowsPerPage) || 1}`;
+        }
+
+        function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); } }
+        function nextPage() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
+
+        async function saveBill() {
+            const billData = {
+                invoiceNo: document.getElementById('b-invoice').value,
+                date: document.getElementById('b-date').value,
+                jobNo: document.getElementById('b-jobNo').value,
+                advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
+                amountPaid: parseFloat(document.getElementById('b-amount').value) || 0,
+                paymentMode: document.getElementById('b-mode').value
+            };
+
+            const { error } = await db.from('billing').insert([billData]);
+            
+            if (error) {
+                alert("Error saving: " + error.message);
+            } else {
+                // If there's a Job No and Advance, update it in the Orders table too!
+                if(billData.jobNo && billData.advancePaid > 0) {
+                    await db.from('repairOrders').update({ advancePaid: billData.advancePaid }).eq('jobNo', billData.jobNo);
+                }
+                alert("Bill Generated Successfully!");
+                toggleForm();
+                fetchBilling();
+                document.getElementById('b-jobNo').value = '';
+                document.getElementById('b-advance').value = '0';
+                document.getElementById('b-amount').value = '0';
+            }
+        }
+    </script>
+</body>
+</html>
