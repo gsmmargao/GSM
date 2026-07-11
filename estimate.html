@@ -17,8 +17,8 @@
         .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
-        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
-        .nav-item.active { background: black; color: white; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
         /* Main Content Area */
@@ -73,8 +73,8 @@
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
-        <a href="index.html" class="nav-item" style="color: inherit; text-decoration: none;">Order Details</a>
-        <a href="estimate.html" class="nav-item active" style="color: inherit; text-decoration: none;">Estimate Letter</a>
+        <a href="index.html" class="nav-item">Order Details</a>
+        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
         <div class="nav-item">Billing</div>
         <div class="nav-item">Store Plus</div>
         <div class="nav-item">Accessories</div>
@@ -169,9 +169,8 @@
     <script>
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Function: Fetch order by Job Number
         window.fetchEstimate = async function() {
             const jobInput = document.getElementById('searchJobNo').value.trim();
             
@@ -181,12 +180,11 @@
             }
 
             try {
-                // Query Supabase for this exact Job Number
-                const { data, error } = await supabase
+                const { data, error } = await supabaseClient
                     .from('repairOrders')
                     .select('*')
                     .eq('jobNo', jobInput)
-                    .single(); // We only want one result
+                    .single(); 
 
                 if (error) throw error;
                 if (!data) {
@@ -194,7 +192,6 @@
                     return;
                 }
 
-                // Populate the receipt DOM elements with the database info
                 document.getElementById('estJobNo').innerText = data.jobNo || 'N/A';
                 document.getElementById('estDate').innerText = data.date || 'N/A';
                 document.getElementById('estCustomerName').innerText = data.customerName || 'N/A';
@@ -204,7 +201,6 @@
                 document.getElementById('estImeiNo').innerText = data.imeiNo || 'N/A';
                 document.getElementById('estProblemDesc').innerText = data.problemDesc || 'N/A';
 
-                // Show the printable area
                 document.getElementById('printableArea').style.display = 'block';
 
             } catch (error) {
