@@ -320,7 +320,7 @@
         window.deleteOrder = async function(jobNo) {
             if (!confirm("Are you sure you want to delete this repair order? This cannot be undone.")) {
                 return;
-            }
+            }updateOrderStatus
 
             try {
                 const { error } = await supabaseClient
