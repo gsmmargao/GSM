@@ -111,6 +111,12 @@
         <div class="nav-item">Sales Report</div>
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
+        
+        <!-- Pushes logout to the bottom -->
+        <div style="flex-grow: 1;"></div> 
+        <div class="nav-item" onclick="logOut()" style="color: #dc2626; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            🚪 Log Out
+        </div>
     </div>
 
     <!-- Main Content -->
@@ -234,7 +240,6 @@
                 </div>
 
                 <div class="form-actions">
-                    <!-- CHANGED: Now this ONLY saves to the database -->
                     <button class="btn-save" onclick="saveEstimate()">💾 Save Estimate</button>
                     <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
@@ -341,35 +346,27 @@
                 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
             );
         }
+
+        // --- AUTHENTICATION LOCK ---
         async function checkAuth() {
             const { data } = await window.mySupa.auth.getSession();
             if (!data.session) {
-                window.location.href = 'login.html'; // Kick them to login page
+                // If they are not logged in, boot them to the login page
+                window.location.href = 'login.html';
+            } else {
+                // If they are logged in, fetch the data
+                fetchEstimates();
             }
         }
-        checkAuth();
-
+        
         async function logOut() {
             await window.mySupa.auth.signOut();
             window.location.href = 'login.html';
         }
-        
-        async function checkAuth() {
-            const { data } = await window.mySupa.auth.getSession();
-            if (!data.session) {
-                window.location.href = 'login.html'; // Kick them to login page
-            }
-        }
-        checkAuth();
-
-        async function logOut() {
-            await window.mySupa.auth.signOut();
-            window.location.href = 'login.html';
-        }
-        
+        // ---------------------------
 
         document.addEventListener("DOMContentLoaded", () => {
-            fetchEstimates();
+            checkAuth(); // Run the security check immediately
             document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
         });
 
@@ -407,7 +404,6 @@
                             <td>${est.modelNo || ''}</td>
                             <td style="color:#10b981; font-weight:bold;">₹${parseFloat(est.billAmount).toFixed(2)}</td>
                             <td>
-                                <!-- The Print button sits perfectly in the list view -->
                                 <button onclick='reprintEstimate(${JSON.stringify(est)})' style="background:transparent; border:1px solid #2563eb; color:#2563eb; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🖨️ Print</button>
                             </td>
                         </tr>
@@ -474,7 +470,6 @@
             document.getElementById('m-Final').innerText = (E + K).toFixed(2);
         }
 
-        // CHANGED: Now only saves and updates the list
         async function saveEstimate() {
             const name = document.getElementById('f-name').value;
             if(!name) return alert("Customer Name is required.");
@@ -516,11 +511,9 @@
                 
                 alert("Estimate Saved Successfully! You can now print it from the list.");
                 
-                // Close form and refresh list
                 toggleForm();
                 fetchEstimates();
                 
-                // Clear the form for the next entry
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-mobile').value = '';
                 document.getElementById('f-address').value = '';
@@ -540,10 +533,9 @@
                     </tr>
                 `;
                 runMath();
-            } catch (err) { alert("Error Details: " + JSON.stringify(err)); }
+            } catch (err) { alert("Save Failed: " + err.message); }
         }
 
-        // Triggered by the "Print" button on the table rows
         function reprintEstimate(data) {
             document.getElementById('p-estNo').innerText = data.estNo;
             document.getElementById('p-date').innerText = data.date;
@@ -582,7 +574,6 @@
             
             document.getElementById('p-Final').innerText = '₹' + parseFloat(data.billAmount).toFixed(2);
 
-            // Pop open the print dialog
             window.print();
         }
 
