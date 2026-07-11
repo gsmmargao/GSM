@@ -74,8 +74,8 @@
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
-        <div class="nav-item active">Order Details</div>
-        <div class="nav-item">Estimate Letter</div>
+        <a href="index.html" class="nav-item active" style="color: inherit; text-decoration: none;">Order Details</a>
+        <a href="estimate.html" class="nav-item" style="color: inherit; text-decoration: none;">Estimate Letter</a>
         <div class="nav-item">Billing</div>
         <div class="nav-item">Store Plus</div>
         <div class="nav-item">Accessories</div>
@@ -156,7 +156,7 @@
                 </div>
                 <div class="form-actions">
                     <button class="btn-save" onclick="saveOrder()">+ Save Order</button>
-                    <button class="btn">Cancel</button>
+                    <button class="btn" onclick="clearForm()">Cancel</button>
                 </div>
             </div>
 
@@ -194,9 +194,18 @@
         // Initialize Supabase Client
         const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Run fetch on initial page load
+        // Run fetch and set up real-time on initial page load
         document.addEventListener("DOMContentLoaded", () => {
             fetchOrders();
+
+            // Set up Realtime listener for cross-device live updates
+            supabase
+                .channel('public:repairOrders')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => {
+                    // Any time a record is inserted, updated, or deleted anywhere, refresh our table
+                    fetchOrders();
+                })
+                .subscribe();
         });
 
         // Function: Fetch orders from Supabase table and render them
@@ -284,23 +293,26 @@
                 if (error) throw error;
 
                 alert("Repair order added successfully!");
+                clearForm();
                 
-                // Clear Form Inputs
-                document.getElementById('customerName').value = '';
-                document.getElementById('contactNo').value = '';
-                document.getElementById('jobNo').value = '';
-                document.getElementById('imeiNo').value = '';
-                document.getElementById('modelNo').value = '';
-                document.getElementById('problemDesc').value = '';
-
-                // Refresh table display
-                fetchOrders();
+                // We no longer need to call fetchOrders() here manually because 
+                // the Realtime listener above will detect the change and run it!
                 
             } catch (error) {
                 console.error("Submission failed: ", error);
                 alert("Error writing to database: " + error.message);
             }
         };
+
+        // Function: Clear form fields
+        window.clearForm = function() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('contactNo').value = '';
+            document.getElementById('jobNo').value = '';
+            document.getElementById('imeiNo').value = '';
+            document.getElementById('modelNo').value = '';
+            document.getElementById('problemDesc').value = '';
+        }
 
         // Function: Update the status of an existing order
         window.updateOrderStatus = async function(orderId, newStatus) {
@@ -312,9 +324,6 @@
 
                 if (error) throw error;
 
-                // Refresh the table to update the top summary counters
-                fetchOrders();
-                
             } catch (error) {
                 console.error("Error updating status: ", error);
                 alert("Failed to update status: " + error.message);
@@ -334,9 +343,6 @@
                     .eq('id', orderId);
 
                 if (error) throw error;
-
-                // Refresh the table to show the order is gone
-                fetchOrders();
                 
             } catch (error) {
                 console.error("Error deleting order: ", error);
