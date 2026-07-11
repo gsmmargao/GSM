@@ -2,72 +2,103 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GSM SOLUTION - Estimate Builder</title>
+    <title>GSM SOLUTION - Estimate Letter</title>
     <style>
         body { font-family: sans-serif; background: #f4f5f7; margin: 0; display: flex; }
         .sidebar { width: 250px; background: white; border-right: 1px solid #ccc; height: 100vh; padding: 20px; }
-        .nav-item { display: block; padding: 10px; color: #333; text-decoration: none; }
-        .nav-item.active { background: black; color: white; }
-        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
-        .form-card { background: white; padding: 20px; border-radius: 8px; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px; }
-        .btn { padding: 10px; cursor: pointer; background: black; color: white; border: none; }
-        @media print { .no-print { display: none !important; } .form-card { display: block !important; } }
+        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
+        .form-card { background: white; padding: 40px; border-radius: 8px; max-width: 800px; margin: auto; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        .btn { padding: 10px 20px; cursor: pointer; background: black; color: white; border: none; margin-top: 10px; }
+        .no-print { margin-bottom: 20px; }
+        @media print { .no-print { display: none; } body { background: white; } }
     </style>
 </head>
 <body>
     <div class="sidebar no-print">
         <strong>GSM SOLUTION</strong>
-        <a href="index.html" class="nav-item">Order Details</a>
-        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
+        <a href="index.html" style="display:block; padding:10px; color:#333;">Order Details</a>
+        <a href="#" style="display:block; padding:10px; background:black; color:white;">Estimate Letter</a>
     </div>
 
     <div class="main-content">
         <div id="listView" class="no-print">
             <button class="btn" onclick="openForm()">+ Create New Estimate</button>
-            <table id="estTable"><thead><tr><th>Est No</th><th>Customer</th><th>Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
+            <table id="estTable"><thead><tr><th>Est No</th><th>Customer</th><th>Bill Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
         </div>
 
         <div id="formView" class="form-card">
-            <h3>GSM SOLUTION - Estimate Letter</h3>
-            <input type="text" id="estNo" readonly>
-            <input type="text" id="customerName" placeholder="Customer Name">
-            <input type="number" id="labour" placeholder="Labour Charge" oninput="runCalc()">
-            <input type="number" id="parts" placeholder="Parts Amount" oninput="runCalc()">
-            <p><strong>Final Bill (incl 18% Tax): ₹<span id="totalDisplay">0</span></strong></p>
-            <button class="btn" onclick="saveAndPrint()">Save & Print</button>
-            <button class="btn" onclick="location.reload()">Cancel</button>
+            <!-- Header -->
+            <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px;">
+                <div><strong>GSM SOLUTION</strong><br>Reliance Atria Shop No 6,7 First Floor, Opp PNG Jewelers, Margao Goa<br>GSTIN:30CLPPM8573A1Z2 | PAN:CLPPM8573A</div>
+                <div style="text-align:right;"><strong>ESTIMATE LETTER</strong><br>Est No: <input id="estNo" readonly style="border:none; width:60px;"></div>
+            </div>
+
+            <div style="margin:20px 0;">
+                <input type="text" id="cName" placeholder="Customer Name" style="width:100%; margin-bottom:5px;"><br>
+                <input type="text" id="cMobile" placeholder="Mobile No" style="width:48%;">
+                <input type="text" id="cAddress" placeholder="Full Address" style="width:48%;">
+            </div>
+
+            <!-- Parts Table -->
+            <table id="partsTable">
+                <thead><tr><th>Code</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
+                <tbody id="partsBody"></tbody>
+            </table>
+            <button class="btn no-print" onclick="addPart()">+ Add Part</button>
+
+            <!-- Tax Calc -->
+            <div id="calcSection" style="margin-top:20px;">
+                Parts Amt (A): <input type="number" id="partsA" oninput="calc()" value="0"><br>
+                Discount (B): <input type="number" id="discB" oninput="calc()" value="0"><br>
+                Parts Subtotal (C=A-B): <span id="valC">0</span><br>
+                GST 18% (D): <span id="valD">0</span><br>
+                <strong>Total Parts (E=C+D): <span id="valE">0</span></strong><br><br>
+                
+                Labour (F): <input type="number" id="labourF" oninput="calc()" value="0"><br>
+                Labour Disc (G): <input type="number" id="discG" oninput="calc()" value="0"><br>
+                Labour Subtotal (H=F-G): <span id="valH">0</span><br>
+                GST 18% (I): <span id="valI">0</span><br>
+                <strong>Total Labour (K=H+I): <span id="valK">0</span></strong><br><br>
+                <h3>Final Bill Amount: ₹<span id="finalTotal">0</span></h3>
+            </div>
+
+            <button class="btn no-print" onclick="saveAndPrint()">Save & Print</button>
+            <button class="btn no-print" style="background:#666;" onclick="location.reload()">Cancel</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Using a completely different variable name to avoid "already declared" errors
-        const db = window.supabase.createClient(
-            'https://cbsmsclmyyxgwwztqwsc.supabase.co', 
-            'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
-        );
+        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
 
-        async function loadData() {
-            const { data } = await db.from('estimates').select('*');
-            const tbody = document.getElementById('estimatesTableBody');
-            tbody.innerHTML = '';
-            if(data) data.forEach(e => tbody.innerHTML += `<tr><td>${e.estNo}</td><td>${e.customerName}</td><td>₹${e.billAmount}</td></tr>`);
+        function addPart() {
+            document.getElementById('partsBody').innerHTML += `<tr><td><input></td><td><input></td><td><input value="1"></td><td><input value="0"></td><td>0</td></tr>`;
         }
 
-        function runCalc() {
-            const l = parseFloat(document.getElementById('labour').value) || 0;
-            const p = parseFloat(document.getElementById('parts').value) || 0;
-            document.getElementById('totalDisplay').innerText = ((l + p) * 1.18).toFixed(2);
+        function calc() {
+            const A = parseFloat(document.getElementById('partsA').value) || 0;
+            const B = parseFloat(document.getElementById('discB').value) || 0;
+            const C = A - B;
+            const D = C * 0.18;
+            const E = C + D;
+            const F = parseFloat(document.getElementById('labourF').value) || 0;
+            const G = parseFloat(document.getElementById('discG').value) || 0;
+            const H = F - G;
+            const I = H * 0.18;
+            const K = H + I;
+            document.getElementById('valC').innerText = C.toFixed(2);
+            document.getElementById('valD').innerText = D.toFixed(2);
+            document.getElementById('valE').innerText = E.toFixed(2);
+            document.getElementById('valH').innerText = H.toFixed(2);
+            document.getElementById('valI').innerText = I.toFixed(2);
+            document.getElementById('valK').innerText = K.toFixed(2);
+            document.getElementById('finalTotal').innerText = (E + K).toFixed(2);
         }
 
         async function saveAndPrint() {
-            const data = { 
-                estNo: document.getElementById('estNo').value, 
-                customerName: document.getElementById('customerName').value, 
-                billAmount: parseFloat(document.getElementById('totalDisplay').innerText) 
-            };
+            const data = { estNo: document.getElementById('estNo').value, customerName: document.getElementById('cName').value, billAmount: document.getElementById('finalTotal').innerText };
             await db.from('estimates').insert([data]);
             window.print();
             location.reload();
@@ -79,7 +110,12 @@
             document.getElementById('estNo').value = 'EST' + Date.now().toString().slice(-3);
         }
 
-        loadData();
+        async function load() {
+            const { data } = await db.from('estimates').select('*');
+            const tbody = document.getElementById('estimatesTableBody');
+            if(data) data.forEach(e => tbody.innerHTML += `<tr><td>${e.estNo}</td><td>${e.customerName}</td><td>₹${e.billAmount}</td></tr>`);
+        }
+        load();
     </script>
 </body>
 </html>
