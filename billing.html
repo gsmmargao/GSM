@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Billing</title>
+    
+    <!-- This completely stops the 404 favicon error -->
+    <link rel="icon" href="data:,">
+    
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
         body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
@@ -67,6 +71,7 @@
 
         <div class="dashboard-padding">
             
+            <!-- Hidden Form Area -->
             <div class="form-card" id="billingForm">
                 <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW BILL</div>
                 <div class="form-grid">
@@ -96,6 +101,7 @@
                 </div>
             </div>
 
+            <!-- Table Area -->
             <div class="table-card">
                 <table>
                     <thead>
@@ -128,6 +134,7 @@
         let currentPage = 1;
         const rowsPerPage = 10;
 
+        // Security Lock
         async function checkAuth() {
             const { data } = await db.auth.getSession();
             if (!data.session) window.location.href = 'login.html';
@@ -138,6 +145,7 @@
             window.location.href = 'login.html';
         }
 
+        // Initialize Page
         document.addEventListener("DOMContentLoaded", () => {
             checkAuth();
             document.getElementById('b-date').value = new Date().toISOString().split('T')[0];
@@ -164,6 +172,7 @@
             }
         }
 
+        // Load Billing Data
         async function fetchBilling() {
             const { data, error } = await db.from('billing').select('*').order('created_at', { ascending: false });
             if (!error && data) {
@@ -173,6 +182,7 @@
             }
         }
 
+        // Render Paginated Table
         function renderTable() {
             const tbody = document.getElementById('billingTableBody');
             tbody.innerHTML = '';
@@ -201,6 +211,7 @@
         function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); } }
         function nextPage() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
 
+        // Save Bill to DB
         async function saveBill() {
             const billData = {
                 invoiceNo: document.getElementById('b-invoice').value,
