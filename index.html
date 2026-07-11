@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Order Management</title>
-    
-    <!-- This completely stops the 404 favicon error -->
     <link rel="icon" href="data:,">
     
     <style>
@@ -28,7 +26,6 @@
         /* Main Content Area */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         
-        /* Top Header */
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .header-left h1 { margin: 0; font-size: 1.5rem; }
         .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
@@ -37,10 +34,8 @@
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
         .btn-primary { background: black; color: white; border: none; }
 
-        /* Dashboard Content */
         .dashboard-padding { padding: 20px 30px; }
         
-        /* Summary Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
         .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
         .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; }
@@ -50,7 +45,6 @@
         .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
         .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
 
-        /* Form Area */
         .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; }
         .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
@@ -63,7 +57,6 @@
         .form-actions { display: flex; gap: 10px; margin-top: 20px; }
         .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* Table Area */
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
@@ -72,13 +65,11 @@
 </head>
 <body>
 
-    <!-- Sidebar Navigation -->
     <div class="sidebar">
         <div class="logo-area">
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
-        <!-- Links are now perfectly wired -->
         <a href="index.html" class="nav-item active">Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
@@ -88,16 +79,13 @@
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
 
-        <!-- Logout Button -->
         <div style="flex-grow: 1;"></div> 
         <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
             🚪 Log Out
         </div>
     </div>
 
-    <!-- Main Application Area -->
     <div class="main-content">
-        <!-- Top Header -->
         <div class="header">
             <div class="header-left">
                 <h1>Order Details</h1>
@@ -111,7 +99,6 @@
         </div>
 
         <div class="dashboard-padding">
-            <!-- Summary Stats -->
             <div class="stats-grid">
                 <div class="stat-card c-blue">
                     <h3 style="color: #2563eb;">Total Orders</h3>
@@ -131,51 +118,23 @@
                 </div>
             </div>
 
-            <!-- New Order Form -->
             <div class="form-card">
-                <div class="form-header">
-                    📄 NEW ORDER ENTRY
-                </div>
+                <div class="form-header">📄 NEW ORDER ENTRY</div>
                 <div class="form-grid">
-                    <div class="form-group">
-                        <label>Customer Name <span>*</span></label>
-                        <input type="text" id="customerName" placeholder="Full name">
-                    </div>
-                    <div class="form-group">
-                        <label>Contact No.</label>
-                        <input type="text" id="contactNo" placeholder="Phone number">
-                    </div>
-                    <div class="form-group">
-                        <label>Job Number <span>*</span></label>
-                        <input type="text" id="jobNo" placeholder="e.g. JOB-001">
-                    </div>
-                    <div class="form-group">
-                        <label>IMEI No.</label>
-                        <input type="text" id="imeiNo" placeholder="15-digit IMEI">
-                    </div>
-                    <div class="form-group">
-                        <label>Model No.</label>
-                        <input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro">
-                    </div>
-                    <!-- ADDED: Advance Paid Field for Billing Integration -->
-                    <div class="form-group">
-                        <label>Advance Paid (₹)</label>
-                        <input type="number" id="advancePaid" placeholder="0" value="0">
-                    </div>
+                    <div class="form-group"><label>Customer Name <span>*</span></label><input type="text" id="customerName" placeholder="Full name"></div>
+                    <div class="form-group"><label>Contact No.</label><input type="text" id="contactNo" placeholder="Phone number"></div>
+                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="jobNo" placeholder="e.g. JOB-001"></div>
+                    <div class="form-group"><label>IMEI No.</label><input type="text" id="imeiNo" placeholder="15-digit IMEI"></div>
+                    <div class="form-group"><label>Model No.</label><input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro"></div>
+                    <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="advancePaid" placeholder="0" value="0"></div>
                 </div>
-                <div class="form-grid" style="grid-template-columns: 1fr;">
-                    <div class="form-group full-width">
-                        <label>Problem Description</label>
-                        <input type="text" id="problemDesc" placeholder="Describe the issue...">
-                    </div>
-                </div>
+                <div class="form-grid" style="grid-template-columns: 1fr;"><div class="form-group full-width"><label>Problem Description</label><input type="text" id="problemDesc" placeholder="Describe the issue..."></div></div>
                 <div class="form-actions">
                     <button class="btn-save" onclick="saveOrder()">+ Save Order</button>
                     <button class="btn" onclick="clearForm()">Cancel</button>
                 </div>
             </div>
 
-            <!-- Data Table -->
             <div class="table-card">
                 <table>
                     <thead>
@@ -191,27 +150,29 @@
                             <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="ordersTableBody">
-                        <!-- Database entries dynamically loaded here -->
-                    </tbody>
+                    <tbody id="ordersTableBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
-    <!-- Supabase SDK Integration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- AUTHENTICATION LOCK ---
+        // --- SET YOUR ADMIN EMAIL HERE ---
+        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
+        let currentUserEmail = '';
+
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
             if (!data.session) {
-                // If not logged in, boot to login page
                 window.location.href = 'login.html';
+            } else {
+                // Save the logged-in user's email
+                currentUserEmail = data.session.user.email;
             }
         }
         
@@ -219,11 +180,9 @@
             await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
-        // ---------------------------
 
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAuth(); // Run security check immediately
-
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); 
             fetchOrders();
 
             supabaseClient
@@ -246,19 +205,25 @@
                 const tableBody = document.getElementById('ordersTableBody');
                 tableBody.innerHTML = ''; 
 
-                let pending = 0;
-                let completed = 0;
-                let delivered = 0;
+                let pending = 0; let completed = 0; let delivered = 0;
 
                 repairOrders.forEach(order => {
                     if(order.status === 'Pending') pending++;
                     if(order.status === 'Repair Completed') completed++;
                     if(order.status === 'Goods Delivered') delivered++;
 
+                    // --- SECURITY CHECK FOR DELETE BUTTON ---
+                    let deleteButtonHtml = '';
+                    if (currentUserEmail === ADMIN_EMAIL) {
+                        deleteButtonHtml = `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>`;
+                    } else {
+                        deleteButtonHtml = `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
+                    }
+                    // ----------------------------------------
+
                     const row = document.createElement('tr');
-                    
                     row.innerHTML = `
-                        <td>Administrator</td>
+                        <td>${order.customerName ? order.customerName.split(' ')[0] : 'Staff'}</td>
                         <td>${order.date || ''}</td>
                         <td><strong>${order.jobNo || ''}</strong></td>
                         <td>${order.customerName || ''}</td>
@@ -273,7 +238,7 @@
                             </select>
                         </td>
                         <td>
-                            <button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                            ${deleteButtonHtml}
                         </td>
                     `;
                     tableBody.appendChild(row);
@@ -284,9 +249,7 @@
                 document.getElementById('completedCount').innerText = completed;
                 document.getElementById('deliveredCount').innerText = delivered;
 
-            } catch (error) {
-                console.error("Error loading data: ", error.message);
-            }
+            } catch (error) { console.error("Error loading data: ", error.message); }
         }
 
         window.saveOrder = async function() {
@@ -297,30 +260,21 @@
                 imeiNo: document.getElementById('imeiNo').value,
                 modelNo: document.getElementById('modelNo').value,
                 problemDesc: document.getElementById('problemDesc').value,
-                advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0, // Saves advance for Billing Tab
+                advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0,
                 date: new Date().toISOString().split('T')[0],
                 status: "Pending"
             };
 
             if(!orderData.customerName || !orderData.jobNo) {
-                alert("Please complete the required fields: Customer Name and Job Number.");
-                return;
+                return alert("Please complete Customer Name and Job Number.");
             }
 
             try {
-                const { data, error } = await supabaseClient
-                    .from('repairOrders')
-                    .insert([orderData]);
-
+                const { error } = await supabaseClient.from('repairOrders').insert([orderData]);
                 if (error) throw error;
-
                 alert("Repair order added successfully!");
                 clearForm();
-                
-            } catch (error) {
-                console.error("Submission failed: ", error);
-                alert("Error writing to database: " + error.message);
-            }
+            } catch (error) { alert("Error writing to database: " + error.message); }
         };
 
         window.clearForm = function() {
@@ -335,51 +289,28 @@
 
         window.updateOrderStatus = async function(jobNo, newStatus) {
             try {
-                const { error } = await supabaseClient
-                    .from('repairOrders')
-                    .update({ status: newStatus })
-                    .eq('jobNo', jobNo);
-
+                const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('jobNo', jobNo);
                 if (error) throw error;
-
-            } catch (error) {
-                console.error("Error updating status: ", error);
-                alert("Failed to update status: " + error.message);
-            }
+            } catch (error) { alert("Failed to update status: " + error.message); }
         };
 
         window.deleteOrder = async function(jobNo) {
-            if (!confirm("Are you sure you want to delete this repair order? This cannot be undone.")) {
-                return;
+            if (currentUserEmail !== ADMIN_EMAIL) {
+                return alert("You do not have permission to delete orders.");
             }
+            if (!confirm("Are you sure you want to delete this repair order?")) return;
 
             try {
-                const { error } = await supabaseClient
-                    .from('repairOrders')
-                    .delete()
-                    .eq('jobNo', jobNo);
-
+                const { error } = await supabaseClient.from('repairOrders').delete().eq('jobNo', jobNo);
                 if (error) throw error;
-                
-            } catch (error) {
-                console.error("Error deleting order: ", error);
-                alert("Failed to delete order: " + error.message);
-            }
+            } catch (error) { alert("Failed to delete order: " + error.message); }
         };
 
         window.searchTable = function() {
             const input = document.getElementById("searchInput").value.toLowerCase();
-            const tableBody = document.getElementById("ordersTableBody");
-            const rows = tableBody.getElementsByTagName("tr");
-
+            const rows = document.getElementById("ordersTableBody").getElementsByTagName("tr");
             for (let i = 0; i < rows.length; i++) {
-                const rowText = rows[i].textContent.toLowerCase();
-                
-                if (rowText.includes(input)) {
-                    rows[i].style.display = "";
-                } else {
-                    rows[i].style.display = "none";
-                }
+                rows[i].style.display = rows[i].textContent.toLowerCase().includes(input) ? "" : "none";
             }
         };
     </script>
