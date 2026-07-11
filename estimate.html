@@ -2,120 +2,557 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>GSM SOLUTION - Estimate Letter</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Estimate Letter</title>
     <style>
-        body { font-family: sans-serif; background: #f4f5f7; margin: 0; display: flex; }
-        .sidebar { width: 250px; background: white; border-right: 1px solid #ccc; height: 100vh; padding: 20px; }
-        .main-content { flex: 1; padding: 30px; overflow-y: auto; }
-        .form-card { background: white; padding: 40px; border-radius: 8px; max-width: 800px; margin: auto; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        .btn { padding: 10px 20px; cursor: pointer; background: black; color: white; border: none; margin-top: 10px; }
-        .no-print { margin-bottom: 20px; }
-        @media print { .no-print { display: none; } body { background: white; } }
+        :root {
+            --bg-color: #f4f5f7;
+            --sidebar-width: 250px;
+            --primary-blue: #2563eb;
+            --border-color: #e5e7eb;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
+
+        /* Main Content Area */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
+        /* Top Header */
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .header-left h1 { margin: 0; font-size: 1.5rem; }
+        .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
+        .btn-primary { background: black; color: white; border: none; }
+
+        /* Dashboard Content */
+        .dashboard-padding { padding: 20px 30px; }
+        
+        /* Summary Cards */
+        .stats-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; color: #2563eb; }
+        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: #111827; }
+
+        /* Form Area */
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group.full-width { grid-column: span 3; }
+        
+        /* Math Matrix Table */
+        .math-box { background: #f9fafb; border: 1px solid var(--border-color); border-radius: 6px; padding: 15px; margin-top: 15px; font-size: 0.9rem; }
+        .math-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; }
+        .math-row { display: flex; justify-content: space-between; margin-bottom: 8px; align-items: center; }
+        .math-row input { width: 80px; padding: 4px; border: 1px solid #ccc; border-radius: 4px; text-align: right; }
+        .math-total { font-weight: bold; border-top: 2px solid #ccc; padding-top: 8px; margin-top: 8px; }
+
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+
+        /* Table Area */
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        .data-table { width: 100%; border-collapse: collapse; text-align: left; }
+        .data-table th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        .data-table td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
+
+        /* Parts Input Table */
+        .parts-table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+        .parts-table th, .parts-table td { border: 1px solid var(--border-color); padding: 8px; text-align: left; }
+        .parts-table input { width: 100%; box-sizing: border-box; border: none; background: transparent; padding: 5px; outline: none; }
+        .parts-table input:focus { background: #fff; }
+
+        /* Hidden Print Layout */
+        #printArea { display: none; }
+
+        @media print {
+            body * { visibility: hidden; }
+            #printArea, #printArea * { visibility: visible; }
+            #printArea { position: absolute; left: 0; top: 0; width: 100%; padding: 20px; box-sizing: border-box; display: block !important; }
+            .sidebar, .header, .dashboard-padding, .form-card, .table-card { display: none !important; }
+            
+            .p-header { display: flex; justify-content: space-between; border-bottom: 2px solid black; padding-bottom: 15px; margin-bottom: 20px; }
+            .p-title { text-align: right; }
+            .p-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; font-size: 0.9rem; }
+            .p-table th { background: black !important; color: white !important; padding: 8px; text-align: left; -webkit-print-color-adjust: exact; }
+            .p-table td, .p-table th { border: 1px solid #ccc; padding: 8px; }
+            .p-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; font-size: 0.9rem; }
+            .p-box { border: 1px solid #ccc; padding: 10px; background: #f9fafb !important; -webkit-print-color-adjust: exact; }
+            .p-totals { display: flex; justify-content: flex-end; }
+            .p-totals-box { width: 350px; font-size: 0.9rem; }
+            .p-row { display: flex; justify-content: space-between; margin-bottom: 4px; border-bottom: 1px dashed #eee; }
+        }
     </style>
 </head>
 <body>
-    <div class="sidebar no-print">
-        <strong>GSM SOLUTION</strong>
-        <a href="index.html" style="display:block; padding:10px; color:#333;">Order Details</a>
-        <a href="#" style="display:block; padding:10px; background:black; color:white;">Estimate Letter</a>
+
+    <!-- Sidebar -->
+    <div class="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon">GSM</div>
+            SOLUTION
+        </div>
+        <a href="index.html" class="nav-item">Order Details</a>
+        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
+        <div class="nav-item">Billing</div>
+        <div class="nav-item">Store Plus</div>
+        <div class="nav-item">Accessories</div>
+        <div class="nav-item">Sales Report</div>
+        <div class="nav-item">UPI Book</div>
+        <div class="nav-item">Cashbook</div>
     </div>
 
+    <!-- Main Content -->
     <div class="main-content">
-        <div id="listView" class="no-print">
-            <button class="btn" onclick="openForm()">+ Create New Estimate</button>
-            <table id="estTable"><thead><tr><th>Est No</th><th>Customer</th><th>Bill Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
+        <!-- Header -->
+        <div class="header">
+            <div class="header-left">
+                <h1>Estimate Letter</h1>
+                <p>Manage and generate customer estimates</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, Est no, contact" onkeyup="searchTable()">
+                <button class="btn" onclick="fetchEstimates()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Estimate</button>
+            </div>
         </div>
 
-        <div id="formView" class="form-card">
-            <!-- Header -->
-            <div style="display:flex; justify-content:space-between; border-bottom:2px solid #000; padding-bottom:10px;">
-                <div><strong>GSM SOLUTION</strong><br>Reliance Atria Shop No 6,7 First Floor, Opp PNG Jewelers, Margao Goa<br>GSTIN:30CLPPM8573A1Z2 | PAN:CLPPM8573A</div>
-                <div style="text-align:right;"><strong>ESTIMATE LETTER</strong><br>Est No: <input id="estNo" readonly style="border:none; width:60px;"></div>
+        <div class="dashboard-padding">
+            <!-- Stats Grid -->
+            <div class="stats-grid" id="statsGrid">
+                <div class="stat-card" style="background: #eff6ff; border-color: #bfdbfe;">
+                    <h3>Total Estimates Generated</h3>
+                    <p class="number" id="totalCount">0</p>
+                </div>
+                <div class="stat-card" style="background: #ecfdf5; border-color: #a7f3d0;">
+                    <h3 style="color: #059669;">Total Estimated Value</h3>
+                    <p class="number" id="totalValue">₹0.00</p>
+                </div>
             </div>
 
-            <div style="margin:20px 0;">
-                <input type="text" id="cName" placeholder="Customer Name" style="width:100%; margin-bottom:5px;"><br>
-                <input type="text" id="cMobile" placeholder="Mobile No" style="width:48%;">
-                <input type="text" id="cAddress" placeholder="Full Address" style="width:48%;">
-            </div>
-
-            <!-- Parts Table -->
-            <table id="partsTable">
-                <thead><tr><th>Code</th><th>Description</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead>
-                <tbody id="partsBody"></tbody>
-            </table>
-            <button class="btn no-print" onclick="addPart()">+ Add Part</button>
-
-            <!-- Tax Calc -->
-            <div id="calcSection" style="margin-top:20px;">
-                Parts Amt (A): <input type="number" id="partsA" oninput="calc()" value="0"><br>
-                Discount (B): <input type="number" id="discB" oninput="calc()" value="0"><br>
-                Parts Subtotal (C=A-B): <span id="valC">0</span><br>
-                GST 18% (D): <span id="valD">0</span><br>
-                <strong>Total Parts (E=C+D): <span id="valE">0</span></strong><br><br>
+            <!-- Form Area (Hidden by default) -->
+            <div class="form-card" id="estimateFormCard">
+                <div class="form-header">📄 NEW ESTIMATE ENTRY</div>
                 
-                Labour (F): <input type="number" id="labourF" oninput="calc()" value="0"><br>
-                Labour Disc (G): <input type="number" id="discG" oninput="calc()" value="0"><br>
-                Labour Subtotal (H=F-G): <span id="valH">0</span><br>
-                GST 18% (I): <span id="valI">0</span><br>
-                <strong>Total Labour (K=H+I): <span id="valK">0</span></strong><br><br>
-                <h3>Final Bill Amount: ₹<span id="finalTotal">0</span></h3>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Estimate No. (Auto)</label>
+                        <input type="text" id="f-estNo" readonly style="background: #f3f4f6; font-weight:bold;">
+                    </div>
+                    <div class="form-group">
+                        <label>Date</label>
+                        <input type="date" id="f-date">
+                    </div>
+                    <div class="form-group">
+                        <label>Service Order No.</label>
+                        <input type="text" id="f-serviceNo" placeholder="e.g. JOB-001">
+                    </div>
+                    <div class="form-group">
+                        <label>Customer Name *</label>
+                        <input type="text" id="f-name" placeholder="Full Name">
+                    </div>
+                    <div class="form-group">
+                        <label>Mobile No.</label>
+                        <input type="text" id="f-mobile" placeholder="Phone Number">
+                    </div>
+                    <div class="form-group">
+                        <label>GSTIN</label>
+                        <input type="text" id="f-gstin" placeholder="Optional">
+                    </div>
+                    <div class="form-group full-width">
+                        <label>Full Address</label>
+                        <input type="text" id="f-address" placeholder="Customer Address">
+                    </div>
+                    <div class="form-group">
+                        <label>Model No.</label>
+                        <input type="text" id="f-model" placeholder="Device Model">
+                    </div>
+                    <div class="form-group">
+                        <label>Serial / IMEI No.</label>
+                        <input type="text" id="f-serial" placeholder="Device IMEI">
+                    </div>
+                </div>
+
+                <div class="form-header" style="margin-top: 15px;">🔧 PARTS & SERVICE DETAILS</div>
+                
+                <table class="parts-table">
+                    <thead style="background: #f9fafb;">
+                        <tr>
+                            <th style="width: 20%;">Part Code</th>
+                            <th style="width: 40%;">Description</th>
+                            <th style="width: 10%;">Qty</th>
+                            <th style="width: 15%;">Rate (₹)</th>
+                            <th style="width: 15%;">Amount (₹)</th>
+                        </tr>
+                    </thead>
+                    <tbody id="f-partsBody">
+                        <tr>
+                            <td><input type="text" class="i-code" placeholder="Code"></td>
+                            <td><input type="text" class="i-desc" placeholder="Part Name"></td>
+                            <td><input type="number" class="i-qty" value="1" oninput="runMath()"></td>
+                            <td><input type="number" class="i-rate" value="0" oninput="runMath()"></td>
+                            <td class="i-amt" style="padding-left:10px; font-weight:bold;">0.00</td>
+                        </tr>
+                    </tbody>
+                </table>
+                <button class="btn" onclick="addFormPartRow()" style="font-size: 0.8rem;">+ Add Another Part</button>
+
+                <div class="math-box">
+                    <div class="math-grid">
+                        <div>
+                            <div style="font-weight:bold; margin-bottom:10px; color:#2563eb;">PARTS CALCULATION</div>
+                            <div class="math-row"><span>Parts Amount (A)</span> <span id="m-A">0.00</span></div>
+                            <div class="math-row"><span>Discount (B)</span> <input type="number" id="m-B" value="0" oninput="runMath()"></div>
+                            <div class="math-row"><span>Parts Sub Total (C)</span> <span id="m-C">0.00</span></div>
+                            <div class="math-row"><span>GST 18% (D)</span> <span id="m-D">0.00</span></div>
+                            <div class="math-row math-total"><span>Total Parts (E)</span> <span id="m-E">0.00</span></div>
+                        </div>
+                        <div>
+                            <div style="font-weight:bold; margin-bottom:10px; color:#059669;">LABOUR CALCULATION</div>
+                            <div class="math-row"><span>Labour Amount (F)</span> <input type="number" id="m-F" value="0" oninput="runMath()"></div>
+                            <div class="math-row"><span>Discount (G)</span> <input type="number" id="m-G" value="0" oninput="runMath()"></div>
+                            <div class="math-row"><span>Labour Sub Total (H)</span> <span id="m-H">0.00</span></div>
+                            <div class="math-row"><span>GST 18% (I)</span> <span id="m-I">0.00</span></div>
+                            <div class="math-row math-total"><span>Total Labour (K)</span> <span id="m-K">0.00</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="text-align: right; font-size: 1.4rem; font-weight: bold; margin-top: 15px; color: #111827;">
+                    FINAL BILL AMOUNT: ₹<span id="m-Final">0.00</span>
+                </div>
+
+                <div class="form-actions">
+                    <button class="btn-save" onclick="saveEstimate()">💾 Save & Print Estimate</button>
+                    <button class="btn" onclick="toggleForm()">Cancel</button>
+                </div>
             </div>
 
-            <button class="btn no-print" onclick="saveAndPrint()">Save & Print</button>
-            <button class="btn no-print" style="background:#666;" onclick="location.reload()">Cancel</button>
+            <!-- Data Table -->
+            <div class="table-card" id="dataTableCard">
+                <table class="data-table">
+                    <thead>
+                        <tr>
+                            <th>Created By</th>
+                            <th>Date</th>
+                            <th>Est No.</th>
+                            <th>Customer Name</th>
+                            <th>Mobile No.</th>
+                            <th>Model No.</th>
+                            <th>Bill Amount</th>
+                            <th>Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="estimatesTableBody">
+                        <!-- Loaded dynamically -->
+                    </tbody>
+                </table>
+            </div>
         </div>
     </div>
 
+    <!-- Hidden Print Layout -->
+    <div id="printArea">
+        <div class="p-header">
+            <div>
+                <h2 style="margin:0; font-size:1.8rem; letter-spacing:1px;">GSM SOLUTION</h2>
+                <p style="margin:4px 0 0 0;">Reliance Atria Shop No 6,7 First Floor</p>
+                <p style="margin:0;">Opp PNG Jewelers, Margao Goa</p>
+                <p style="margin:4px 0 0 0; font-size:0.85rem;">GSTIN: 30CLPPM8573A1Z2 | PAN: CLPPM8573A</p>
+            </div>
+            <div class="p-title">
+                <h1 style="margin:0; color:#333; font-size:2rem; text-transform:uppercase;">Estimate Letter</h1>
+                <p style="margin:5px 0 0 0; font-weight:bold;">Est No: <span id="p-estNo"></span></p>
+                <p style="margin:2px 0 0 0;">Date: <span id="p-date"></span></p>
+                <p style="margin:2px 0 0 0; font-size:0.85rem;">Service Order: <span id="p-orderNo"></span></p>
+            </div>
+        </div>
+
+        <div class="p-grid">
+            <div class="p-box">
+                <strong style="display:block; border-bottom:1px solid #ccc; padding-bottom:4px; margin-bottom:4px;">Customer Details</strong>
+                <strong id="p-name"></strong><br>
+                Mobile: <span id="p-mobile"></span><br>
+                <span id="p-address"></span><br>
+                GSTIN: <span id="p-gstin"></span>
+            </div>
+            <div class="p-box">
+                <strong style="display:block; border-bottom:1px solid #ccc; padding-bottom:4px; margin-bottom:4px;">Device Details</strong>
+                Model: <strong id="p-model"></strong><br>
+                Serial/IMEI: <span id="p-serial"></span>
+            </div>
+        </div>
+
+        <table class="p-table">
+            <thead>
+                <tr>
+                    <th style="width:15%">Code</th>
+                    <th style="width:45%">Description</th>
+                    <th style="width:10%">Qty</th>
+                    <th style="width:15%">Rate</th>
+                    <th style="width:15%">Amount</th>
+                </tr>
+            </thead>
+            <tbody id="p-partsTbody"></tbody>
+        </table>
+
+        <div class="p-totals">
+            <div class="p-totals-box">
+                <div class="p-row"><span>Parts Amount (A)</span> <strong id="p-A"></strong></div>
+                <div class="p-row"><span>Discount (B)</span> <strong id="p-B"></strong></div>
+                <div class="p-row"><span>Parts Sub Total (C)</span> <strong id="p-C"></strong></div>
+                <div class="p-row"><span>GST 18% (D)</span> <strong id="p-D"></strong></div>
+                <div class="p-row" style="border-bottom:2px solid black; margin-bottom:10px;"><span>Total Parts (E)</span> <strong id="p-E"></strong></div>
+                
+                <div class="p-row"><span>Labour Amount (F)</span> <strong id="p-F"></strong></div>
+                <div class="p-row"><span>Discount (G)</span> <strong id="p-G"></strong></div>
+                <div class="p-row"><span>Labour Sub Total (H)</span> <strong id="p-H"></strong></div>
+                <div class="p-row"><span>GST 18% (I)</span> <strong id="p-I"></strong></div>
+                <div class="p-row" style="border-bottom:2px solid black; margin-bottom:10px;"><span>Total Labour (K)</span> <strong id="p-K"></strong></div>
+                
+                <div class="p-row" style="font-size:1.2rem; font-weight:bold; border:none; margin-top:10px;">
+                    <span>FINAL BILL AMOUNT</span> <span id="p-Final"></span>
+                </div>
+            </div>
+        </div>
+        <div style="margin-top: 40px; text-align: center; font-size: 0.8rem; color: #666; border-top: 1px solid #ccc; padding-top: 10px;">
+            This is an estimate only. Final pricing may vary based on internal damage inspection. Thank you for choosing GSM SOLUTION.
+        </div>
+    </div>
+
+    <!-- Supabase Logic -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-
-        function addPart() {
-            document.getElementById('partsBody').innerHTML += `<tr><td><input></td><td><input></td><td><input value="1"></td><td><input value="0"></td><td>0</td></tr>`;
+        if (!window.mySupa) {
+            window.mySupa = window.supabase.createClient(
+                'https://cbsmsclmyyxgwwztqwsc.supabase.co', 
+                'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
+            );
         }
 
-        function calc() {
-            const A = parseFloat(document.getElementById('partsA').value) || 0;
-            const B = parseFloat(document.getElementById('discB').value) || 0;
-            const C = A - B;
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchEstimates();
+            document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
+        });
+
+        function toggleForm() {
+            const form = document.getElementById('estimateFormCard');
+            const stats = document.getElementById('statsGrid');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                stats.style.display = 'none';
+                generateEstNo();
+            } else {
+                form.style.display = 'none';
+                stats.style.display = 'grid';
+            }
+        }
+
+        async function fetchEstimates() {
+            try {
+                const { data, error } = await window.mySupa.from('estimates').select('*').order('estNo', { ascending: false });
+                if (error) throw error;
+
+                const tbody = document.getElementById('estimatesTableBody');
+                tbody.innerHTML = '';
+                let totalVal = 0;
+
+                data.forEach(est => {
+                    totalVal += parseFloat(est.billAmount) || 0;
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>Administrator</td>
+                            <td>${est.date || ''}</td>
+                            <td><strong>${est.estNo || ''}</strong></td>
+                            <td>${est.customerName || ''}</td>
+                            <td>${est.mobileNo || ''}</td>
+                            <td>${est.modelNo || ''}</td>
+                            <td style="color:#10b981; font-weight:bold;">₹${parseFloat(est.billAmount).toFixed(2)}</td>
+                            <td><button onclick='reprintEstimate(${JSON.stringify(est)})' style="background:transparent; border:1px solid #2563eb; color:#2563eb; padding:4px 8px; border-radius:4px; cursor:pointer;">Print</button></td>
+                        </tr>
+                    `;
+                });
+
+                document.getElementById('totalCount').innerText = data.length;
+                document.getElementById('totalValue').innerText = '₹' + totalVal.toFixed(2);
+            } catch (err) { console.error(err); }
+        }
+
+        async function generateEstNo() {
+            try {
+                const { data } = await window.mySupa.from('estimates').select('estNo').order('estNo', { ascending: false }).limit(1);
+                let next = 305;
+                if (data && data.length > 0) {
+                    const num = parseInt(data[0].estNo.replace('EST', ''));
+                    if (!isNaN(num) && num >= 305) next = num + 1;
+                }
+                document.getElementById('f-estNo').value = `EST${next}`;
+            } catch (e) { document.getElementById('f-estNo').value = `EST305`; }
+        }
+
+        function addFormPartRow() {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="i-code" placeholder="Code"></td>
+                <td><input type="text" class="i-desc" placeholder="Part Name"></td>
+                <td><input type="number" class="i-qty" value="1" oninput="runMath()"></td>
+                <td><input type="number" class="i-rate" value="0" oninput="runMath()"></td>
+                <td class="i-amt" style="padding-left:10px; font-weight:bold;">0.00</td>
+            `;
+            document.getElementById('f-partsBody').appendChild(tr);
+        }
+
+        function runMath() {
+            let sumA = 0;
+            document.querySelectorAll('#f-partsBody tr').forEach(row => {
+                const q = parseFloat(row.querySelector('.i-qty').value) || 0;
+                const r = parseFloat(row.querySelector('.i-rate').value) || 0;
+                const amt = q * r;
+                row.querySelector('.i-amt').innerText = amt.toFixed(2);
+                sumA += amt;
+            });
+
+            const B = parseFloat(document.getElementById('m-B').value) || 0;
+            const C = sumA - B;
             const D = C * 0.18;
             const E = C + D;
-            const F = parseFloat(document.getElementById('labourF').value) || 0;
-            const G = parseFloat(document.getElementById('discG').value) || 0;
+
+            const F = parseFloat(document.getElementById('m-F').value) || 0;
+            const G = parseFloat(document.getElementById('m-G').value) || 0;
             const H = F - G;
             const I = H * 0.18;
             const K = H + I;
-            document.getElementById('valC').innerText = C.toFixed(2);
-            document.getElementById('valD').innerText = D.toFixed(2);
-            document.getElementById('valE').innerText = E.toFixed(2);
-            document.getElementById('valH').innerText = H.toFixed(2);
-            document.getElementById('valI').innerText = I.toFixed(2);
-            document.getElementById('valK').innerText = K.toFixed(2);
-            document.getElementById('finalTotal').innerText = (E + K).toFixed(2);
+
+            document.getElementById('m-A').innerText = sumA.toFixed(2);
+            document.getElementById('m-C').innerText = C.toFixed(2);
+            document.getElementById('m-D').innerText = D.toFixed(2);
+            document.getElementById('m-E').innerText = E.toFixed(2);
+            document.getElementById('m-H').innerText = H.toFixed(2);
+            document.getElementById('m-I').innerText = I.toFixed(2);
+            document.getElementById('m-K').innerText = K.toFixed(2);
+            document.getElementById('m-Final').innerText = (E + K).toFixed(2);
         }
 
-        async function saveAndPrint() {
-            const data = { estNo: document.getElementById('estNo').value, customerName: document.getElementById('cName').value, billAmount: document.getElementById('finalTotal').innerText };
-            await db.from('estimates').insert([data]);
+        async function saveEstimate() {
+            const name = document.getElementById('f-name').value;
+            if(!name) return alert("Customer Name is required.");
+
+            const parts = [];
+            document.querySelectorAll('#f-partsBody tr').forEach(row => {
+                parts.push({
+                    code: row.querySelector('.i-code').value,
+                    desc: row.querySelector('.i-desc').value,
+                    qty: row.querySelector('.i-qty').value,
+                    rate: row.querySelector('.i-rate').value,
+                    amt: row.querySelector('.i-amt').innerText
+                });
+            });
+
+            const estData = {
+                estNo: document.getElementById('f-estNo').value,
+                date: document.getElementById('f-date').value,
+                serviceOrderNo: document.getElementById('f-serviceNo').value,
+                customerName: name,
+                mobileNo: document.getElementById('f-mobile').value,
+                gstin: document.getElementById('f-gstin').value,
+                address: document.getElementById('f-address').value,
+                modelNo: document.getElementById('f-model').value,
+                serialNo: document.getElementById('f-serial').value,
+                partsList: parts,
+                mathTotals: {
+                    A: document.getElementById('m-A').innerText, B: document.getElementById('m-B').value,
+                    C: document.getElementById('m-C').innerText, D: document.getElementById('m-D').innerText, E: document.getElementById('m-E').innerText,
+                    F: document.getElementById('m-F').value, G: document.getElementById('m-G').value,
+                    H: document.getElementById('m-H').innerText, I: document.getElementById('m-I').innerText, K: document.getElementById('m-K').innerText
+                },
+                billAmount: parseFloat(document.getElementById('m-Final').innerText)
+            };
+
+            try {
+                await window.mySupa.from('estimates').insert([estData]);
+                reprintEstimate(estData); // Populates print view and triggers print
+                toggleForm();
+                fetchEstimates();
+                
+                // Clear form for next time
+                document.getElementById('f-name').value = '';
+                document.getElementById('f-mobile').value = '';
+                document.getElementById('f-address').value = '';
+                document.getElementById('m-B').value = '0';
+                document.getElementById('m-F').value = '0';
+                document.getElementById('m-G').value = '0';
+                document.getElementById('f-partsBody').innerHTML = `
+                    <tr>
+                        <td><input type="text" class="i-code" placeholder="Code"></td>
+                        <td><input type="text" class="i-desc" placeholder="Part Name"></td>
+                        <td><input type="number" class="i-qty" value="1" oninput="runMath()"></td>
+                        <td><input type="number" class="i-rate" value="0" oninput="runMath()"></td>
+                        <td class="i-amt" style="padding-left:10px; font-weight:bold;">0.00</td>
+                    </tr>
+                `;
+                runMath();
+            } catch (err) { alert("Save Failed: " + err.message); }
+        }
+
+        function reprintEstimate(data) {
+            document.getElementById('p-estNo').innerText = data.estNo;
+            document.getElementById('p-date').innerText = data.date;
+            document.getElementById('p-orderNo').innerText = data.serviceOrderNo || '-';
+            
+            document.getElementById('p-name').innerText = data.customerName;
+            document.getElementById('p-mobile').innerText = data.mobileNo || '-';
+            document.getElementById('p-address').innerText = data.address || '-';
+            document.getElementById('p-gstin').innerText = data.gstin || '-';
+            
+            document.getElementById('p-model').innerText = data.modelNo || '-';
+            document.getElementById('p-serial').innerText = data.serialNo || '-';
+
+            const pBody = document.getElementById('p-partsTbody');
+            pBody.innerHTML = '';
+            if(data.partsList) {
+                data.partsList.forEach(p => {
+                    if(p.desc || p.amt > 0) {
+                        pBody.innerHTML += `<tr><td>${p.code||'-'}</td><td>${p.desc}</td><td>${p.qty}</td><td>₹${p.rate}</td><td>₹${p.amt}</td></tr>`;
+                    }
+                });
+            }
+
+            const m = data.mathTotals || {};
+            document.getElementById('p-A').innerText = '₹' + (m.A || '0.00');
+            document.getElementById('p-B').innerText = '₹' + (m.B || '0.00');
+            document.getElementById('p-C').innerText = '₹' + (m.C || '0.00');
+            document.getElementById('p-D').innerText = '₹' + (m.D || '0.00');
+            document.getElementById('p-E').innerText = '₹' + (m.E || '0.00');
+            
+            document.getElementById('p-F').innerText = '₹' + (m.F || '0.00');
+            document.getElementById('p-G').innerText = '₹' + (m.G || '0.00');
+            document.getElementById('p-H').innerText = '₹' + (m.H || '0.00');
+            document.getElementById('p-I').innerText = '₹' + (m.I || '0.00');
+            document.getElementById('p-K').innerText = '₹' + (m.K || '0.00');
+            
+            document.getElementById('p-Final').innerText = '₹' + parseFloat(data.billAmount).toFixed(2);
+
             window.print();
-            location.reload();
         }
 
-        function openForm() {
-            document.getElementById('listView').style.display = 'none';
-            document.getElementById('formView').style.display = 'block';
-            document.getElementById('estNo').value = 'EST' + Date.now().toString().slice(-3);
+        function searchTable() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.getElementById("estimatesTableBody").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = rows[i].textContent.toLowerCase().includes(input) ? "" : "none";
+            }
         }
-
-        async function load() {
-            const { data } = await db.from('estimates').select('*');
-            const tbody = document.getElementById('estimatesTableBody');
-            if(data) data.forEach(e => tbody.innerHTML += `<tr><td>${e.estNo}</td><td>${e.customerName}</td><td>₹${e.billAmount}</td></tr>`);
-        }
-        load();
     </script>
 </body>
 </html>
