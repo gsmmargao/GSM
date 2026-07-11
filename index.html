@@ -4,6 +4,10 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Order Management</title>
+    
+    <!-- This completely stops the 404 favicon error -->
+    <link rel="icon" href="data:,">
+    
     <style>
         :root {
             --bg-color: #f4f5f7;
@@ -74,6 +78,7 @@
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
+        <!-- Links are now perfectly wired -->
         <a href="index.html" class="nav-item active">Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
@@ -83,7 +88,7 @@
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
 
-        <!-- Logout Button (Pushed to bottom) -->
+        <!-- Logout Button -->
         <div style="flex-grow: 1;"></div> 
         <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
             🚪 Log Out
@@ -151,6 +156,11 @@
                     <div class="form-group">
                         <label>Model No.</label>
                         <input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro">
+                    </div>
+                    <!-- ADDED: Advance Paid Field for Billing Integration -->
+                    <div class="form-group">
+                        <label>Advance Paid (₹)</label>
+                        <input type="number" id="advancePaid" placeholder="0" value="0">
                     </div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr;">
@@ -287,6 +297,7 @@
                 imeiNo: document.getElementById('imeiNo').value,
                 modelNo: document.getElementById('modelNo').value,
                 problemDesc: document.getElementById('problemDesc').value,
+                advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0, // Saves advance for Billing Tab
                 date: new Date().toISOString().split('T')[0],
                 status: "Pending"
             };
@@ -319,6 +330,7 @@
             document.getElementById('imeiNo').value = '';
             document.getElementById('modelNo').value = '';
             document.getElementById('problemDesc').value = '';
+            document.getElementById('advancePaid').value = '0';
         }
 
         window.updateOrderStatus = async function(jobNo, newStatus) {
