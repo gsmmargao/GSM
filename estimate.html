@@ -2,24 +2,24 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Estimate Builder</title>
     <style>
-        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
-        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; cursor: pointer; }
-        .nav-item.active { background: black !important; color: white !important; }
-        .main-content { flex: 1; overflow-y: auto; padding: 20px; }
-        .form-card { background: white; padding: 25px; border-radius: 8px; border: 1px solid #ccc; display: none; }
-        .btn { padding: 10px 20px; cursor: pointer; background: black; color: white; border: none; border-radius: 4px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ccc; padding: 10px; text-align: left; }
+        :root { --bg-color: #f4f5f7; }
+        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; }
+        .sidebar { width: 250px; background: white; border-right: 1px solid #ccc; padding: 20px; }
+        .nav-item { display: block; padding: 10px; color: #333; text-decoration: none; }
+        .nav-item.active { background: black; color: white; }
+        .main-content { flex: 1; padding: 20px; overflow-y: auto; }
+        .form-container { background: white; padding: 20px; border-radius: 8px; display: none; }
+        .btn { padding: 10px 20px; cursor: pointer; background: black; color: white; border: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; background: white; }
+        th, td { border: 1px solid #ccc; padding: 10px; }
+        @media print { .no-print { display: none; } }
     </style>
 </head>
 <body>
     <div class="sidebar">
-        <div style="padding:20px; font-weight:bold;">GSM SOLUTION</div>
+        <strong>GSM SOLUTION</strong>
         <a href="index.html" class="nav-item">Order Details</a>
         <a href="estimate.html" class="nav-item active">Estimate Letter</a>
     </div>
@@ -27,36 +27,30 @@
     <div class="main-content">
         <div id="listView">
             <button class="btn" onclick="showForm()">+ Create New Estimate</button>
-            <table><thead><tr><th>Est No.</th><th>Customer</th><th>Bill Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
+            <table><thead><tr><th>Est No.</th><th>Customer</th><th>Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
         </div>
 
-        <div class="form-card" id="formView">
-            <h3>New Estimate Builder</h3>
-            <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
-                <input type="text" id="estNo" readonly>
-                <input type="text" id="customerName" placeholder="Customer Name">
-                <input type="number" id="labour" placeholder="Labour Charge" oninput="calculate()">
-                <input type="number" id="parts" placeholder="Parts Amount" oninput="calculate()">
-            </div>
-            <p>Total (incl 18% Tax): ₹<span id="totalDisplay">0</span></p>
-            <button class="btn" onclick="saveEstimate()">Save Estimate</button>
-            <button class="btn" style="background:#666;" onclick="cancelForm()">Cancel</button>
+        <div id="formView" class="form-container">
+            <h3>New Estimate</h3>
+            <input type="text" id="estNo" readonly placeholder="Est No">
+            <input type="text" id="customerName" placeholder="Customer Name">
+            <input type="number" id="labour" placeholder="Labour" oninput="calculate()">
+            <input type="number" id="parts" placeholder="Parts" oninput="calculate()">
+            <p>Total (Tax 18%): ₹<span id="totalDisplay">0</span></p>
+            <button class="btn" onclick="saveEstimate()">Save & Print</button>
+            <button class="btn" onclick="location.reload()">Cancel</button>
         </div>
     </div>
 
-    <!-- Load Supabase ONLY ONCE -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Check if window.supabase exists before creating client to avoid duplicates
-        if (!window.mySupabaseClient) {
-            window.mySupabaseClient = window.supabase.createClient(
-                'https://cbsmsclmyyxgwwztqwsc.supabase.co', 
-                'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
-            );
-        }
+        const supabase = window.supabase.createClient(
+            'https://cbsmsclmyyxgwwztqwsc.supabase.co', 
+            'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
+        );
 
         async function fetchEstimates() {
-            const { data, error } = await window.mySupabaseClient.from('estimates').select('*');
+            const { data } = await supabase.from('estimates').select('*');
             const tbody = document.getElementById('estimatesTableBody');
             tbody.innerHTML = '';
             if(data) data.forEach(est => {
@@ -65,10 +59,9 @@
         }
 
         function calculate() {
-            const labour = parseFloat(document.getElementById('labour').value) || 0;
-            const parts = parseFloat(document.getElementById('parts').value) || 0;
-            const total = (labour + parts) * 1.18;
-            document.getElementById('totalDisplay').innerText = total.toFixed(2);
+            const l = parseFloat(document.getElementById('labour').value) || 0;
+            const p = parseFloat(document.getElementById('parts').value) || 0;
+            document.getElementById('totalDisplay').innerText = ((l + p) * 1.18).toFixed(2);
         }
 
         async function saveEstimate() {
@@ -77,21 +70,16 @@
                 customerName: document.getElementById('customerName').value,
                 billAmount: parseFloat(document.getElementById('totalDisplay').innerText)
             };
-            await window.mySupabaseClient.from('estimates').insert([estData]);
-            alert("Estimate Saved!");
-            cancelForm();
-            fetchEstimates();
+            await supabase.from('estimates').insert([estData]);
+            alert("Saved!");
+            window.print();
+            location.reload();
         }
 
         function showForm() {
             document.getElementById('listView').style.display = 'none';
             document.getElementById('formView').style.display = 'block';
             document.getElementById('estNo').value = 'EST' + Date.now().toString().slice(-3);
-        }
-
-        function cancelForm() {
-            document.getElementById('listView').style.display = 'block';
-            document.getElementById('formView').style.display = 'none';
         }
 
         fetchEstimates();
