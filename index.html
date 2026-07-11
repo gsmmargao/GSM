@@ -74,8 +74,9 @@
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
-        <a href="index.html" class="nav-item active" style="color: inherit; text-decoration: none;">Order Details</a>
-        <a href="estimate.html" class="nav-item" style="color: inherit; text-decoration: none;">Estimate Letter</a>
+        <!-- FIXED: Removed the style override so the text correctly turns white when active -->
+        <a href="index.html" class="nav-item active">Order Details</a>
+        <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <div class="nav-item">Billing</div>
         <div class="nav-item">Store Plus</div>
         <div class="nav-item">Accessories</div>
@@ -93,7 +94,6 @@
                 <p>Manage customer repair orders</p>
             </div>
             <div class="header-right">
-                <!-- Search Bar connected to onkeyup -->
                 <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no, contact" onkeyup="searchTable()">
                 <button class="btn" onclick="fetchOrders()">↻ Refresh</button>
                 <button class="btn btn-primary">+ New Order</button>
@@ -187,18 +187,13 @@
     <!-- Supabase SDK Integration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // Configured with your project credentials
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
-        
-        // RENAMED TO supabaseClient TO PREVENT COLLISION
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Run fetch and set up real-time on initial page load
         document.addEventListener("DOMContentLoaded", () => {
             fetchOrders();
 
-            // Set up Realtime listener for cross-device live updates
             supabaseClient
                 .channel('public:repairOrders')
                 .on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => {
@@ -207,7 +202,6 @@
                 .subscribe();
         });
 
-        // Function: Fetch orders from Supabase table and render them
         async function fetchOrders() {
             try {
                 const { data: repairOrders, error } = await supabaseClient
@@ -218,21 +212,20 @@
                 if (error) throw error;
 
                 const tableBody = document.getElementById('ordersTableBody');
-                tableBody.innerHTML = ''; // Reset list
+                tableBody.innerHTML = ''; 
 
-                // Metrics Counters
                 let pending = 0;
                 let completed = 0;
                 let delivered = 0;
 
                 repairOrders.forEach(order => {
-                    // Count statuses
                     if(order.status === 'Pending') pending++;
                     if(order.status === 'Repair Completed') completed++;
                     if(order.status === 'Goods Delivered') delivered++;
 
-                    // Create Row
                     const row = document.createElement('tr');
+                    
+                    // FIXED: We now target the Job Number (order.jobNo) instead of an auto-generated ID
                     row.innerHTML = `
                         <td>Administrator</td>
                         <td>${order.date || ''}</td>
@@ -242,20 +235,19 @@
                         <td>${order.modelNo || ''} <br><small style="color:gray;">${order.imeiNo || ''}</small></td>
                         <td>${order.problemDesc || ''}</td>
                         <td>
-                            <select onchange="updateOrderStatus('${order.id}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; cursor: pointer;">
+                            <select onchange="updateOrderStatus('${order.jobNo}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; cursor: pointer;">
                                 <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
                                 <option value="Repair Completed" ${order.status === 'Repair Completed' ? 'selected' : ''}>Repair Completed</option>
                                 <option value="Goods Delivered" ${order.status === 'Goods Delivered' ? 'selected' : ''}>Goods Delivered</option>
                             </select>
                         </td>
                         <td>
-                            <button onclick="deleteOrder('${order.id}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                            <button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
                         </td>
                     `;
                     tableBody.appendChild(row);
                 });
 
-                // Update Counter numbers dynamically
                 document.getElementById('totalOrdersCount').innerText = repairOrders.length;
                 document.getElementById('pendingCount').innerText = pending;
                 document.getElementById('completedCount').innerText = completed;
@@ -266,7 +258,6 @@
             }
         }
 
-        // Function: Save new ticket entry to Supabase
         window.saveOrder = async function() {
             const orderData = {
                 customerName: document.getElementById('customerName').value,
@@ -275,7 +266,7 @@
                 imeiNo: document.getElementById('imeiNo').value,
                 modelNo: document.getElementById('modelNo').value,
                 problemDesc: document.getElementById('problemDesc').value,
-                date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+                date: new Date().toISOString().split('T')[0],
                 status: "Pending"
             };
 
@@ -300,7 +291,6 @@
             }
         };
 
-        // Function: Clear form fields
         window.clearForm = function() {
             document.getElementById('customerName').value = '';
             document.getElementById('contactNo').value = '';
@@ -310,13 +300,13 @@
             document.getElementById('problemDesc').value = '';
         }
 
-        // Function: Update the status of an existing order
-        window.updateOrderStatus = async function(orderId, newStatus) {
+        // FIXED: This function now correctly targets the 'jobNo' column to make the change
+        window.updateOrderStatus = async function(jobNo, newStatus) {
             try {
                 const { error } = await supabaseClient
                     .from('repairOrders')
                     .update({ status: newStatus })
-                    .eq('id', orderId);
+                    .eq('jobNo', jobNo);
 
                 if (error) throw error;
 
@@ -326,8 +316,8 @@
             }
         };
 
-        // Function: Delete an order from Supabase
-        window.deleteOrder = async function(orderId) {
+        // FIXED: This function now correctly targets the 'jobNo' column for deleting
+        window.deleteOrder = async function(jobNo) {
             if (!confirm("Are you sure you want to delete this repair order? This cannot be undone.")) {
                 return;
             }
@@ -336,7 +326,7 @@
                 const { error } = await supabaseClient
                     .from('repairOrders')
                     .delete()
-                    .eq('id', orderId);
+                    .eq('jobNo', jobNo);
 
                 if (error) throw error;
                 
@@ -346,7 +336,6 @@
             }
         };
 
-        // Function: Filter table rows based on search input
         window.searchTable = function() {
             const input = document.getElementById("searchInput").value.toLowerCase();
             const tableBody = document.getElementById("ordersTableBody");
