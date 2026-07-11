@@ -342,6 +342,21 @@
             );
         }
 
+        
+        async function checkAuth() {
+            const { data } = await window.mySupa.auth.getSession();
+            if (!data.session) {
+                window.location.href = 'login.html'; // Kick them to login page
+            }
+        }
+        checkAuth();
+
+        async function logOut() {
+            await window.mySupa.auth.signOut();
+            window.location.href = 'login.html';
+        }
+        
+
         document.addEventListener("DOMContentLoaded", () => {
             fetchEstimates();
             document.getElementById('f-date').value = new Date().toISOString().split('T')[0];
