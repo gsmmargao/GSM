@@ -26,84 +26,60 @@
     <div class="main-content">
         <div id="listView" class="no-print">
             <button class="btn" onclick="openForm()">+ Create New Estimate</button>
-            <table><thead><tr><th>Created By</th><th>Date</th><th>Est No</th><th>Mobile</th><th>Model</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
+            <table id="estTable"><thead><tr><th>Est No</th><th>Customer</th><th>Amount</th></tr></thead><tbody id="estimatesTableBody"></tbody></table>
         </div>
 
         <div id="formView" class="form-card">
-            <div id="printHeader" style="display:none;">
-                <div style="display:flex; justify-content:space-between;">
-                    <div><h3>GSM SOLUTION</h3><p>Reliance Atria Shop No 6,7 First Floor, Opp PNG Jewelers, Margao Goa<br>GSTIN:30CLPPM8573A1Z2 | PAN:CLPPM8573A</p></div>
-                    <div style="text-align:right;"><h1>Estimate Letter</h1><p id="p-estNo"></p><p id="p-date"></p><p id="p-orderNo"></p></div>
-                </div>
-            </div>
-            
-            <h3>Estimate Details</h3>
+            <h3>GSM SOLUTION - Estimate Letter</h3>
             <input type="text" id="estNo" readonly>
             <input type="text" id="customerName" placeholder="Customer Name">
-            <input type="text" id="mobileNo" placeholder="Mobile No">
-            <input type="text" id="address" placeholder="Address">
-            <input type="text" id="modelNo" placeholder="Model No">
-            
-            <h4>Parts</h4>
-            <table id="partsTable"><thead><tr><th>Code</th><th>Desc</th><th>Qty</th><th>Rate</th><th>Amt</th></tr></thead><tbody id="partsBody"></tbody></table>
-            <button class="btn" onclick="addPartRow()">+ Add Part</button>
-            
-            <h4>Labour & Totals</h4>
-            <input type="number" id="labour" placeholder="Labour Charge" oninput="calculate()">
-            <div id="calcOutput"></div>
-            
+            <input type="number" id="labour" placeholder="Labour Charge" oninput="runCalc()">
+            <input type="number" id="parts" placeholder="Parts Amount" oninput="runCalc()">
+            <p><strong>Final Bill (incl 18% Tax): ₹<span id="totalDisplay">0</span></strong></p>
             <button class="btn" onclick="saveAndPrint()">Save & Print</button>
+            <button class="btn" onclick="location.reload()">Cancel</button>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const supabase = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+        // Using a completely different variable name to avoid "already declared" errors
+        const db = window.supabase.createClient(
+            'https://cbsmsclmyyxgwwztqwsc.supabase.co', 
+            'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
+        );
 
-        async function fetchEstimates() {
-            const { data } = await supabase.from('estimates').select('*');
+        async function loadData() {
+            const { data } = await db.from('estimates').select('*');
             const tbody = document.getElementById('estimatesTableBody');
             tbody.innerHTML = '';
-            if(data) data.forEach(e => tbody.innerHTML += `<tr><td>Admin</td><td>${e.date}</td><td>${e.estNo}</td><td>${e.mobileNo}</td><td>${e.modelNo}</td></tr>`);
+            if(data) data.forEach(e => tbody.innerHTML += `<tr><td>${e.estNo}</td><td>${e.customerName}</td><td>₹${e.billAmount}</td></tr>`);
         }
 
-        function addPartRow() {
-            const tbody = document.getElementById('partsBody');
-            tbody.innerHTML += `<tr><td><input class="p-code"></td><td><input class="p-desc"></td><td><input class="p-qty" value="1" oninput="calculate()"></td><td><input class="p-rate" value="0" oninput="calculate()"></td><td class="p-amt">0</td></tr>`;
+        function runCalc() {
+            const l = parseFloat(document.getElementById('labour').value) || 0;
+            const p = parseFloat(document.getElementById('parts').value) || 0;
+            document.getElementById('totalDisplay').innerText = ((l + p) * 1.18).toFixed(2);
         }
 
-        function calculate() {
-            let partsA = 0;
-            document.querySelectorAll('#partsBody tr').forEach(tr => {
-                const q = tr.querySelector('.p-qty').value;
-                const r = tr.querySelector('.p-rate').value;
-                const amt = q * r;
-                tr.querySelector('.p-amt').innerText = amt;
-                partsA += amt;
-            });
-            const labourF = parseFloat(document.getElementById('labour').value) || 0;
-            const partsD = partsA * 0.18;
-            const labourI = labourF * 0.18;
-            document.getElementById('calcOutput').innerHTML = `
-                <p>Parts Total: ₹${(partsA + partsD).toFixed(2)} | Labour Total: ₹${(labourF + labourI).toFixed(2)}</p>
-                <strong>Final Bill: ₹${((partsA + partsD) + (labourF + labourI)).toFixed(2)}</strong>
-            `;
+        async function saveAndPrint() {
+            const data = { 
+                estNo: document.getElementById('estNo').value, 
+                customerName: document.getElementById('customerName').value, 
+                billAmount: parseFloat(document.getElementById('totalDisplay').innerText) 
+            };
+            await db.from('estimates').insert([data]);
+            window.print();
+            location.reload();
         }
 
         function openForm() {
             document.getElementById('listView').style.display = 'none';
             document.getElementById('formView').style.display = 'block';
-            document.getElementById('estNo').value = 'EST' + (305 + Math.floor(Math.random()*100));
+            document.getElementById('estNo').value = 'EST' + Date.now().toString().slice(-3);
         }
 
-        async function saveAndPrint() {
-            const data = { estNo: document.getElementById('estNo').value, customerName: document.getElementById('customerName').value, date: new Date().toISOString().split('T')[0] };
-            await supabase.from('estimates').insert([data]);
-            window.print();
-            location.reload();
-        }
-
-        fetchEstimates();
+        loadData();
     </script>
 </body>
 </html>
