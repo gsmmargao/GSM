@@ -57,9 +57,9 @@
         .form-group.full-width { grid-column: span 3; }
         
         .form-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: #9ca3af; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; }
+        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* Table Area Placeholder */
+        /* Table Area */
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
@@ -94,7 +94,7 @@
             </div>
             <div class="header-right">
                 <input type="text" class="search-bar" placeholder="Search by name, job no, contact">
-                <button class="btn">↻ Refresh</button>
+                <button class="btn" onclick="fetchOrders()">↻ Refresh</button>
                 <button class="btn btn-primary">+ New Order</button>
             </div>
         </div>
@@ -104,19 +104,19 @@
             <div class="stats-grid">
                 <div class="stat-card c-blue">
                     <h3 style="color: #2563eb;">Total Orders</h3>
-                    <p class="number">50</p>
+                    <p class="number" id="totalOrdersCount">0</p>
                 </div>
                 <div class="stat-card c-orange">
                     <h3 style="color: #d97706;">Pending</h3>
-                    <p class="number">31</p>
+                    <p class="number" id="pendingCount">0</p>
                 </div>
                 <div class="stat-card c-purple">
                     <h3 style="color: #7c3aed;">Repair Completed</h3>
-                    <p class="number">1</p>
+                    <p class="number" id="completedCount">0</p>
                 </div>
                 <div class="stat-card c-green">
                     <h3 style="color: #059669;">Goods Delivered</h3>
-                    <p class="number">18</p>
+                    <p class="number" id="deliveredCount">0</p>
                 </div>
             </div>
 
@@ -128,55 +128,33 @@
                 <div class="form-grid">
                     <div class="form-group">
                         <label>Customer Name <span>*</span></label>
-                        <input type="text" placeholder="Full name">
+                        <input type="text" id="customerName" placeholder="Full name">
                     </div>
                     <div class="form-group">
                         <label>Contact No.</label>
-                        <input type="text" placeholder="Phone number">
+                        <input type="text" id="contactNo" placeholder="Phone number">
                     </div>
                     <div class="form-group">
                         <label>Job Number <span>*</span></label>
-                        <input type="text" placeholder="e.g. JOB-001">
-                    </div>
-                    <div class="form-group">
-                        <label>Advance Paid (₹)</label>
-                        <div style="display: flex;">
-                            <input type="number" placeholder="0.00" style="flex: 1; border-radius: 6px 0 0 6px;">
-                            <button style="background: black; color: white; border: none; padding: 0 15px;">Cash</button>
-                            <button style="background: white; border: 1px solid #e5e7eb; padding: 0 15px; border-radius: 0 6px 6px 0;">UPI</button>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" value="2026-07-11">
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <div style="margin-top: 10px;">
-                            <span style="background: #fef08a; padding: 5px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: #b45309;">Pending</span> <span style="font-size: 0.8rem; color: gray;">(default on save)</span>
-                        </div>
+                        <input type="text" id="jobNo" placeholder="e.g. JOB-001">
                     </div>
                     <div class="form-group">
                         <label>IMEI No.</label>
-                        <input type="text" placeholder="15-digit IMEI">
+                        <input type="text" id="imeiNo" placeholder="15-digit IMEI">
                     </div>
                     <div class="form-group">
                         <label>Model No.</label>
-                        <input type="text" placeholder="e.g. iPhone 15 Pro">
+                        <input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro">
                     </div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr;">
                     <div class="form-group full-width">
                         <label>Problem Description</label>
-                        <input type="text" placeholder="Describe the issue...">
-                    </div>
-                    <div class="form-group full-width">
-                        <label>Notes</label>
-                        <input type="text" placeholder="Add any additional notes about this order...">
+                        <input type="text" id="problemDesc" placeholder="Describe the issue...">
                     </div>
                 </div>
                 <div class="form-actions">
-                    <button class="btn-save">+ Save Order</button>
+                    <button class="btn-save" onclick="saveOrder()">+ Save Order</button>
                     <button class="btn">Cancel</button>
                 </div>
             </div>
@@ -193,27 +171,125 @@
                             <th>Contact No.</th>
                             <th>IMEI / Model</th>
                             <th>Problem</th>
-                            <th>Advance Paid (₹)</th>
                             <th>Status</th>
                         </tr>
                     </thead>
-                    <tbody>
-                        <tr>
-                            <td>Shashank</td>
-                            <td>2026-07-11</td>
-                            <td>4438768889</td>
-                            <td>Desmond Fernandes</td>
-                            <td>9159820763</td>
-                            <td>SM-A556ELB2INS</td>
-                            <td>Display / Displa...</td>
-                            <td>0.00</td>
-                            <td>Pending</td>
-                        </tr>
+                    <tbody id="ordersTableBody">
+                        <!-- Database entries dynamically loaded here -->
                     </tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <!-- Supabase SDK Integration -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        // Configured with your project credentials
+        const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
+        const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
+        
+        // Initialize Supabase Client
+        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        // Run fetch on initial page load
+        document.addEventListener("DOMContentLoaded", () => {
+            fetchOrders();
+        });
+
+        // Function: Fetch orders from Supabase table and render them
+        async function fetchOrders() {
+            try {
+                const { data: repairOrders, error } = await supabase
+                    .from('repairOrders')
+                    .select('*')
+                    .order('date', { ascending: false });
+
+                if (error) throw error;
+
+                const tableBody = document.getElementById('ordersTableBody');
+                tableBody.innerHTML = ''; // Reset list
+
+                // Metrics Counters
+                let pending = 0;
+                let completed = 0;
+                let delivered = 0;
+
+                repairOrders.forEach(order => {
+                    // Count statuses
+                    if(order.status === 'Pending') pending++;
+                    if(order.status === 'Repair Completed') completed++;
+                    if(order.status === 'Goods Delivered') delivered++;
+
+                    // Create Row
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>Administrator</td>
+                        <td>${order.date || ''}</td>
+                        <td><strong>${order.jobNo || ''}</strong></td>
+                        <td>${order.customerName || ''}</td>
+                        <td>${order.contactNo || ''}</td>
+                        <td>${order.modelNo || ''} <br><small style="color:gray;">${order.imeiNo || ''}</small></td>
+                        <td>${order.problemDesc || ''}</td>
+                        <td><span style="background: #fef08a; padding: 4px 8px; border-radius: 12px; font-size: 0.8rem; font-weight: bold; color: #b45309;">${order.status || 'Pending'}</span></td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                // Update Counter numbers dynamically
+                document.getElementById('totalOrdersCount').innerText = repairOrders.length;
+                document.getElementById('pendingCount').innerText = pending;
+                document.getElementById('completedCount').innerText = completed;
+                document.getElementById('deliveredCount').innerText = delivered;
+
+            } catch (error) {
+                console.error("Error loading data: ", error.message);
+            }
+        }
+
+        // Function: Save new ticket entry to Supabase
+        window.saveOrder = async function() {
+            const orderData = {
+                customerName: document.getElementById('customerName').value,
+                contactNo: document.getElementById('contactNo').value,
+                jobNo: document.getElementById('jobNo').value,
+                imeiNo: document.getElementById('imeiNo').value,
+                modelNo: document.getElementById('modelNo').value,
+                problemDesc: document.getElementById('problemDesc').value,
+                date: new Date().toISOString().split('T')[0], // YYYY-MM-DD format
+                status: "Pending"
+            };
+
+            if(!orderData.customerName || !orderData.jobNo) {
+                alert("Please complete the required fields: Customer Name and Job Number.");
+                return;
+            }
+
+            try {
+                const { data, error } = await supabase
+                    .from('repairOrders')
+                    .insert([orderData]);
+
+                if (error) throw error;
+
+                alert("Repair order added successfully!");
+                
+                // Clear Form Inputs
+                document.getElementById('customerName').value = '';
+                document.getElementById('contactNo').value = '';
+                document.getElementById('jobNo').value = '';
+                document.getElementById('imeiNo').value = '';
+                document.getElementById('modelNo').value = '';
+                document.getElementById('problemDesc').value = '';
+
+                // Refresh table display
+                fetchOrders();
+                
+            } catch (error) {
+                console.error("Submission failed: ", error);
+                alert("Error writing to database: " + error.message);
+            }
+        };
+    </script>
 </body>
 </html>
