@@ -59,7 +59,7 @@
         .math-total { font-weight: bold; border-top: 2px solid #ccc; padding-top: 8px; margin-top: 8px; }
 
         .form-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: #10b981; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
         /* Table Area */
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
@@ -234,7 +234,8 @@
                 </div>
 
                 <div class="form-actions">
-                    <button class="btn-save" onclick="saveEstimate()">💾 Save & Print Estimate</button>
+                    <!-- CHANGED: Now this ONLY saves to the database -->
+                    <button class="btn-save" onclick="saveEstimate()">💾 Save Estimate</button>
                     <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
@@ -379,7 +380,10 @@
                             <td>${est.mobileNo || ''}</td>
                             <td>${est.modelNo || ''}</td>
                             <td style="color:#10b981; font-weight:bold;">₹${parseFloat(est.billAmount).toFixed(2)}</td>
-                            <td><button onclick='reprintEstimate(${JSON.stringify(est)})' style="background:transparent; border:1px solid #2563eb; color:#2563eb; padding:4px 8px; border-radius:4px; cursor:pointer;">Print</button></td>
+                            <td>
+                                <!-- The Print button sits perfectly in the list view -->
+                                <button onclick='reprintEstimate(${JSON.stringify(est)})' style="background:transparent; border:1px solid #2563eb; color:#2563eb; padding:6px 12px; border-radius:4px; cursor:pointer; font-weight:bold;">🖨️ Print</button>
+                            </td>
                         </tr>
                     `;
                 });
@@ -444,6 +448,7 @@
             document.getElementById('m-Final').innerText = (E + K).toFixed(2);
         }
 
+        // CHANGED: Now only saves and updates the list
         async function saveEstimate() {
             const name = document.getElementById('f-name').value;
             if(!name) return alert("Customer Name is required.");
@@ -480,15 +485,22 @@
             };
 
             try {
-                await window.mySupa.from('estimates').insert([estData]);
-                reprintEstimate(estData); // Populates print view and triggers print
+                const { error } = await window.mySupa.from('estimates').insert([estData]);
+                if (error) throw error;
+                
+                alert("Estimate Saved Successfully! You can now print it from the list.");
+                
+                // Close form and refresh list
                 toggleForm();
                 fetchEstimates();
                 
-                // Clear form for next time
+                // Clear the form for the next entry
                 document.getElementById('f-name').value = '';
                 document.getElementById('f-mobile').value = '';
                 document.getElementById('f-address').value = '';
+                document.getElementById('f-model').value = '';
+                document.getElementById('f-serial').value = '';
+                document.getElementById('f-serviceNo').value = '';
                 document.getElementById('m-B').value = '0';
                 document.getElementById('m-F').value = '0';
                 document.getElementById('m-G').value = '0';
@@ -505,6 +517,7 @@
             } catch (err) { alert("Save Failed: " + err.message); }
         }
 
+        // Triggered by the "Print" button on the table rows
         function reprintEstimate(data) {
             document.getElementById('p-estNo').innerText = data.estNo;
             document.getElementById('p-date').innerText = data.date;
@@ -522,7 +535,7 @@
             pBody.innerHTML = '';
             if(data.partsList) {
                 data.partsList.forEach(p => {
-                    if(p.desc || p.amt > 0) {
+                    if(p.desc || parseFloat(p.amt) > 0) {
                         pBody.innerHTML += `<tr><td>${p.code||'-'}</td><td>${p.desc}</td><td>${p.qty}</td><td>₹${p.rate}</td><td>₹${p.amt}</td></tr>`;
                     }
                 });
@@ -543,6 +556,7 @@
             
             document.getElementById('p-Final').innerText = '₹' + parseFloat(data.billAmount).toFixed(2);
 
+            // Pop open the print dialog
             window.print();
         }
 
