@@ -341,7 +341,18 @@
                 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-'
             );
         }
+        async function checkAuth() {
+            const { data } = await window.mySupa.auth.getSession();
+            if (!data.session) {
+                window.location.href = 'login.html'; // Kick them to login page
+            }
+        }
+        checkAuth();
 
+        async function logOut() {
+            await window.mySupa.auth.signOut();
+            window.location.href = 'login.html';
+        }
         
         async function checkAuth() {
             const { data } = await window.mySupa.auth.getSession();
