@@ -82,6 +82,12 @@
         <div class="nav-item">Sales Report</div>
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
+
+        <!-- Logout Button (Pushed to bottom) -->
+        <div style="flex-grow: 1;"></div> 
+        <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            🚪 Log Out
+        </div>
     </div>
 
     <!-- Main Application Area -->
@@ -95,7 +101,7 @@
             <div class="header-right">
                 <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no, contact" onkeyup="searchTable()">
                 <button class="btn" onclick="fetchOrders()">↻ Refresh</button>
-                <button class="btn btn-primary">+ New Order</button>
+                <button class="btn btn-primary" onclick="document.getElementById('customerName').focus()">+ New Order</button>
             </div>
         </div>
 
@@ -190,7 +196,24 @@
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
+        // --- AUTHENTICATION LOCK ---
+        async function checkAuth() {
+            const { data } = await supabaseClient.auth.getSession();
+            if (!data.session) {
+                // If not logged in, boot to login page
+                window.location.href = 'login.html';
+            }
+        }
+        
+        async function logOut() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+        // ---------------------------
+
         document.addEventListener("DOMContentLoaded", () => {
+            checkAuth(); // Run security check immediately
+
             fetchOrders();
 
             supabaseClient
