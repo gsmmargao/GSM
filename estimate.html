@@ -5,132 +5,437 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Estimate Letter</title>
     <link rel="icon" href="data:,">
+    
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
         body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; z-index: 40; }
-        .sidebar.collapsed { width: 0; padding: 0; border: none; }
-        .logo-area { padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; }
-        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; }
-        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; cursor: pointer; }
-        .nav-item.active { background: black !important; color: white !important; }
-        
-        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; }
+        /* Auto-Collapsing Sidebar */
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
+
+        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; }
         .sidebar-collapsed-btn { left: 0 !important; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; }
-        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); background: white; font-weight: bold; }
-        .btn-primary { background: black; color: white; }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
+        .btn-primary { background: black; color: white; border: none; }
+        .dashboard-padding { padding: 20px 30px; }
+
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
         
-        .form-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; display: none; }
-        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
-        input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; box-sizing: border-box; }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        table.list-table { width: 100%; border-collapse: collapse; text-align: left; }
+        table.list-table th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        table.list-table td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
+
+        /* Dynamic Parts Input Table Styling */
+        .parts-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
+        .parts-table th { background: #f3f4f6; padding: 10px; font-size: 0.8rem; text-align: left; }
+        .parts-table td { padding: 5px; }
+        .parts-table input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
         
-        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
-        th { background: #f9fafb; padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
-        td { padding: 15px; border-bottom: 1px solid var(--border-color); }
+        .totals-box { background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 15px; text-align: right; font-size: 0.9rem; }
+        .totals-row { margin-bottom: 5px; }
+        .totals-final { font-size: 1.2rem; font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 2px solid #e5e7eb; }
     </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
-    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-    <a href="index.html" class="nav-item">📦 Order Details</a>
-    <a href="estimate.html" class="nav-item active">Estimate Letter</a>
-    <a href="billing.html" class="nav-item">Billing</a>
-    <div style="flex-grow: 1;"></div>
-    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; border-top: 1px solid var(--border-color);">
-        <span id="userNameDisplay">User</span> Logout ➔
-    </div>
-</div>
-<div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+        <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+        <a href="index.html" class="nav-item">📦 Order Details</a>
+        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
+        <a href="billing.html" class="nav-item">Billing</a>
+        <div class="nav-item">Store Plus</div>
+        <div class="nav-item">Accessories</div>
+        <div class="nav-item">Sales Report</div>
+        <div class="nav-item">UPI Book</div>
+        <div class="nav-item">Cashbook</div>
+        
+        <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
-<div class="main-content">
-    <div class="header">
-        <h1>Estimate Letters</h1>
-        <div>
-            <button class="btn" onclick="location.reload()">↻ Refresh</button>
-            <button class="btn btn-primary" onclick="toggleForm()">+ New Estimate</button>
+        <div style="flex-grow: 1;"></div> 
+        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
+        </div>
+    </div>
+    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <div class="header">
+            <div>
+                <h1 style="margin:0; font-size:1.5rem;">Estimate Letters</h1>
+            </div>
+            <div>
+                <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Estimate</button>
+            </div>
+        </div>
+
+        <div class="dashboard-padding">
+            
+            <!-- Estimate Builder Form -->
+            <div class="form-card" id="estimateForm">
+                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW ESTIMATE</div>
+                
+                <div class="form-grid">
+                    <div class="form-group"><label>Estimate No.</label><input type="text" id="e-estNo" readonly style="background:#f3f4f6; font-weight:bold;"></div>
+                    <div class="form-group"><label>Date</label><input type="date" id="e-date"></div>
+                    <div class="form-group"><label>Job / Call No.</label><input type="text" id="e-jobNo" placeholder="e.g. 4438768800" onblur="fetchCustomerDetails()"></div>
+                    <div class="form-group"><label>Customer Name</label><input type="text" id="e-name"></div>
+                    <div class="form-group"><label>Model No.</label><input type="text" id="e-model"></div>
+                    <div class="form-group"><label>IMEI / Serial (Optional)</label><input type="text" id="e-imei"></div>
+                </div>
+
+                <div style="margin-top: 20px; font-weight: bold; font-size: 0.9rem;">🛠️ Parts Required</div>
+                <table class="parts-table" id="partsTable">
+                    <thead>
+                        <tr>
+                            <th style="width: 20%;">Part Code</th>
+                            <th style="width: 45%;">Description</th>
+                            <th style="width: 12%;">Rate (₹)</th>
+                            <th style="width: 10%;">Qty</th>
+                            <th style="width: 13%;">Amount (₹)</th>
+                            <th></th>
+                        </tr>
+                    </thead>
+                    <tbody id="partsBody">
+                        <!-- Dynamic rows go here -->
+                    </tbody>
+                </table>
+                <button class="btn" onclick="addPartRow()" style="font-size: 0.8rem; padding: 4px 8px;">+ Add Part Row</button>
+
+                <div class="form-grid" style="margin-top: 20px;">
+                    <div class="form-group"><label>Labor & Service Charges (₹)</label><input type="number" id="e-labor" value="0" oninput="calculateTotals()"></div>
+                </div>
+
+                <div class="totals-box">
+                    <div class="totals-row">Parts Sub Total: <span id="t-parts" style="display:inline-block; width:100px;">₹0.00</span></div>
+                    <div class="totals-row">Parts GST (18%): <span id="t-parts-gst" style="display:inline-block; width:100px;">₹0.00</span></div>
+                    <div class="totals-row" style="margin-top:10px;">Labor Sub Total: <span id="t-labor" style="display:inline-block; width:100px;">₹0.00</span></div>
+                    <div class="totals-row">Labor GST (18%): <span id="t-labor-gst" style="display:inline-block; width:100px;">₹0.00</span></div>
+                    <div class="totals-final">FINAL BILL AMOUNT: <span id="t-final" style="display:inline-block; width:120px;">₹0.00</span></div>
+                </div>
+
+                <div style="margin-top:20px;">
+                    <button class="btn btn-primary" style="background:#2563eb;" onclick="saveEstimate()">💾 Save & Generate</button>
+                    <button class="btn" onclick="toggleForm()">Cancel</button>
+                </div>
+            </div>
+
+            <div class="table-card">
+                <table class="list-table">
+                    <thead>
+                        <tr><th>Est. No.</th><th>Date</th><th>Job No</th><th>Customer</th><th>Model</th><th>Total Bill</th><th>Created By</th><th>Action</th></tr>
+                    </thead>
+                    <tbody id="estimateTableBody"></tbody>
+                </table>
+            </div>
         </div>
     </div>
 
-    <div class="form-card" id="estimateForm">
-        <div class="form-grid">
-            <input type="text" id="e-estNo" readonly placeholder="Estimate No">
-            <input type="date" id="e-date">
-            <input type="text" id="e-jobNo" placeholder="Job Number" onblur="fetchDetails()">
-            <input type="text" id="e-name" placeholder="Customer Name">
-            <input type="text" id="e-model" placeholder="Model">
-            <input type="number" id="e-cost" placeholder="Cost (₹)">
-        </div>
-        <button class="btn btn-primary" style="margin-top:15px;" onclick="saveEstimate()">💾 Save</button>
-    </div>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- UPDATE THIS
+        
+        let allEstimatesData = [];
 
-    <table>
-        <thead><tr><th>Estimate No.</th><th>Date</th><th>Job No</th><th>Name</th><th>Model</th><th>Cost</th><th>Created By</th></tr></thead>
-        <tbody id="estimateTableBody"></tbody>
-    </table>
-</div>
-
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script>
-    const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-    
-    // Auto-Collapse
-    let timer;
-    function resetSidebarTimer() { timer = setTimeout(() => { document.getElementById('sidebar').classList.add('collapsed'); document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn'); }, 5000); }
-    function clearSidebarTimer() { clearTimeout(timer); }
-    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn'); }
-    
-    async function checkAuth() {
-        const { data } = await db.auth.getSession();
-        if(!data.session) window.location.href = 'login.html';
-        else {
-            let name = data.session.user.email.split('@')[0];
-            document.getElementById('userNameDisplay').innerText = name.charAt(0).toUpperCase() + name.slice(1);
+        // --- Sidebar Logic ---
+        let sidebarTimer;
+        window.resetSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+            sidebarTimer = setTimeout(() => {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
+            }, 5000);
         }
-    }
+        window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+        window.toggleSidebar = function() {
+            document.getElementById('sidebar').classList.toggle('collapsed');
+            document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn');
+            if(!document.getElementById('sidebar').classList.contains('collapsed')) resetSidebarTimer();
+            else clearSidebarTimer();
+        }
 
-    window.toggleForm = async function() {
-        const f = document.getElementById('estimateForm');
-        f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'block' : 'none';
-        if(f.style.display === 'block') {
+        async function checkAuth() {
+            const { data } = await db.auth.getSession();
+            if (!data.session) return window.location.href = 'login.html';
+            let email = data.session.user.email;
+            document.getElementById('userNameDisplay').innerText = email.split('@')[0].toUpperCase();
+            if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                document.getElementById('adminUsersTab').style.display = 'flex';
+            }
+        }
+        window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
+
+        document.addEventListener("DOMContentLoaded", () => {
+            checkAuth(); resetSidebarTimer();
             document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
-            const { data } = await db.from('estimates').select('estimateNo').order('estimateNo', {ascending: false}).limit(1);
-            let n = (data && data.length > 0) ? parseInt(data[0].estimateNo.replace(/\D/g,'')) + 1 : 1000;
-            document.getElementById('e-estNo').value = 'EST'+n;
+            fetchEstimates();
+        });
+
+        // --- Estimate Form & Calculations ---
+        window.toggleForm = async function() {
+            const f = document.getElementById('estimateForm');
+            f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'block' : 'none';
+            if(f.style.display === 'block') {
+                const { data } = await db.from('estimates').select('estimateNo').order('estimateNo', {ascending:false}).limit(1);
+                let nextNum = (data && data.length > 0 && data[0].estimateNo) ? parseInt(data[0].estimateNo.replace(/\D/g, '')) + 1 : 1000;
+                document.getElementById('e-estNo').value = `EST${nextNum}`;
+                document.getElementById('partsBody').innerHTML = '';
+                addPartRow(); // Add one empty row to start
+                calculateTotals();
+            }
         }
-    }
 
-    window.fetchDetails = async function() {
-        const job = document.getElementById('e-jobNo').value;
-        const { data } = await db.from('repairOrders').select('customerName, modelNo').ilike('jobNo', job).maybeSingle();
-        if(data) { document.getElementById('e-name').value = data.customerName; document.getElementById('e-model').value = data.modelNo; }
-    }
+        window.fetchCustomerDetails = async function() {
+            const jobNo = document.getElementById('e-jobNo').value.trim();
+            if(!jobNo) return;
+            const { data } = await db.from('repairOrders').select('customerName, modelNo, imeiNo').ilike('jobNo', jobNo).maybeSingle();
+            if(data) {
+                document.getElementById('e-name').value = data.customerName || '';
+                document.getElementById('e-model').value = data.modelNo || '';
+                document.getElementById('e-imei').value = data.imeiNo || '';
+            }
+        }
 
-    window.saveEstimate = async function() {
-        const d = {
-            "estimateNo": document.getElementById('e-estNo').value,
-            "date": document.getElementById('e-date').value,
-            "jobNo": document.getElementById('e-jobNo').value,
-            "customerName": document.getElementById('e-name').value,
-            "modelNo": document.getElementById('e-model').value,
-            "cost": parseFloat(document.getElementById('e-cost').value) || 0,
-            "createdBy": document.getElementById('userNameDisplay').innerText
-        };
-        await db.from('estimates').insert([d]);
-        alert("Saved!"); location.reload();
-    }
+        window.addPartRow = function() {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td><input type="text" class="p-code" placeholder="Code"></td>
+                <td><input type="text" class="p-desc" placeholder="Description"></td>
+                <td><input type="number" class="p-rate" value="0" oninput="calculateTotals()"></td>
+                <td><input type="number" class="p-qty" value="1" oninput="calculateTotals()"></td>
+                <td><input type="number" class="p-amount" value="0" readonly style="background:#f3f4f6; font-weight:bold;"></td>
+                <td><button onclick="this.closest('tr').remove(); calculateTotals()" style="color:red; background:none; border:none; cursor:pointer;">❌</button></td>
+            `;
+            document.getElementById('partsBody').appendChild(tr);
+        }
 
-    window.logOut = async () => { await db.auth.signOut(); location.href = 'login.html'; }
-    document.addEventListener("DOMContentLoaded", () => { checkAuth(); resetSidebarTimer(); fetchEstimates(); });
-    async function fetchEstimates() {
-        const { data } = await db.from('estimates').select('*').order('created_at', {ascending: false});
-        const tbody = document.getElementById('estimateTableBody');
-        if(data) data.forEach(r => tbody.innerHTML += `<tr><td>${r.estimateNo}</td><td>${r.date}</td><td>${r.jobNo}</td><td>${r.customerName}</td><td>${r.modelNo}</td><td>₹${r.cost}</td><td>${r.createdBy}</td></tr>`);
-    }
-</script>
+        window.calculateTotals = function() {
+            let partsSubTotal = 0;
+            const rows = document.querySelectorAll('#partsBody tr');
+            
+            // Calculate Parts
+            rows.forEach(row => {
+                const rate = parseFloat(row.querySelector('.p-rate').value) || 0;
+                const qty = parseFloat(row.querySelector('.p-qty').value) || 0;
+                const amt = rate * qty;
+                row.querySelector('.p-amount').value = amt.toFixed(2);
+                partsSubTotal += amt;
+            });
+
+            const partsGst = partsSubTotal * 0.18;
+            const laborSubTotal = parseFloat(document.getElementById('e-labor').value) || 0;
+            const laborGst = laborSubTotal * 0.18;
+            const finalTotal = partsSubTotal + partsGst + laborSubTotal + laborGst;
+
+            document.getElementById('t-parts').innerText = '₹' + partsSubTotal.toFixed(2);
+            document.getElementById('t-parts-gst').innerText = '₹' + partsGst.toFixed(2);
+            document.getElementById('t-labor').innerText = '₹' + laborSubTotal.toFixed(2);
+            document.getElementById('t-labor-gst').innerText = '₹' + laborGst.toFixed(2);
+            document.getElementById('t-final').innerText = '₹' + finalTotal.toFixed(2);
+        }
+
+        // --- Save and Load Data ---
+        window.fetchEstimates = async function() {
+            const { data } = await db.from('estimates').select('*').order('created_at', { ascending: false });
+            if(data) {
+                allEstimatesData = data; 
+                const tbody = document.getElementById('estimateTableBody');
+                tbody.innerHTML = '';
+                data.forEach((est, index) => {
+                    tbody.innerHTML += `<tr>
+                        <td><strong>${est.estimateNo}</strong></td>
+                        <td>${est.date}</td>
+                        <td style="color:#2563eb; font-weight:bold;">${est.jobNo || '-'}</td>
+                        <td>${est.customerName || '-'}</td>
+                        <td>${est.modelNo || '-'}</td>
+                        <td style="color:#10b981; font-weight:bold;">₹${est.total_amount || est.cost || 0}</td>
+                        <td style="text-transform: capitalize;">${est.createdBy || '-'}</td>
+                        <td><button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="printEstimate(${index})">🖨️ Print</button></td>
+                    </tr>`;
+                });
+            }
+        }
+
+        window.saveEstimate = async function() {
+            // Gather Parts
+            const partsList = [];
+            document.querySelectorAll('#partsBody tr').forEach(row => {
+                const code = row.querySelector('.p-code').value.trim();
+                const desc = row.querySelector('.p-desc').value.trim();
+                const rate = parseFloat(row.querySelector('.p-rate').value) || 0;
+                const qty = parseFloat(row.querySelector('.p-qty').value) || 0;
+                if(code || desc) partsList.push({ code, desc, rate, qty, amt: rate * qty });
+            });
+
+            const laborAmt = parseFloat(document.getElementById('e-labor').value) || 0;
+            const finalTotal = parseFloat(document.getElementById('t-final').innerText.replace('₹', '')) || 0;
+
+            const estData = {
+                "estimateNo": document.getElementById('e-estNo').value,
+                "date": document.getElementById('e-date').value,
+                "jobNo": document.getElementById('e-jobNo').value.trim(),
+                "customerName": document.getElementById('e-name').value.trim(),
+                "modelNo": document.getElementById('e-model').value.trim(),
+                "remarks": document.getElementById('e-imei').value.trim(), // Storing IMEI in remarks for now
+                "parts_list": partsList,
+                "labor_amount": laborAmt,
+                "total_amount": finalTotal,
+                "cost": finalTotal, // Fallback for older code
+                "createdBy": document.getElementById('userNameDisplay').innerText 
+            };
+
+            const { error } = await db.from('estimates').insert([estData]);
+            if(error) return alert("Error saving: " + error.message);
+            
+            alert("Estimate Saved!"); 
+            toggleForm(); 
+            fetchEstimates();
+        }
+
+        // --- PRINT FUNCTIONALITY (Matches Your Exact HTML Design) ---
+        window.printEstimate = function(index) {
+            const est = allEstimatesData[index];
+            if(!est) return;
+
+            // Calculations based on saved JSON array
+            let partsRowsHtml = '';
+            let partsSubTotal = 0;
+
+            if(est.parts_list && Array.isArray(est.parts_list)) {
+                est.parts_list.forEach((part, i) => {
+                    partsSubTotal += part.amt;
+                    partsRowsHtml += `
+                    <tr class="font-bold">
+                        <td class="text-center">${i + 1}</td>
+                        <td>${part.code}</td>
+                        <td>${part.desc}</td>
+                        <td class="text-center">${part.rate.toFixed(2)}</td>
+                        <td class="text-center">${part.qty}</td>
+                        <td class="text-center">${part.amt.toFixed(2)}</td>
+                    </tr>`;
+                });
+            }
+
+            const partsGst = partsSubTotal * 0.18;
+            const partsTotal = partsSubTotal + partsGst;
+            const laborSubTotal = est.labor_amount || 0;
+            const laborGst = laborSubTotal * 0.18;
+            const laborTotal = laborSubTotal + laborGst;
+            const billAmount = est.total_amount || (partsTotal + laborTotal);
+
+            const printWindow = window.open('', '_blank');
+            printWindow.document.write(`
+            <html>
+            <head>
+                <title>Estimate - ${est.estimateNo}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; color: #000; }
+                    table { width: 100%; max-width: 900px; border-collapse: collapse; margin: 0 auto; }
+                    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+                    .text-center { text-align: center; } .text-right { text-align: right; } .text-left { text-align: left; }
+                    .font-bold { font-weight: bold; }
+                    .col-sr { width: 5%; } .col-code { width: 15%; } .col-desc { width: 45%; } .col-rate { width: 12%; } .col-qty { width: 8%; } .col-amount { width: 15%; }
+                    .header-title { font-size: 14px; font-weight: bold; text-align: center; padding: 6px; }
+                    .no-bottom-border { border-bottom: none !important; } .no-top-border { border-top: none !important; }
+                    .totals-label { font-size: 10px; padding-right: 10px; }
+                    .bill-amount { font-size: 14px; font-weight: bold; }
+                </style>
+            </head>
+            <body>
+            <table>
+                <tr><td colspan="6" class="header-title">ESTIMATE COPY</td></tr>
+                <tr>
+                    <td colspan="3" class="font-bold no-bottom-border">GSM SOLUTION.<br><br><br>RELIANCE ATRIA SHOP NO.6,7 FIRST FLOOR MARGAO GOA</td>
+                    <td colspan="3" class="no-bottom-border"><br><br><br></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="font-bold">GSTIN: 30CLPPM8573A1Z2</td>
+                    <td colspan="3"><span class="font-bold">Invoice No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.estimateNo}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="font-bold">PAN: CLPPM8573A</td>
+                    <td colspan="3"><span class="font-bold">Date:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.date}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="3"></td>
+                    <td colspan="3"><span class="font-bold">Call No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.jobNo || '-'}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="no-bottom-border font-bold"><br>Name: &nbsp; ${est.customerName || '-'}<br><br></td>
+                    <td colspan="3" class="no-bottom-border"><br><span class="font-bold">Model No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.modelNo || '-'}</span><br><br></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="font-bold">Address: &nbsp; - </td>
+                    <td colspan="3"><span class="font-bold">IMEI/Serial:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.remarks || '-'}</span></td>
+                </tr>
+                
+                <tr class="font-bold text-center">
+                    <td class="col-sr">SR NO</td>
+                    <td class="col-code text-left">PART CODE</td>
+                    <td class="col-desc text-left">DESCRIPTION</td>
+                    <td class="col-rate">RATE (RS)</td>
+                    <td class="col-qty">QTY</td>
+                    <td class="col-amount">AMOUNT (RS)</td>
+                </tr>
+                
+                ${partsRowsHtml}
+                
+                <tr><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td></tr>
+                
+                <tr>
+                    <td colspan="5" class="text-right totals-label">Parts Sub Total ( C ):</td>
+                    <td class="text-right font-bold">${partsSubTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right totals-label">GST 18% (D):</td>
+                    <td class="text-right font-bold">${partsGst.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right totals-label">Total Parts (E)= (C+D):</td>
+                    <td class="text-right font-bold">${partsTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right totals-label">Labour & Service Sub Total(H):</td>
+                    <td class="text-right font-bold">${laborSubTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right totals-label">GST 18%(I):</td>
+                    <td class="text-right font-bold">${laborGst.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right totals-label">Total Labour & Services (K)=(H+I):</td>
+                    <td class="text-right font-bold">${laborTotal.toFixed(2)}</td>
+                </tr>
+                <tr>
+                    <td colspan="5" class="text-right font-bold" style="font-size: 12px; padding-top: 8px; padding-bottom: 8px;">BILL AMOUNT (E+K):</td>
+                    <td class="text-right bill-amount" style="border: 2px solid #000; border-left: 1px solid #000;">${billAmount.toFixed(2)}</td>
+                </tr>
+            </table>
+            <script>
+                window.onload = function() { window.print(); }
+            <\/script>
+            </body>
+            </html>
+            `);
+            printWindow.document.close();
+        }
+    </script>
 </body>
 </html>
