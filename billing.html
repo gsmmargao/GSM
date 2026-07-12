@@ -213,35 +213,48 @@
 
         // Save Bill to DB
         async function saveBill() {
+            // 1. Get the Job Number and remove any accidental spaces
+            const rawJobNo = document.getElementById('b-jobNo').value.trim();
+
             const billData = {
                 invoiceNo: document.getElementById('b-invoice').value,
                 date: document.getElementById('b-date').value,
-                jobNo: document.getElementById('b-jobNo').value,
+                jobNo: rawJobNo,
                 advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
                 amountPaid: parseFloat(document.getElementById('b-amount').value) || 0,
                 paymentMode: document.getElementById('b-mode').value
             };
 
-            const { error } = await db.from('billing').insert([billData]);
+            // Save to Billing table
+            const { error: billError } = await db.from('billing').insert([billData]);
             
-            if (error) {
-                alert("Error saving: " + error.message);
-            } else {
-                // UPDATE ORDER DETAILS AUTOMATICALLY
-                if(billData.jobNo) {
-                    let updateData = { status: 'Goods Delivered' };
-                    if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
-                    
-                    await db.from('repairOrders').update(updateData).eq('jobNo', billData.jobNo);
+            if (billError) {
+                alert("Error saving Bill: " + billError.message);
+                return; // Stop here if bill fails
+            } 
+            
+            // 2. UPDATE ORDER DETAILS AUTOMATICALLY
+            if(rawJobNo !== '') {
+                let updateData = { status: 'Goods Delivered' };
+                if (billData.advancePaid > 0) {
+                    updateData.advancePaid = billData.advancePaid;
                 }
                 
-                alert("Bill Generated Successfully!");
-                toggleForm();
-                fetchBilling();
-                document.getElementById('b-jobNo').value = '';
-                document.getElementById('b-advance').value = '0';
-                document.getElementById('b-amount').value = '0';
+                // Using .ilike() instead of .eq() so it ignores uppercase/lowercase!
+                const { error: orderError } = await db.from('repairOrders')
+                    .update(updateData)
+                    .ilike('jobNo', rawJobNo);
+                    
+                if (orderError) {
+                    alert("Bill saved, but Order Status failed to update: " + orderError.message);
+                }
             }
-        }    </script>
-</body>
+            
+            alert("Bill Generated Successfully!");
+            toggleForm();
+            fetchBilling();
+            document.getElementById('b-jobNo').value = '';
+            document.getElementById('b-advance').value = '0';
+            document.getElementById('b-amount').value = '0';
+        }</body>
 </html>
