@@ -13,17 +13,41 @@
             --primary-blue: #2563eb;
             --border-color: #e5e7eb;
         }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
+        /* Sidebar Styling (with transition for collapse) */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
         .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        /* Sidebar Toggle Button */
+        .sidebar-toggle-btn {
+            position: absolute;
+            left: var(--sidebar-width);
+            top: 50%;
+            transform: translateY(-50%);
+            background: black;
+            color: white;
+            width: 20px;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            z-index: 50;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            transition: left 0.4s ease;
+            font-weight: bold;
+        }
+        .sidebar-collapsed-btn { left: 0 !important; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
         
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .header-left h1 { margin: 0; font-size: 1.5rem; }
@@ -61,53 +85,20 @@
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
-        /* --- 3-WAY TOGGLE SWITCH CSS --- */
-        .toggle-container {
-            display: flex;
-            align-items: center;
-            background-color: #e5e7eb;
-            border-radius: 30px;
-            position: relative;
-            width: 120px;
-            height: 32px;
-            user-select: none;
-            margin: 0 auto;
-        }
-        .toggle-slider {
-            position: absolute;
-            top: 2px;
-            left: 2px;
-            height: 28px;
-            width: 38px;
-            border-radius: 15px;
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-            z-index: 1;
-        }
-        .status-Pending .toggle-slider { left: 2px; background-color: #eab308; } /* Yellow */
-        .status-Completed .toggle-slider { left: 41px; background-color: #3b82f6; } /* Blue */
-        .status-Delivered .toggle-slider { left: 80px; background-color: #22c55e; } /* Green */
-        
-        .toggle-option {
-            flex: 1;
-            text-align: center;
-            font-size: 0.8rem;
-            font-weight: bold;
-            z-index: 2;
-            color: #6b7280;
-            cursor: pointer;
-            line-height: 32px;
-        }
-        .status-Pending .opt-p, .status-Completed .opt-c, .status-Delivered .opt-d { color: white; }
+        /* Progress Button Styling */
+        .status-btn { border: none; padding: 8px 16px; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: opacity 0.2s; width: 150px; }
+        .status-btn:hover { opacity: 0.85; }
     </style>
 </head>
 <body>
 
-    <div class="sidebar">
+    <!-- Sidebar with auto-collapse hover events -->
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
             <div class="logo-icon">GSM</div>
             SOLUTION
         </div>
-        <a href="index.html" class="nav-item active">Order Details</a>
+        <a href="index.html" class="nav-item active">📦 Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
         <div class="nav-item">Store Plus</div>
@@ -116,14 +107,18 @@
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
         
-        <!-- Protected Admin Users Tab (Hidden dynamically by default) -->
+        <!-- Protected Admin Users Tab -->
         <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
         <div style="flex-grow: 1;"></div> 
-        <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-            🚪 Log Out
+        <!-- Bold Black Logout Button -->
+        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
         </div>
     </div>
+
+    <!-- The floating sidebar toggle button -->
+    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
     <div class="main-content">
         <div class="header">
@@ -132,6 +127,7 @@
                 <p>Manage customer repair orders</p>
             </div>
             <div class="header-right">
+                <!-- Search bar is here, just before the refresh button -->
                 <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no..." onkeyup="searchTable()">
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
                 <button class="btn btn-primary" onclick="toggleForm()">+ New Order</button>
@@ -163,9 +159,9 @@
                 <div class="form-grid">
                     <div class="form-group"><label>Customer Name <span>*</span></label><input type="text" id="customerName" placeholder="Full name"></div>
                     <div class="form-group"><label>Contact No.</label><input type="text" id="contactNo" placeholder="Phone number"></div>
-                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="jobNo" placeholder="e.g. JOB-001"></div>
+                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="jobNo" value="4438768800"></div>
                     <div class="form-group"><label>IMEI No.</label><input type="text" id="imeiNo" placeholder="15-digit IMEI"></div>
-                    <div class="form-group"><label>Model No.</label><input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro"></div>
+                    <div class="form-group"><label>Model No.</label><input type="text" id="modelNo" value="SM-A356ELBJINS"></div>
                     <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="advancePaid" placeholder="0" value="0"></div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr;"><div class="form-group full-width"><label>Problem Description</label><input type="text" id="problemDesc" placeholder="Describe the issue..."></div></div>
@@ -203,8 +199,37 @@
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- SET YOUR ADMIN EMAIL HERE ---
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
+        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
         let currentUserEmail = '';
+
+        // Sidebar Auto-Collapse Logic
+        let sidebarTimer;
+        
+        window.resetSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+            // Auto collapse after 5 seconds
+            sidebarTimer = setTimeout(() => {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
+            }, 5000);
+        }
+
+        window.clearSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+        }
+
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarToggle');
+            sidebar.classList.toggle('collapsed');
+            btn.classList.toggle('sidebar-collapsed-btn');
+            
+            if(!sidebar.classList.contains('collapsed')) {
+                resetSidebarTimer(); // Restart timer if opened manually
+            } else {
+                clearSidebarTimer(); // Stop timer if closed manually
+            }
+        }
 
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
@@ -213,7 +238,10 @@
             } else {
                 currentUserEmail = data.session.user.email;
                 
-                // Magic rule: Automatically show the "Manage Users" button if they are Admin!
+                // Set the bold black user name on the logout button
+                let displayEmail = currentUserEmail.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+                
                 if (currentUserEmail === ADMIN_EMAIL) {
                     document.getElementById('adminUsersTab').style.display = 'flex';
                 }
@@ -228,6 +256,7 @@
         document.addEventListener("DOMContentLoaded", async () => {
             await checkAuth(); 
             fetchOrders();
+            resetSidebarTimer(); // Start the 5 second collapse timer!
 
             supabaseClient
                 .channel('public:repairOrders')
@@ -262,14 +291,12 @@
                 let pending = 0; let completed = 0; let delivered = 0;
 
                 repairOrders.forEach(order => {
-                    let statusClass = '';
                     let statusColor = '';
                     
-                    if(order.status === 'Pending') { pending++; statusClass = 'status-Pending'; statusColor = '#eab308';}
-                    if(order.status === 'Repair Completed') { completed++; statusClass = 'status-Completed'; statusColor = '#3b82f6'; }
-                    if(order.status === 'Goods Delivered') { delivered++; statusClass = 'status-Delivered'; statusColor = '#22c55e'; }
+                    if(order.status === 'Pending') { pending++; statusColor = '#eab308';}
+                    if(order.status === 'Repair Completed') { completed++; statusColor = '#3b82f6'; }
+                    if(order.status === 'Goods Delivered') { delivered++; statusColor = '#22c55e'; }
 
-                    // Advance Paid Form Element (Editable for Admin only)
                     let advanceHtml = '';
                     if (currentUserEmail === ADMIN_EMAIL) {
                         advanceHtml = `<input type="number" value="${order.advancePaid || 0}" onchange="updateAdvance('${order.jobNo}', this.value)" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">`;
@@ -277,7 +304,6 @@
                         advanceHtml = `₹${order.advancePaid || 0}`;
                     }
 
-                    // Delete Button Security
                     let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
                         ? `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
                         : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
@@ -292,15 +318,11 @@
                         <td>${order.problemDesc || ''}</td>
                         <td style="color:#10b981; font-weight:bold;">${advanceHtml}</td>
                         
-                        <!-- 3-WAY TOGGLE SWITCH (Unlocked for all stages so users can switch stages freely) -->
+                        <!-- SIMPLIFIED ONE-CLICK STATUS BUTTON -->
                         <td style="text-align: center;">
-                            <div class="toggle-container ${statusClass}">
-                                <div class="toggle-slider"></div>
-                                <div class="toggle-option opt-p" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Pending')" title="Pending">P</div>
-                                <div class="toggle-option opt-c" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Repair Completed')" title="Repair Completed">C</div>
-                                <div class="toggle-option opt-d" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Goods Delivered')" title="Goods Delivered">D</div>
-                            </div>
-                            <div style="font-size:0.75rem; font-weight:700; margin-top:5px; color:${statusColor}">${order.status}</div>
+                            <button class="status-btn" style="background-color: ${statusColor};" onclick="advanceStatus('${order.jobNo}', '${order.status}')">
+                                ${order.status}
+                            </button>
                         </td>
                         
                         <td>${deleteButtonHtml}</td>
@@ -345,20 +367,34 @@
         window.clearForm = function() {
             document.getElementById('customerName').value = '';
             document.getElementById('contactNo').value = '';
-            document.getElementById('jobNo').value = '';
+            // Restoring defaults requested by user!
+            document.getElementById('jobNo').value = '4438768800';
             document.getElementById('imeiNo').value = '';
-            document.getElementById('modelNo').value = '';
+            document.getElementById('modelNo').value = 'SM-A356ELBJINS';
             document.getElementById('problemDesc').value = '';
             document.getElementById('advancePaid').value = '0';
         }
 
-        window.setOrderStatus = async function(jobNo, currentStatus, newStatus) {
-            if (currentStatus === newStatus) return; 
-            
-            if (!confirm(`Are you sure you want to change the status to "${newStatus}"?`)) return;
+        // --- NEW ONE-CLICK STATUS PROGRESSION LOGIC ---
+        window.advanceStatus = async function(jobNo, currentStatus) {
+            let nextStatus = '';
+            let confirmMsg = '';
+
+            if (currentStatus === 'Pending') {
+                nextStatus = 'Repair Completed';
+                confirmMsg = `Mark job ${jobNo} as "Repair Completed"?`;
+            } else if (currentStatus === 'Repair Completed') {
+                nextStatus = 'Goods Delivered';
+                confirmMsg = `Mark job ${jobNo} as "Goods Delivered"?`;
+            } else {
+                // If it's already Delivered, you can choose to ignore clicks or prompt to reset
+                return alert("This order is already marked as Goods Delivered.");
+            }
+
+            if (!confirm(confirmMsg)) return;
 
             try {
-                const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('jobNo', jobNo);
+                const { error } = await supabaseClient.from('repairOrders').update({ status: nextStatus }).eq('jobNo', jobNo);
                 if (error) throw error;
             } catch (error) { alert("Failed to update status: " + error.message); }
         };
