@@ -227,10 +227,14 @@
             if (error) {
                 alert("Error saving: " + error.message);
             } else {
-                // If there's a Job No and Advance, update it in the Orders table too!
-                if(billData.jobNo && billData.advancePaid > 0) {
-                    await db.from('repairOrders').update({ advancePaid: billData.advancePaid }).eq('jobNo', billData.jobNo);
+                // UPDATE ORDER DETAILS AUTOMATICALLY
+                if(billData.jobNo) {
+                    let updateData = { status: 'Goods Delivered' };
+                    if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
+                    
+                    await db.from('repairOrders').update(updateData).eq('jobNo', billData.jobNo);
                 }
+                
                 alert("Bill Generated Successfully!");
                 toggleForm();
                 fetchBilling();
@@ -238,7 +242,6 @@
                 document.getElementById('b-advance').value = '0';
                 document.getElementById('b-amount').value = '0';
             }
-        }
-    </script>
+        }    </script>
 </body>
 </html>
