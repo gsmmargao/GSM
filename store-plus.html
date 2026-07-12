@@ -3,889 +3,482 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Accessories - Order Management</title>
-    
-    <!-- Supabase JS Library -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    
-    <!-- Lucide Icons -->
-    <script src="https://unpkg.com/lucide@latest"></script>
+    <title>GSM Solution - Store Plus</title>
+    <link rel="icon" href="data:,">
     
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
+        :root {
+            --bg-color: #f4f5f7;
+            --sidebar-width: 250px;
+            --primary-blue: #2563eb;
+            --border-color: #e5e7eb;
         }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
-            background-color: #f8fafc;
-            min-height: 100vh;
-        }
-
-        /* Header */
-        .header {
-            background: white;
-            border-bottom: 1px solid #e2e8f0;
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .header-left {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .header-left h1 {
-            font-size: 18px;
-            font-weight: 600;
-        }
-
-        .header-right {
-            display: flex;
-            gap: 16px;
-            align-items: center;
-        }
-
-        .date {
-            font-size: 14px;
-            color: #64748b;
-        }
-
-        .company-name {
-            font-weight: 600;
-        }
-
-        /* Main Container */
-        .container {
-            padding: 24px;
-            max-width: 1400px;
-            margin: 0 auto;
-        }
-
-        /* Title Section */
-        .title-section {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 24px;
-        }
-
-        .title-section h2 {
-            font-size: 36px;
-            font-weight: 700;
-        }
-
-        .catalog-btn {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            padding: 8px 16px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            background: white;
-            cursor: pointer;
-            font-size: 14px;
-        }
-
-        .catalog-btn:hover {
-            background: #f1f5f9;
-        }
-
-        /* Tabs */
-        .tabs {
-            display: inline-flex;
-            background: white;
-            border: 1px solid #e2e8f0;
-            border-radius: 12px;
-            padding: 4px;
-            margin-bottom: 24px;
-        }
-
-        .tab-btn {
-            padding: 8px 24px;
-            border-radius: 8px;
-            border: none;
-            background: transparent;
-            cursor: pointer;
-            font-size: 14px;
-            transition: all 0.2s;
-        }
-
-        .tab-btn.active {
-            background: white;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
-            font-weight: 600;
-        }
-
-        .tab-btn:not(.active) {
-            color: #64748b;
-        }
-
-        /* GST Banner */
-        .gst-banner {
-            margin-bottom: 24px;
-            border-radius: 12px;
-            border: 1px solid #fbbf24;
-            background: #fef3c7;
-            padding: 16px;
-            color: #92400e;
-            display: none;
-        }
-
-        .gst-banner.show {
-            display: block;
-        }
-
-        /* Form Card */
-        .form-card {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            padding: 24px;
-            margin-bottom: 24px;
-        }
-
-        .form-card h3 {
-            font-size: 18px;
-            font-weight: 600;
-            color: #c2410c;
-            margin-bottom: 24px;
-        }
-
-        .form-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .form-grid-4 {
-            display: grid;
-            grid-template-columns: repeat(4, 1fr);
-            gap: 16px;
-            margin-bottom: 16px;
-        }
-
-        .form-group {
-            display: flex;
-            flex-direction: column;
-        }
-
-        .form-group label {
-            font-size: 14px;
-            color: #475569;
-            margin-bottom: 4px;
-        }
-
-        .form-group input,
-        .form-group select {
-            padding: 12px;
-            border: 1px solid #e2e8f0;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-        }
-
-        .form-group input:focus,
-        .form-group select:focus {
-            border-color: #f59e0b;
-            box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.1);
-        }
-
-        .required-hint {
-            font-size: 12px;
-            color: #ea580c;
-            margin-top: 4px;
-        }
-
-        .submit-btn {
-            background: #f59e0b;
+        /* Fixed Toggle Button CSS */
+        .sidebar-toggle-btn {
+            position: absolute;
+            left: var(--sidebar-width);
+            top: 50%;
+            transform: translateY(-50%);
+            background: black;
             color: white;
-            padding: 12px 24px;
-            border: none;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 14px;
-            font-weight: 500;
-        }
-
-        .submit-btn:hover {
-            background: #d97706;
-        }
-
-        .submit-btn:disabled {
-            background: #fcd34d;
-            cursor: not-allowed;
-        }
-
-        /* Table Card */
-        .table-card {
-            background: white;
-            border-radius: 16px;
-            border: 1px solid #e2e8f0;
-            overflow: hidden;
-        }
-
-        .table-header {
-            padding: 16px 20px;
-            border-bottom: 1px solid #e2e8f0;
-            font-weight: 600;
-        }
-
-        .table-wrapper {
-            overflow-x: auto;
-        }
-
-        table {
-            width: 100%;
-            border-collapse: collapse;
-        }
-
-        thead {
-            background: #f8fafc;
-        }
-
-        th {
-            padding: 16px;
-            text-align: left;
-            font-size: 14px;
-            font-weight: 500;
-            white-space: nowrap;
-        }
-
-        td {
-            padding: 16px;
-            font-size: 14px;
-            border-top: 1px solid #e2e8f0;
-        }
-
-        tbody tr:hover {
-            background: #f8fafc;
-        }
-
-        .empty-state {
-            text-align: center;
-            padding: 48px;
-            color: #64748b;
-        }
-
-        .loading-spinner {
-            display: inline-block;
             width: 20px;
-            height: 20px;
-            border: 2px solid #e2e8f0;
-            border-top-color: #f59e0b;
-            border-radius: 50%;
-            animation: spin 0.6s linear infinite;
-        }
-
-        @keyframes spin {
-            to { transform: rotate(360deg); }
-        }
-
-        .action-btn {
-            background: none;
-            border: none;
+            height: 60px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
-            padding: 4px;
+            z-index: 50;
+            border-radius: 0 8px 8px 0;
+            box-shadow: 2px 0 5px rgba(0,0,0,0.2);
+            transition: left 0.4s ease;
+            font-weight: bold;
         }
+        .sidebar-collapsed-btn { left: 0 !important; }
 
-        .delete-btn:hover {
-            color: #dc2626;
-        }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
+        
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .header-left h1 { margin: 0; font-size: 1.5rem; }
+        .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
+        .btn-primary { background: black; color: white; border: none; }
 
-        .bill-btn:hover {
-            color: #2563eb;
-        }
+        .dashboard-padding { padding: 20px 30px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; }
+        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: #111827; }
+        .c-blue { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+        .c-orange { color: #d97706; background: #fffbeb; border-color: #fde68a; }
+        .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
+        .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
 
-        .toast {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 16px 24px;
-            border-radius: 8px;
-            color: white;
-            font-size: 14px;
-            z-index: 1000;
-            animation: slideIn 0.3s ease;
-            display: none;
-        }
+        .category-tabs { display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }
+        .category-tab { padding: 10px 20px; background: white; border: 1px solid var(--border-color); border-radius: 6px; cursor: pointer; font-weight: 500; transition: all 0.2s; }
+        .category-tab.active { background: black; color: white; border-color: black; }
+        .category-tab:hover:not(.active) { background: #f3f4f6; }
 
-        .toast.success {
-            background: #059669;
-        }
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; }
+        .form-group label span { color: red; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group.full-width { grid-column: span 3; }
+        
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        .toast.error {
-            background: #dc2626;
-        }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px; }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
-        @keyframes slideIn {
-            from {
-                transform: translateX(100%);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
-        }
-
-        @media (max-width: 768px) {
-            .form-grid,
-            .form-grid-4 {
-                grid-template-columns: 1fr;
-            }
-            
-            .title-section h2 {
-                font-size: 24px;
-            }
-        }
+        .stock-badge { padding: 4px 10px; border-radius: 12px; font-size: 0.8rem; font-weight: 600; }
+        .in-stock { background: #ecfdf5; color: #059669; }
+        .low-stock { background: #fffbeb; color: #d97706; }
+        .out-stock { background: #fef2f2; color: #dc2626; }
     </style>
 </head>
 <body>
-    <!-- Toast Notification -->
-    <div id="toast" class="toast"></div>
 
-    <!-- Header -->
-    <div class="header">
-        <div class="header-left">
-            <i data-lucide="package"></i>
-            <h1>Accessories</h1>
-        </div>
-        <div class="header-right">
-            <span class="date" id="currentDate"></span>
-            <span class="company-name">GSM SOLUTION</span>
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+        <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+        <a href="index.html" class="nav-item">📦 Order Details</a>
+        <a href="estimate.html" class="nav-item">🧾 Estimate</a>
+        <a href="billing.html" class="nav-item">Billing</a>
+        <a href="store-plus.html" class="nav-item active">🏪 Store Plus</a>
+        <div class="nav-item">Accessories</div>
+        <div class="nav-item">Sales Report</div>
+        <div class="nav-item">UPI Book</div>
+        <div class="nav-item">Cashbook</div>
+        
+        <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+
+        <div style="flex-grow: 1;"></div> 
+        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
         </div>
     </div>
+    
+    <!-- Floating sidebar toggle button -->
+    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
     <!-- Main Content -->
-    <div class="container">
-        <!-- Title -->
-        <div class="title-section">
-            <h2>Accessories</h2>
-            <button class="catalog-btn" onclick="alert('Item Catalog coming soon!')">
-                <i data-lucide="package" style="width:16px;height:16px;"></i>
-                Item Catalog
-                <i data-lucide="chevron-down" style="width:16px;height:16px;"></i>
-            </button>
+    <div class="main-content">
+        <div class="header">
+            <div class="header-left">
+                <h1>Store Plus</h1>
+                <p>Manage inventory and stock</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search products..." onkeyup="searchTable()">
+                <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ Add Product</button>
+            </div>
         </div>
 
-        <!-- Tabs -->
-        <div class="tabs">
-            <button class="tab-btn" onclick="switchTab('regular')" id="regularTab">Regular Invoices</button>
-            <button class="tab-btn active" onclick="switchTab('gst')" id="gstTab">GST Invoices</button>
-        </div>
-
-        <!-- GST Banner -->
-        <div class="gst-banner show" id="gstBanner">
-            This section generates <strong>dedicated GST invoices</strong> with series starting from #677. A customer GSTIN is required.
-        </div>
-
-        <!-- Invoice Form -->
-        <div class="form-card">
-            <h3 id="formTitle">NEW GST INVOICE ENTRY</h3>
-            
-            <div class="form-grid">
-                <div class="form-group">
-                    <label>Customer Name</label>
-                    <input type="text" id="customerName" placeholder="Full name" required>
+        <div class="dashboard-padding">
+            <div class="stats-grid">
+                <div class="stat-card c-blue">
+                    <h3 style="color: #2563eb;">Total Products</h3>
+                    <p class="number" id="totalProductsCount">0</p>
                 </div>
-                <div class="form-group">
-                    <label>Mobile Number</label>
-                    <input type="text" id="mobileNumber" placeholder="10 digit number" pattern="[0-9]{10}" required>
+                <div class="stat-card c-green">
+                    <h3 style="color: #059669;">In Stock</h3>
+                    <p class="number" id="inStockCount">0</p>
                 </div>
-                <div class="form-group">
-                    <label>Customer GSTIN</label>
-                    <input type="text" id="gstin" placeholder="30XXXXX1234A1Z5">
-                    <span class="required-hint" id="gstinHint">Required for GST invoices</span>
+                <div class="stat-card c-orange">
+                    <h3 style="color: #d97706;">Low Stock</h3>
+                    <p class="number" id="lowStockCount">0</p>
+                </div>
+                <div class="stat-card c-purple">
+                    <h3 style="color: #7c3aed;">Out of Stock</h3>
+                    <p class="number" id="outStockCount">0</p>
                 </div>
             </div>
 
-            <div class="form-grid-4">
-                <div class="form-group">
-                    <label>Item</label>
-                    <select id="itemSelect" required>
-                        <option value="">Select Item</option>
-                    </select>
+            <!-- Category Tabs -->
+            <div class="category-tabs" id="categoryTabs">
+                <div class="category-tab active" onclick="filterByCategory('All')">All Products</div>
+                <div class="category-tab" onclick="filterByCategory('Mobile Parts')">📱 Mobile Parts</div>
+                <div class="category-tab" onclick="filterByCategory('Accessories')">🎧 Accessories</div>
+                <div class="category-tab" onclick="filterByCategory('Tools')">🔧 Tools</div>
+                <div class="category-tab" onclick="filterByCategory('Cables & Connectors')">🔌 Cables</div>
+                <div class="category-tab" onclick="filterByCategory('Other')">📦 Other</div>
+            </div>
+
+            <div class="form-card" id="productFormCard">
+                <div class="form-header">📦 ADD NEW PRODUCT</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Product Name <span>*</span></label><input type="text" id="productName" placeholder="Product name"></div>
+                    <div class="form-group"><label>Category <span>*</span></label>
+                        <select id="productCategory">
+                            <option value="">Select Category</option>
+                            <option value="Mobile Parts">Mobile Parts</option>
+                            <option value="Accessories">Accessories</option>
+                            <option value="Tools">Tools</option>
+                            <option value="Cables & Connectors">Cables & Connectors</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+                    <div class="form-group"><label>Brand</label><input type="text" id="productBrand" placeholder="Brand name"></div>
+                    <div class="form-group"><label>Model/Part No.</label><input type="text" id="productModel" placeholder="Model or part number"></div>
+                    <div class="form-group"><label>Quantity <span>*</span></label><input type="number" id="productQuantity" placeholder="0" value="0"></div>
+                    <div class="form-group"><label>Unit Price (₹)</label><input type="number" id="productPrice" placeholder="0.00" step="0.01"></div>
                 </div>
-                <div class="form-group">
-                    <label>Serial Number</label>
-                    <input type="text" id="serialNumber" placeholder="Optional">
+                <div class="form-grid" style="grid-template-columns: 1fr;">
+                    <div class="form-group full-width"><label>Description</label><input type="text" id="productDescription" placeholder="Product description..."></div>
                 </div>
-                <div class="form-group">
-                    <label>Payment Mode</label>
-                    <select id="paymentMode">
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                        <option value="Card">Card</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Date</label>
-                    <input type="date" id="invoiceDate" required>
+                <div class="form-actions">
+                    <button class="btn-save" onclick="saveProduct()">+ Add Product</button>
+                    <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
 
-            <button class="submit-btn" id="submitBtn" onclick="createInvoice()">
-                <i data-lucide="plus" style="width:16px;height:16px;"></i>
-                Create GST Invoice
-            </button>
-        </div>
-
-        <!-- Invoices Table -->
-        <div class="table-card">
-            <div class="table-header" id="tableTitle">GST Invoices</div>
-            <div class="table-wrapper">
+            <div class="table-card">
                 <table>
-                    <thead id="tableHead"></thead>
-                    <tbody id="tableBody">
+                    <thead>
                         <tr>
-                            <td colspan="14" class="empty-state">
-                                <div class="loading-spinner"></div>
-                                <div style="margin-top: 12px;">Loading invoices...</div>
-                            </td>
+                            <th>Product Name</th>
+                            <th>Category</th>
+                            <th>Brand</th>
+                            <th>Model/Part No.</th>
+                            <th>Quantity</th>
+                            <th>Unit Price (₹)</th>
+                            <th>Total Value (₹)</th>
+                            <th>Status</th>
+                            <th>Action</th>
                         </tr>
-                    </tbody>
+                    </thead>
+                    <tbody id="productsTableBody"></tbody>
                 </table>
             </div>
         </div>
     </div>
 
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // ==========================================
-        // STEP 4: REPLACE WITH YOUR SUPABASE CREDENTIALS
-        // ==========================================
-        const SUPABASE_URL = 'https://YOUR-PROJECT-ID.supabase.co';  // ← PASTE YOUR URL HERE
-        const SUPABASE_KEY = 'YOUR-ANON-KEY';  // ← PASTE YOUR ANON KEY HERE
-        
-        // Initialize Supabase
-        const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
-        
-        // Global variables
-        let currentTab = 'gst';
-        let allItems = [];
+        const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
+        const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // ==========================================
-        // INITIALIZATION
-        // ==========================================
-        document.addEventListener('DOMContentLoaded', function() {
-            // Initialize Lucide icons
-            lucide.createIcons();
-            
-            // Set current date
-            setCurrentDate();
-            
-            // Set default date to today
-            document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
-            
-            // Load items and invoices
-            loadItems();
-            loadInvoices();
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com';
+        let currentUserEmail = '';
+        let currentFilter = 'All';
+
+        // --- Sidebar Logic ---
+        let sidebarTimer;
+        window.resetSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+            sidebarTimer = setTimeout(() => {
+                const sb = document.getElementById('sidebar');
+                const btn = document.getElementById('sidebarToggle');
+                if(sb && btn) {
+                    sb.classList.add('collapsed');
+                    btn.classList.add('sidebar-collapsed-btn');
+                }
+            }, 5000);
+        }
+        window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+        
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarToggle');
+            if(sb && btn) {
+                sb.classList.toggle('collapsed');
+                btn.classList.toggle('sidebar-collapsed-btn');
+                if(!sb.classList.contains('collapsed')) resetSidebarTimer();
+                else clearSidebarTimer();
+            }
+        }
+
+        async function checkAuth() {
+            const { data } = await supabaseClient.auth.getSession();
+            if (!data.session) {
+                window.location.href = 'login.html';
+            } else {
+                currentUserEmail = data.session.user.email;
+                let displayEmail = currentUserEmail.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+                
+                if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                    document.getElementById('adminUsersTab').style.display = 'flex';
+                }
+            }
+        }
+        
+        async function logOut() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); 
+            fetchProducts();
+            resetSidebarTimer(); 
+
+            supabaseClient
+                .channel('public:storeProducts')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'storeProducts' }, payload => {
+                    fetchProducts();
+                })
+                .subscribe();
         });
 
-        // Set current date in header
-        function setCurrentDate() {
-            const options = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
-            document.getElementById('currentDate').textContent = new Date().toLocaleDateString('en-US', options);
-        }
-
-        // ==========================================
-        // TAB SWITCHING
-        // ==========================================
-        function switchTab(tab) {
-            currentTab = tab;
-            
-            // Update tab buttons
-            document.getElementById('regularTab').classList.toggle('active', tab === 'regular');
-            document.getElementById('gstTab').classList.toggle('active', tab === 'gst');
-            
-            // Show/hide GST banner
-            document.getElementById('gstBanner').classList.toggle('show', tab === 'gst');
-            
-            // Update form title
-            document.getElementById('formTitle').textContent = tab === 'gst' ? 'NEW GST INVOICE ENTRY' : 'NEW ENTRY';
-            
-            // Update submit button
-            document.getElementById('submitBtn').innerHTML = tab === 'gst' 
-                ? '<i data-lucide="plus" style="width:16px;height:16px;"></i> Create GST Invoice'
-                : '<i data-lucide="plus" style="width:16px;height:16px;"></i> Add Entry';
-            
-            // Show/hide GSTIN hint
-            document.getElementById('gstinHint').style.display = tab === 'gst' ? 'block' : 'none';
-            
-            // Update table title
-            document.getElementById('tableTitle').textContent = tab === 'gst' ? 'GST Invoices' : 'Regular Invoices';
-            
-            // Make GSTIN required for GST tab
-            document.getElementById('gstin').required = tab === 'gst';
-            
-            lucide.createIcons();
-            loadInvoices();
-        }
-
-        // ==========================================
-        // LOAD ITEMS FROM SUPABASE
-        // ==========================================
-        async function loadItems() {
-            try {
-                const { data, error } = await supabase
-                    .from('accessory_items')
-                    .select('*')
-                    .order('name');
-                
-                if (error) throw error;
-                
-                allItems = data || [];
-                populateItemDropdown();
-            } catch (error) {
-                showToast('Error loading items: ' + error.message, 'error');
-            }
-        }
-
-        function populateItemDropdown() {
-            const select = document.getElementById('itemSelect');
-            select.innerHTML = '<option value="">Select Item</option>';
-            
-            allItems.forEach(item => {
-                const option = document.createElement('option');
-                option.value = item.id;
-                option.textContent = `${item.name} - ₹${item.price}`;
-                option.dataset.price = item.price;
-                option.dataset.gstRate = item.gst_rate;
-                option.dataset.hsn = item.hsn_code;
-                select.appendChild(option);
-            });
-        }
-
-        // ==========================================
-        // LOAD INVOICES FROM SUPABASE
-        // ==========================================
-        async function loadInvoices() {
-            const tableBody = document.getElementById('tableBody');
-            tableBody.innerHTML = `
-                <tr>
-                    <td colspan="14" class="empty-state">
-                        <div class="loading-spinner"></div>
-                        <div style="margin-top: 12px;">Loading invoices...</div>
-                    </td>
-                </tr>
-            `;
-            
-            try {
-                const { data, error } = await supabase
-                    .from('invoices')
-                    .select('*')
-                    .eq('invoice_type', currentTab)
-                    .order('created_at', { ascending: false });
-                
-                if (error) throw error;
-                
-                renderTable(data || []);
-            } catch (error) {
-                showToast('Error loading invoices: ' + error.message, 'error');
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="14" class="empty-state">Error loading invoices. Please try again.</td>
-                    </tr>
-                `;
-            }
-        }
-
-        // ==========================================
-        // RENDER TABLE
-        // ==========================================
-        function renderTable(invoices) {
-            // Render table head
-            const tableHead = document.getElementById('tableHead');
-            if (currentTab === 'gst') {
-                tableHead.innerHTML = `
-                    <tr>
-                        <th>GST Inv #</th>
-                        <th>Created By</th>
-                        <th>Date</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>GSTIN</th>
-                        <th>Item</th>
-                        <th>HSN</th>
-                        <th>Base Amt</th>
-                        <th>GST</th>
-                        <th>Total</th>
-                        <th>Mode</th>
-                        <th>Bill</th>
-                        <th></th>
-                    </tr>
-                `;
+        window.toggleForm = function() {
+            const form = document.getElementById('productFormCard');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                document.getElementById('productName').focus();
             } else {
-                tableHead.innerHTML = `
-                    <tr>
-                        <th>Inv #</th>
-                        <th>Created By</th>
-                        <th>Date</th>
-                        <th>Name</th>
-                        <th>Mobile</th>
-                        <th>Item</th>
-                        <th>HSN</th>
-                        <th>Base Amt</th>
-                        <th>Total</th>
-                        <th>Mode</th>
-                        <th>Bill</th>
-                        <th></th>
-                    </tr>
-                `;
+                form.style.display = 'none';
             }
-            
-            // Render table body
-            const tableBody = document.getElementById('tableBody');
-            
-            if (invoices.length === 0) {
-                const colSpan = currentTab === 'gst' ? 14 : 12;
-                tableBody.innerHTML = `
-                    <tr>
-                        <td colspan="${colSpan}" class="empty-state">
-                            No ${currentTab === 'gst' ? 'GST' : 'regular'} invoices yet. Add an entry above.
-                        </td>
-                    </tr>
-                `;
-                return;
-            }
-            
-            tableBody.innerHTML = invoices.map(invoice => {
-                const date = new Date(invoice.created_at).toLocaleDateString('en-IN', {
-                    day: '2-digit',
-                    month: 'short',
-                    year: 'numeric'
+        }
+
+        async function fetchProducts() {
+            try {
+                let query = supabaseClient
+                    .from('storeProducts')
+                    .select('*')
+                    .order('created_at', { ascending: false });
+
+                if (currentFilter !== 'All') {
+                    query = query.eq('category', currentFilter);
+                }
+
+                const { data: products, error } = await query;
+
+                if (error) throw error;
+
+                const tableBody = document.getElementById('productsTableBody');
+                tableBody.innerHTML = ''; 
+
+                let totalProducts = 0;
+                let inStock = 0;
+                let lowStock = 0;
+                let outStock = 0;
+
+                products.forEach(product => {
+                    totalProducts++;
+                    const qty = product.quantity || 0;
+                    const price = product.unitPrice || 0;
+                    const totalValue = qty * price;
+                    
+                    let stockStatus = '';
+                    let stockClass = '';
+                    
+                    if (qty > 10) {
+                        stockStatus = 'In Stock';
+                        stockClass = 'in-stock';
+                        inStock++;
+                    } else if (qty > 0 && qty <= 10) {
+                        stockStatus = 'Low Stock';
+                        stockClass = 'low-stock';
+                        lowStock++;
+                    } else {
+                        stockStatus = 'Out of Stock';
+                        stockClass = 'out-stock';
+                        outStock++;
+                    }
+
+                    let actionHtml = '';
+                    if (currentUserEmail === ADMIN_EMAIL) {
+                        actionHtml = `
+                            <button onclick="updateQuantity('${product.id}', ${qty})" style="background: black; color: white; border: none; padding: 6px 12px; border-radius: 4px; cursor: pointer; margin-right: 5px;">Update Qty</button>
+                            <button onclick="deleteProduct('${product.id}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>
+                        `;
+                    } else {
+                        actionHtml = `<span style="color: gray; font-size: 0.8rem;">View Only</span>`;
+                    }
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td><strong>${product.productName || ''}</strong></td>
+                        <td>${product.category || ''}</td>
+                        <td>${product.brand || '-'}</td>
+                        <td>${product.modelNo || '-'}</td>
+                        <td><strong>${qty}</strong></td>
+                        <td>₹${price.toFixed(2)}</td>
+                        <td><strong>₹${totalValue.toFixed(2)}</strong></td>
+                        <td><span class="stock-badge ${stockClass}">${stockStatus}</span></td>
+                        <td>${actionHtml}</td>
+                    `;
+                    tableBody.appendChild(row);
                 });
-                
-                const formatCurrency = (amount) => {
-                    return new Intl.NumberFormat('en-IN', {
-                        style: 'currency',
-                        currency: 'INR'
-                    }).format(amount);
-                };
-                
-                if (currentTab === 'gst') {
-                    return `
-                        <tr>
-                            <td><strong>${invoice.invoice_number}</strong></td>
-                            <td>${invoice.created_by || 'GSM SOLUTION'}</td>
-                            <td>${date}</td>
-                            <td>${invoice.customer_name}</td>
-                            <td>${invoice.mobile_number}</td>
-                            <td>${invoice.gstin || '-'}</td>
-                            <td>${invoice.item_name}</td>
-                            <td>${invoice.hsn_code || '-'}</td>
-                            <td>${formatCurrency(invoice.base_amount)}</td>
-                            <td>${formatCurrency(invoice.gst_amount)}</td>
-                            <td><strong>${formatCurrency(invoice.total_amount)}</strong></td>
-                            <td><span style="background:#f1f5f9;padding:4px 8px;border-radius:12px;font-size:12px;">${invoice.payment_mode}</span></td>
-                            <td><button class="action-btn bill-btn" onclick="viewBill('${invoice.id}')"><i data-lucide="file-text" style="width:16px;height:16px;"></i></button></td>
-                            <td><button class="action-btn delete-btn" onclick="deleteInvoice('${invoice.id}')"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button></td>
-                        </tr>
-                    `;
-                } else {
-                    return `
-                        <tr>
-                            <td><strong>${invoice.invoice_number}</strong></td>
-                            <td>${invoice.created_by || 'GSM SOLUTION'}</td>
-                            <td>${date}</td>
-                            <td>${invoice.customer_name}</td>
-                            <td>${invoice.mobile_number}</td>
-                            <td>${invoice.item_name}</td>
-                            <td>${invoice.hsn_code || '-'}</td>
-                            <td>${formatCurrency(invoice.base_amount)}</td>
-                            <td><strong>${formatCurrency(invoice.total_amount)}</strong></td>
-                            <td><span style="background:#f1f5f9;padding:4px 8px;border-radius:12px;font-size:12px;">${invoice.payment_mode}</span></td>
-                            <td><button class="action-btn bill-btn" onclick="viewBill('${invoice.id}')"><i data-lucide="file-text" style="width:16px;height:16px;"></i></button></td>
-                            <td><button class="action-btn delete-btn" onclick="deleteInvoice('${invoice.id}')"><i data-lucide="trash-2" style="width:16px;height:16px;"></i></button></td>
-                        </tr>
-                    `;
-                }
-            }).join('');
-            
-            lucide.createIcons();
+
+                document.getElementById('totalProductsCount').innerText = totalProducts;
+                document.getElementById('inStockCount').innerText = inStock;
+                document.getElementById('lowStockCount').innerText = lowStock;
+                document.getElementById('outStockCount').innerText = outStock;
+
+            } catch (error) { 
+                console.error("Error loading products: ", error.message); 
+            }
         }
 
-        // ==========================================
-        // CREATE INVOICE
-        // ==========================================
-        async function createInvoice() {
-            // Get form values
-            const customerName = document.getElementById('customerName').value.trim();
-            const mobileNumber = document.getElementById('mobileNumber').value.trim();
-            const gstin = document.getElementById('gstin').value.trim();
-            const itemId = document.getElementById('itemSelect').value;
-            const serialNumber = document.getElementById('serialNumber').value.trim();
-            const paymentMode = document.getElementById('paymentMode').value;
-            const date = document.getElementById('invoiceDate').value;
+        window.filterByCategory = function(category) {
+            currentFilter = category;
             
-            // Validation
-            if (!customerName) {
-                showToast('Please enter customer name', 'error');
-                return;
+            // Update active tab styling
+            document.querySelectorAll('.category-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            
+            fetchProducts();
+        }
+
+        window.saveProduct = async function() {
+            const productName = document.getElementById('productName').value;
+            const category = document.getElementById('productCategory').value;
+            const brand = document.getElementById('productBrand').value;
+            const modelNo = document.getElementById('productModel').value;
+            const quantity = parseInt(document.getElementById('productQuantity').value) || 0;
+            const unitPrice = parseFloat(document.getElementById('productPrice').value) || 0;
+            const description = document.getElementById('productDescription').value;
+
+            if (!productName || !category) {
+                return alert("Please complete Product Name and Category.");
             }
-            if (!mobileNumber || !/^[0-9]{10}$/.test(mobileNumber)) {
-                showToast('Please enter a valid 10-digit mobile number', 'error');
-                return;
-            }
-            if (currentTab === 'gst' && !gstin) {
-                showToast('GSTIN is required for GST invoices', 'error');
-                return;
-            }
-            if (!itemId) {
-                showToast('Please select an item', 'error');
-                return;
-            }
-            if (!date) {
-                showToast('Please select a date', 'error');
-                return;
-            }
-            
-            // Get selected item details
-            const selectedOption = document.getElementById('itemSelect').selectedOptions[0];
-            const itemName = selectedOption.textContent.split(' - ')[0];
-            const price = parseFloat(selectedOption.dataset.price);
-            const gstRate = parseFloat(selectedOption.dataset.gstRate);
-            const hsnCode = selectedOption.dataset.hsn;
-            
-            // Calculate amounts
-            const gstAmount = currentTab === 'gst' ? (price * gstRate) / 100 : 0;
-            const totalAmount = price + gstAmount;
-            
-            // Generate invoice number
-            const prefix = currentTab === 'gst' ? 'GST-' : 'REG-';
-            const invoiceNumber = await generateInvoiceNumber(prefix);
-            
-            // Disable button
-            const submitBtn = document.getElementById('submitBtn');
-            submitBtn.disabled = true;
-            submitBtn.innerHTML = '<div class="loading-spinner"></div> Creating...';
-            
+
+            const productData = {
+                productName: productName,
+                category: category,
+                brand: brand,
+                modelNo: modelNo,
+                quantity: quantity,
+                unitPrice: unitPrice,
+                description: description,
+                createdBy: currentUserEmail,
+                created_at: new Date().toISOString()
+            };
+
             try {
-                const { error } = await supabase
-                    .from('invoices')
-                    .insert({
-                        invoice_number: invoiceNumber,
-                        invoice_type: currentTab,
-                        customer_name: customerName,
-                        mobile_number: mobileNumber,
-                        gstin: gstin || null,
-                        item_id: itemId,
-                        item_name: itemName,
-                        serial_number: serialNumber || null,
-                        hsn_code: hsnCode,
-                        payment_mode: paymentMode,
-                        base_amount: price,
-                        gst_amount: gstAmount,
-                        total_amount: totalAmount,
-                        created_by: 'GSM SOLUTION',
-                        date: date
-                    });
-                
+                const { error } = await supabaseClient.from('storeProducts').insert([productData]);
                 if (error) throw error;
-                
-                showToast('Invoice created successfully!', 'success');
+                alert("Product added successfully!");
                 clearForm();
-                loadInvoices();
-            } catch (error) {
-                showToast('Error creating invoice: ' + error.message, 'error');
-            } finally {
-                submitBtn.disabled = false;
-                submitBtn.innerHTML = currentTab === 'gst' 
-                    ? '<i data-lucide="plus" style="width:16px;height:16px;"></i> Create GST Invoice'
-                    : '<i data-lucide="plus" style="width:16px;height:16px;"></i> Add Entry';
-                lucide.createIcons();
+                toggleForm();
+            } catch (error) { 
+                alert("Error adding product: " + error.message); 
             }
+        };
+
+        window.clearForm = function() {
+            document.getElementById('productName').value = '';
+            document.getElementById('productCategory').value = '';
+            document.getElementById('productBrand').value = '';
+            document.getElementById('productModel').value = '';
+            document.getElementById('productQuantity').value = '0';
+            document.getElementById('productPrice').value = '';
+            document.getElementById('productDescription').value = '';
         }
 
-        // ==========================================
-        // GENERATE INVOICE NUMBER
-        // ==========================================
-        async function generateInvoiceNumber(prefix) {
-            try {
-                const { data, error } = await supabase
-                    .from('invoices')
-                    .select('invoice_number')
-                    .like('invoice_number', `${prefix}%`)
-                    .order('invoice_number', { ascending: false })
-                    .limit(1);
-                
-                if (error) throw error;
-                
-                if (data && data.length > 0) {
-                    const lastNumber = parseInt(data[0].invoice_number.split('-')[1]) || 0;
-                    return `${prefix}${String(lastNumber + 1).padStart(4, '0')}`;
-                }
-                
-                return `${prefix}0001`;
-            } catch (error) {
-                console.error('Error generating invoice number:', error);
-                return `${prefix}${Date.now().toString().slice(-4)}`;
-            }
-        }
-
-        // ==========================================
-        // DELETE INVOICE
-        // ==========================================
-        async function deleteInvoice(id) {
-            if (!confirm('Are you sure you want to delete this invoice?')) return;
+        window.updateQuantity = async function(productId, currentQty) {
+            const newQty = prompt("Enter new quantity:", currentQty);
+            if (newQty === null || newQty === '') return;
             
+            const qtyNum = parseInt(newQty);
+            if (isNaN(qtyNum) || qtyNum < 0) {
+                return alert("Please enter a valid quantity.");
+            }
+
             try {
-                const { error } = await supabase
-                    .from('invoices')
+                const { error } = await supabaseClient
+                    .from('storeProducts')
+                    .update({ quantity: qtyNum })
+                    .eq('id', productId);
+                    
+                if (error) throw error;
+            } catch (error) { 
+                alert("Failed to update quantity: " + error.message); 
+            }
+        };
+
+        window.deleteProduct = async function(productId) {
+            if (currentUserEmail.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) {
+                return alert("You do not have permission to delete products.");
+            }
+            
+            if (!confirm("Are you sure you want to delete this product?")) return;
+
+            try {
+                const { error } = await supabaseClient
+                    .from('storeProducts')
                     .delete()
-                    .eq('id', id);
-                
+                    .eq('id', productId);
+                    
                 if (error) throw error;
-                
-                showToast('Invoice deleted successfully!', 'success');
-                loadInvoices();
-            } catch (error) {
-                showToast('Error deleting invoice: ' + error.message, 'error');
+            } catch (error) { 
+                alert("Failed to delete product: " + error.message); 
             }
-        }
+        };
 
-        // ==========================================
-        // VIEW BILL (Placeholder)
-        // ==========================================
-        function viewBill(id) {
-            alert('Bill view feature coming soon! Invoice ID: ' + id);
-        }
-
-        // ==========================================
-        // CLEAR FORM
-        // ==========================================
-        function clearForm() {
-            document.getElementById('customerName').value = '';
-            document.getElementById('mobileNumber').value = '';
-            document.getElementById('gstin').value = '';
-            document.getElementById('itemSelect').value = '';
-            document.getElementById('serialNumber').value = '';
-            document.getElementById('paymentMode').value = 'Cash';
-            document.getElementById('invoiceDate').value = new Date().toISOString().split('T')[0];
-        }
-
-        // ==========================================
-        // TOAST NOTIFICATIONS
-        // ==========================================
-        function showToast(message, type = 'success') {
-            const toast = document.getElementById('toast');
-            toast.textContent = message;
-            toast.className = `toast ${type}`;
-            toast.style.display = 'block';
-            
-            setTimeout(() => {
-                toast.style.display = 'none';
-            }, 3000);
-        }
+        window.searchTable = function() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.getElementById("productsTableBody").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = rows[i].textContent.toLowerCase().includes(input) ? "" : "none";
+            }
+        };
     </script>
 </body>
 </html>
