@@ -3,258 +3,394 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSM Solution - Billing</title>
-    
-    <!-- This completely stops the 404 favicon error -->
+    <title>GSM Solution - Order Management</title>
     <link rel="icon" href="data:,">
     
     <style>
-        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        :root {
+            --bg-color: #f4f5f7;
+            --sidebar-width: 250px;
+            --primary-blue: #2563eb;
+            --border-color: #e5e7eb;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar */
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
-        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        /* Main Content */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
+        .header-left h1 { margin: 0; font-size: 1.5rem; }
+        .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
         .btn-primary { background: black; color: white; border: none; }
-        .dashboard-padding { padding: 20px 30px; }
 
-        /* Form */
+        .dashboard-padding { padding: 20px 30px; }
+        
+        .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; }
+        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: #111827; }
+        .c-blue { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
+        .c-orange { color: #d97706; background: #fffbeb; border-color: #fde68a; }
+        .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
+        .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
+
         .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; }
+        .form-group label span { color: red; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group.full-width { grid-column: span 3; }
+        
+        .form-actions { display: flex; gap: 10px; margin-top: 20px; }
+        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* Table */
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px;}
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
-        /* Pagination */
-        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
+        /* --- NEW 3-WAY TOGGLE SWITCH CSS --- */
+        .toggle-container {
+            display: flex;
+            align-items: center;
+            background-color: #e5e7eb;
+            border-radius: 30px;
+            position: relative;
+            width: 120px;
+            height: 32px;
+            user-select: none;
+            margin: 0 auto;
+        }
+        .toggle-slider {
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            height: 28px;
+            width: 38px;
+            border-radius: 15px;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            z-index: 1;
+        }
+        .status-Pending .toggle-slider { left: 2px; background-color: #eab308; } /* Yellow */
+        .status-Completed .toggle-slider { left: 41px; background-color: #3b82f6; } /* Blue */
+        .status-Delivered .toggle-slider { left: 80px; background-color: #22c55e; } /* Green */
+        
+        .toggle-option {
+            flex: 1;
+            text-align: center;
+            font-size: 0.8rem;
+            font-weight: bold;
+            z-index: 2;
+            color: #6b7280;
+            cursor: pointer;
+            line-height: 32px;
+        }
+        .status-Pending .opt-p, .status-Completed .opt-c, .status-Delivered .opt-d { color: white; }
+        
+        .locked-toggle { opacity: 0.6; cursor: not-allowed; }
+        .locked-toggle .toggle-option { cursor: not-allowed; }
     </style>
 </head>
 <body>
 
     <div class="sidebar">
-        <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-        <a href="index.html" class="nav-item">Order Details</a>
+        <div class="logo-area">
+            <div class="logo-icon">GSM</div>
+            SOLUTION
+        </div>
+        <a href="index.html" class="nav-item active">Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
-        <a href="billing.html" class="nav-item active">Billing</a>
+        <a href="billing.html" class="nav-item">Billing</a>
         <div class="nav-item">Store Plus</div>
         <div class="nav-item">Accessories</div>
         <div class="nav-item">Sales Report</div>
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
+
         <div style="flex-grow: 1;"></div> 
-        <div class="nav-item" onclick="logOut()" style="color: #dc2626; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">🚪 Log Out</div>
+        <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            🚪 Log Out
+        </div>
     </div>
 
     <div class="main-content">
         <div class="header">
-            <div><h1 style="margin:0; font-size:1.5rem;">Billing & Invoices</h1></div>
-            <div>
-                <button class="btn" onclick="fetchBilling()">↻ Refresh</button>
-                <button class="btn btn-primary" onclick="toggleForm()">+ New Invoice</button>
+            <div class="header-left">
+                <h1>Order Details</h1>
+                <p>Manage customer repair orders</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no..." onkeyup="searchTable()">
+                <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Order</button>
             </div>
         </div>
 
         <div class="dashboard-padding">
-            
-            <!-- Hidden Form Area -->
-            <div class="form-card" id="billingForm">
-                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW BILL</div>
-                <div class="form-grid">
-                    <div class="form-group">
-                        <label>Invoice No. (Auto)</label>
-                        <input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold;">
-                    </div>
-                    <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
-                    <div class="form-group">
-                        <label>Job Number (Optional)</label>
-                        <input type="text" id="b-jobNo" placeholder="e.g. JOB-001" onblur="fetchAdvancePaid()">
-                    </div>
-                    <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="b-advance" value="0"></div>
-                    <div class="form-group"><label>Final Amount Paid (₹)</label><input type="number" id="b-amount" value="0"></div>
-                    <div class="form-group">
-                        <label>Payment Mode</label>
-                        <select id="b-mode">
-                            <option value="Cash">Cash</option>
-                            <option value="UPI">UPI</option>
-                            <option value="Card">Card</option>
-                        </select>
-                    </div>
+            <div class="stats-grid">
+                <div class="stat-card c-blue">
+                    <h3 style="color: #2563eb;">Total Orders</h3>
+                    <p class="number" id="totalOrdersCount">0</p>
                 </div>
-                <div style="margin-top:15px;">
-                    <button class="btn btn-primary" style="background:#10b981;" onclick="saveBill()">💾 Save Bill</button>
+                <div class="stat-card c-orange">
+                    <h3 style="color: #d97706;">Pending</h3>
+                    <p class="number" id="pendingCount">0</p>
+                </div>
+                <div class="stat-card c-purple">
+                    <h3 style="color: #7c3aed;">Repair Completed</h3>
+                    <p class="number" id="completedCount">0</p>
+                </div>
+                <div class="stat-card c-green">
+                    <h3 style="color: #059669;">Goods Delivered</h3>
+                    <p class="number" id="deliveredCount">0</p>
+                </div>
+            </div>
+
+            <div class="form-card" id="orderFormCard">
+                <div class="form-header">📄 NEW ORDER ENTRY</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Customer Name <span>*</span></label><input type="text" id="customerName" placeholder="Full name"></div>
+                    <div class="form-group"><label>Contact No.</label><input type="text" id="contactNo" placeholder="Phone number"></div>
+                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="jobNo" placeholder="e.g. JOB-001"></div>
+                    <div class="form-group"><label>IMEI No.</label><input type="text" id="imeiNo" placeholder="15-digit IMEI"></div>
+                    <div class="form-group"><label>Model No.</label><input type="text" id="modelNo" placeholder="e.g. iPhone 15 Pro"></div>
+                    <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="advancePaid" placeholder="0" value="0"></div>
+                </div>
+                <div class="form-grid" style="grid-template-columns: 1fr;"><div class="form-group full-width"><label>Problem Description</label><input type="text" id="problemDesc" placeholder="Describe the issue..."></div></div>
+                <div class="form-actions">
+                    <button class="btn-save" onclick="saveOrder()">+ Save Order</button>
                     <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
 
-            <!-- Table Area -->
             <div class="table-card">
                 <table>
                     <thead>
                         <tr>
-                            <th>Invoice No.</th>
                             <th>Created By</th>
                             <th>Date</th>
-                            <th>Job Number</th>
-                            <th>Advance Paid</th>
-                            <th>Amount Paid</th>
-                            <th>Mode</th>
+                            <th>Job No.</th>
+                            <th>Customer Name</th>
+                            <th>IMEI / Model</th>
+                            <th>Problem</th>
+                            <th>Advance (₹)</th>
+                            <th style="text-align: center;">Status Tracker</th>
+                            <th>Action</th>
                         </tr>
                     </thead>
-                    <tbody id="billingTableBody"></tbody>
+                    <tbody id="ordersTableBody"></tbody>
                 </table>
-                <div class="pagination">
-                    <button class="btn" onclick="prevPage()">Previous</button>
-                    <span id="pageInfo" style="font-size:0.9rem; font-weight:bold;">Page 1</span>
-                    <button class="btn" onclick="nextPage()">Next</button>
-                </div>
             </div>
         </div>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-        
-        let allBillingData = [];
-        let currentPage = 1;
-        const rowsPerPage = 10;
+        const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
+        const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // Security Lock
+        // --- SET YOUR ADMIN EMAIL HERE ---
+        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
+        let currentUserEmail = '';
+
         async function checkAuth() {
-            const { data } = await db.auth.getSession();
-            if (!data.session) window.location.href = 'login.html';
+            const { data } = await supabaseClient.auth.getSession();
+            if (!data.session) {
+                window.location.href = 'login.html';
+            } else {
+                currentUserEmail = data.session.user.email;
+            }
         }
-
+        
         async function logOut() {
-            await db.auth.signOut();
+            await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
 
-        // Initialize Page
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAuth();
-            document.getElementById('b-date').value = new Date().toISOString().split('T')[0];
-            fetchBilling();
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); 
+            fetchOrders();
+
+            supabaseClient
+                .channel('public:repairOrders')
+                .on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => {
+                    fetchOrders();
+                })
+                .subscribe();
         });
 
-        function toggleForm() {
-            const form = document.getElementById('billingForm');
+        window.toggleForm = function() {
+            const form = document.getElementById('orderFormCard');
             if (form.style.display === 'none' || form.style.display === '') {
                 form.style.display = 'block';
-                document.getElementById('b-invoice').value = 'INV' + Date.now().toString().slice(-4);
+                document.getElementById('customerName').focus();
             } else {
                 form.style.display = 'none';
             }
         }
 
-        // Fetch advance paid from order details automatically if Job No matches
-        async function fetchAdvancePaid() {
-            const jobNo = document.getElementById('b-jobNo').value;
-            if(!jobNo) return;
-            const { data } = await db.from('repairOrders').select('advancePaid').eq('jobNo', jobNo).single();
-            if(data && data.advancePaid) {
-                document.getElementById('b-advance').value = data.advancePaid;
-            }
+        async function fetchOrders() {
+            try {
+                const { data: repairOrders, error } = await supabaseClient
+                    .from('repairOrders')
+                    .select('*')
+                    .order('date', { ascending: false });
+
+                if (error) throw error;
+
+                const tableBody = document.getElementById('ordersTableBody');
+                tableBody.innerHTML = ''; 
+
+                let pending = 0; let completed = 0; let delivered = 0;
+
+                repairOrders.forEach(order => {
+                    let statusClass = '';
+                    let statusColor = '';
+                    
+                    if(order.status === 'Pending') { pending++; statusClass = 'status-Pending'; statusColor = '#eab308';}
+                    if(order.status === 'Repair Completed') { completed++; statusClass = 'status-Completed'; statusColor = '#3b82f6'; }
+                    if(order.status === 'Goods Delivered') { delivered++; statusClass = 'status-Delivered'; statusColor = '#22c55e'; }
+
+                    // Lock switch if it's already delivered
+                    let isLocked = order.status === 'Goods Delivered';
+                    let lockedClass = isLocked ? 'locked-toggle' : '';
+
+                    // Advance Paid Logic
+                    let advanceHtml = '';
+                    if (currentUserEmail === ADMIN_EMAIL) {
+                        advanceHtml = `<input type="number" value="${order.advancePaid || 0}" onchange="updateAdvance('${order.jobNo}', this.value)" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">`;
+                    } else {
+                        advanceHtml = `₹${order.advancePaid || 0}`;
+                    }
+
+                    // Delete Logic
+                    let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
+                        ? `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
+                        : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
+
+                    const row = document.createElement('tr');
+                    row.innerHTML = `
+                        <td>${order.customerName ? order.customerName.split(' ')[0] : 'Staff'}</td>
+                        <td>${order.date || ''}</td>
+                        <td><strong>${order.jobNo || ''}</strong></td>
+                        <td>${order.customerName || ''}<br><small style="color:gray;">${order.contactNo || ''}</small></td>
+                        <td>${order.modelNo || ''} <br><small style="color:gray;">${order.imeiNo || ''}</small></td>
+                        <td>${order.problemDesc || ''}</td>
+                        <td style="color:#10b981; font-weight:bold;">${advanceHtml}</td>
+                        
+                        <!-- 3-WAY TOGGLE SWITCH -->
+                        <td style="text-align: center;">
+                            <div class="toggle-container ${statusClass} ${lockedClass}">
+                                <div class="toggle-slider"></div>
+                                <div class="toggle-option opt-p" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Pending')` : 'alertLocked()'}" title="Pending">P</div>
+                                <div class="toggle-option opt-c" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Repair Completed')` : 'alertLocked()'}" title="Repair Completed">C</div>
+                                <div class="toggle-option opt-d" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Goods Delivered')` : 'alertLocked()'}" title="Goods Delivered">D</div>
+                            </div>
+                            <div style="font-size:0.75rem; font-weight:700; margin-top:5px; color:${statusColor}">${order.status}</div>
+                        </td>
+                        
+                        <td>${deleteButtonHtml}</td>
+                    `;
+                    tableBody.appendChild(row);
+                });
+
+                document.getElementById('totalOrdersCount').innerText = repairOrders.length;
+                document.getElementById('pendingCount').innerText = pending;
+                document.getElementById('completedCount').innerText = completed;
+                document.getElementById('deliveredCount').innerText = delivered;
+
+            } catch (error) { console.error("Error loading data: ", error.message); }
         }
 
-        // Load Billing Data
-        async function fetchBilling() {
-            const { data, error } = await db.from('billing').select('*').order('created_at', { ascending: false });
-            if (!error && data) {
-                allBillingData = data;
-                currentPage = 1;
-                renderTable();
-            }
-        }
-
-        // Render Paginated Table
-        function renderTable() {
-            const tbody = document.getElementById('billingTableBody');
-            tbody.innerHTML = '';
-            
-            const start = (currentPage - 1) * rowsPerPage;
-            const end = start + rowsPerPage;
-            const paginatedItems = allBillingData.slice(start, end);
-
-            paginatedItems.forEach(bill => {
-                tbody.innerHTML += `
-                    <tr>
-                        <td><strong>${bill.invoiceNo}</strong></td>
-                        <td>${bill.createdBy}</td>
-                        <td>${bill.date}</td>
-                        <td style="color:#2563eb; font-weight:bold;">${bill.jobNo || '-'}</td>
-                        <td>₹${bill.advancePaid || 0}</td>
-                        <td style="color:#10b981; font-weight:bold;">₹${bill.amountPaid || 0}</td>
-                        <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px;">${bill.paymentMode}</span></td>
-                    </tr>
-                `;
-            });
-
-            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allBillingData.length / rowsPerPage) || 1}`;
-        }
-
-        function prevPage() { if (currentPage > 1) { currentPage--; renderTable(); } }
-        function nextPage() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
-
-        // Save Bill to DB
-        async function saveBill() {
-            // 1. Get the Job Number and remove any accidental spaces
-            const rawJobNo = document.getElementById('b-jobNo').value.trim();
-
-            const billData = {
-                invoiceNo: document.getElementById('b-invoice').value,
-                date: document.getElementById('b-date').value,
-                jobNo: rawJobNo,
-                advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
-                amountPaid: parseFloat(document.getElementById('b-amount').value) || 0,
-                paymentMode: document.getElementById('b-mode').value
+        window.saveOrder = async function() {
+            const orderData = {
+                customerName: document.getElementById('customerName').value,
+                contactNo: document.getElementById('contactNo').value,
+                jobNo: document.getElementById('jobNo').value,
+                imeiNo: document.getElementById('imeiNo').value,
+                modelNo: document.getElementById('modelNo').value,
+                problemDesc: document.getElementById('problemDesc').value,
+                advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0,
+                date: new Date().toISOString().split('T')[0],
+                status: "Pending"
             };
 
-            // Save to Billing table
-            const { error: billError } = await db.from('billing').insert([billData]);
-            
-            if (billError) {
-                alert("Error saving Bill: " + billError.message);
-                return; // Stop here if bill fails
-            } 
-            
-            // 2. UPDATE ORDER DETAILS AUTOMATICALLY
-            if(rawJobNo !== '') {
-                let updateData = { status: 'Goods Delivered' };
-                if (billData.advancePaid > 0) {
-                    updateData.advancePaid = billData.advancePaid;
-                }
-                
-                // Using .ilike() instead of .eq() so it ignores uppercase/lowercase!
-                const { error: orderError } = await db.from('repairOrders')
-                    .update(updateData)
-                    .ilike('jobNo', rawJobNo);
-                    
-                if (orderError) {
-                    alert("Bill saved, but Order Status failed to update: " + orderError.message);
-                }
+            if(!orderData.customerName || !orderData.jobNo) {
+                return alert("Please complete Customer Name and Job Number.");
             }
+
+            try {
+                const { error } = await supabaseClient.from('repairOrders').insert([orderData]);
+                if (error) throw error;
+                alert("Repair order added successfully!");
+                clearForm();
+                toggleForm();
+            } catch (error) { alert("Error writing to database: " + error.message); }
+        };
+
+        window.clearForm = function() {
+            document.getElementById('customerName').value = '';
+            document.getElementById('contactNo').value = '';
+            document.getElementById('jobNo').value = '';
+            document.getElementById('imeiNo').value = '';
+            document.getElementById('modelNo').value = '';
+            document.getElementById('problemDesc').value = '';
+            document.getElementById('advancePaid').value = '0';
+        }
+
+        // --- NEW STATUS TOGGLE LOGIC ---
+        window.setOrderStatus = async function(jobNo, currentStatus, newStatus) {
+            if (currentStatus === newStatus) return; // Do nothing if clicking the same status
             
-            alert("Bill Generated Successfully!");
-            toggleForm();
-            fetchBilling();
-            document.getElementById('b-jobNo').value = '';
-            document.getElementById('b-advance').value = '0';
-            document.getElementById('b-amount').value = '0';
-        }</body>
+            if (!confirm(`Are you sure you want to change the status to "${newStatus}"?`)) return;
+
+            try {
+                const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('jobNo', jobNo);
+                if (error) throw error;
+            } catch (error) { alert("Failed to update status: " + error.message); }
+        };
+
+        window.alertLocked = function() {
+            alert("This order is already marked as 'Goods Delivered' and is locked. Please contact the Admin to reverse it.");
+        };
+
+        window.updateAdvance = async function(jobNo, newValue) {
+            try {
+                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: parseFloat(newValue) || 0 }).eq('jobNo', jobNo);
+                if (error) throw error;
+            } catch (error) { alert("Failed to update advance: " + error.message); }
+        };
+
+        window.deleteOrder = async function(jobNo) {
+            if (currentUserEmail !== ADMIN_EMAIL) return alert("You do not have permission to delete orders.");
+            if (!confirm("Are you sure you want to delete this repair order?")) return;
+
+            try {
+                const { error } = await supabaseClient.from('repairOrders').delete().eq('jobNo', jobNo);
+                if (error) throw error;
+            } catch (error) { alert("Failed to delete order: " + error.message); }
+        };
+
+        window.searchTable = function() {
+            const input = document.getElementById("searchInput").value.toLowerCase();
+            const rows = document.getElementById("ordersTableBody").getElementsByTagName("tr");
+            for (let i = 0; i < rows.length; i++) {
+                rows[i].style.display = rows[i].textContent.toLowerCase().includes(input) ? "" : "none";
+            }
+        };
+    </script>
+</body>
 </html>
