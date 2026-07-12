@@ -8,109 +8,129 @@
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
         body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
-        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
-        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
-        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
-        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
-        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
-        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.4s ease; font-weight: bold; }
+        
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding: 0; border: none; }
+        .logo-area { padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; }
+        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; }
+        
+        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; }
         .sidebar-collapsed-btn { left: 0 !important; }
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
-        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
-        .btn-primary { background: black; color: white; border: none; }
-        .dashboard-padding { padding: 20px 30px; }
-        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
-        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
-        .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
-        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
-        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 20px 30px; }
+        .header { display: flex; justify-content: space-between; align-items: center; background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; border: 1px solid var(--border-color); background: white; font-weight: bold; }
+        .btn-primary { background: black; color: white; }
+        
+        .form-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 20px; display: none; }
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; }
+        input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; box-sizing: border-box; }
+        
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; overflow: hidden; }
+        th { background: #f9fafb; padding: 15px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        td { padding: 15px; border-bottom: 1px solid var(--border-color); }
     </style>
 </head>
 <body>
-    <div class="sidebar" id="sidebar">
-        <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-        <a href="index.html" class="nav-item">📦 Order Details</a>
-        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
-        <a href="billing.html" class="nav-item">Billing</a>
-        <div style="flex-grow: 1;"></div> 
-        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-            <span id="userNameDisplay">User</span> Logout ➔
-        </div>
-    </div>
-    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
-    <div class="main-content">
-        <div class="header">
-            <div><h1 style="margin:0; font-size:1.5rem;">Estimate Letters</h1></div>
-            <div><button class="btn" onclick="window.location.reload()">↻ Refresh</button> <button class="btn btn-primary" onclick="toggleForm()">+ New Estimate</button></div>
-        </div>
-        <div class="dashboard-padding">
-            <div class="form-card" id="estimateForm">
-                <div class="form-grid">
-                    <input type="text" id="e-estNo" readonly placeholder="Estimate No">
-                    <input type="date" id="e-date">
-                    <input type="text" id="e-jobNo" placeholder="Job Number">
-                    <input type="text" id="e-name" placeholder="Customer Name">
-                    <input type="text" id="e-model" placeholder="Model">
-                    <input type="number" id="e-cost" placeholder="Cost (₹)">
-                </div>
-                <button class="btn btn-primary" onclick="saveEstimate()">💾 Save Estimate</button>
-            </div>
-            <div class="table-card">
-                <table>
-                    <thead><tr><th>Estimate No.</th><th>Date</th><th>Job No</th><th>Name</th><th>Model</th><th>Cost</th><th>Created By</th></tr></thead>
-                    <tbody id="estimateTableBody"></tbody>
-                </table>
-            </div>
+<div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+    <a href="index.html" class="nav-item">📦 Order Details</a>
+    <a href="estimate.html" class="nav-item active">Estimate Letter</a>
+    <a href="billing.html" class="nav-item">Billing</a>
+    <div style="flex-grow: 1;"></div>
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; border-top: 1px solid var(--border-color);">
+        <span id="userNameDisplay">User</span> Logout ➔
+    </div>
+</div>
+<div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+
+<div class="main-content">
+    <div class="header">
+        <h1>Estimate Letters</h1>
+        <div>
+            <button class="btn" onclick="location.reload()">↻ Refresh</button>
+            <button class="btn btn-primary" onclick="toggleForm()">+ New Estimate</button>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-        
-        window.toggleSidebar = function() {
-            document.getElementById('sidebar').classList.toggle('collapsed');
-            document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn');
+    <div class="form-card" id="estimateForm">
+        <div class="form-grid">
+            <input type="text" id="e-estNo" readonly placeholder="Estimate No">
+            <input type="date" id="e-date">
+            <input type="text" id="e-jobNo" placeholder="Job Number" onblur="fetchDetails()">
+            <input type="text" id="e-name" placeholder="Customer Name">
+            <input type="text" id="e-model" placeholder="Model">
+            <input type="number" id="e-cost" placeholder="Cost (₹)">
+        </div>
+        <button class="btn btn-primary" style="margin-top:15px;" onclick="saveEstimate()">💾 Save</button>
+    </div>
+
+    <table>
+        <thead><tr><th>Estimate No.</th><th>Date</th><th>Job No</th><th>Name</th><th>Model</th><th>Cost</th><th>Created By</th></tr></thead>
+        <tbody id="estimateTableBody"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+    
+    // Auto-Collapse
+    let timer;
+    function resetSidebarTimer() { timer = setTimeout(() => { document.getElementById('sidebar').classList.add('collapsed'); document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn'); }, 5000); }
+    function clearSidebarTimer() { clearTimeout(timer); }
+    function toggleSidebar() { document.getElementById('sidebar').classList.toggle('collapsed'); document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn'); }
+    
+    async function checkAuth() {
+        const { data } = await db.auth.getSession();
+        if(!data.session) window.location.href = 'login.html';
+        else {
+            let name = data.session.user.email.split('@')[0];
+            document.getElementById('userNameDisplay').innerText = name.charAt(0).toUpperCase() + name.slice(1);
         }
+    }
 
-        window.toggleForm = function() {
-            const form = document.getElementById('estimateForm');
-            form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+    window.toggleForm = async function() {
+        const f = document.getElementById('estimateForm');
+        f.style.display = (f.style.display === 'none' || f.style.display === '') ? 'block' : 'none';
+        if(f.style.display === 'block') {
+            document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
+            const { data } = await db.from('estimates').select('estimateNo').order('estimateNo', {ascending: false}).limit(1);
+            let n = (data && data.length > 0) ? parseInt(data[0].estimateNo.replace(/\D/g,'')) + 1 : 1000;
+            document.getElementById('e-estNo').value = 'EST'+n;
         }
+    }
 
-        window.logOut = async function() { await db.auth.signOut(); window.location.href = 'login.html'; }
+    window.fetchDetails = async function() {
+        const job = document.getElementById('e-jobNo').value;
+        const { data } = await db.from('repairOrders').select('customerName, modelNo').ilike('jobNo', job).maybeSingle();
+        if(data) { document.getElementById('e-name').value = data.customerName; document.getElementById('e-model').value = data.modelNo; }
+    }
 
-        window.saveEstimate = async function() {
-            // Using dynamic column assignment to bypass hard schema checks
-            const estData = {};
-            estData["estimateNo"] = document.getElementById('e-estNo').value;
-            estData["date"] = document.getElementById('e-date').value;
-            estData["jobNo"] = document.getElementById('e-jobNo').value;
-            estData["customerName"] = document.getElementById('e-name').value;
-            estData["modelNo"] = document.getElementById('e-model').value;
-            estData["cost"] = parseFloat(document.getElementById('e-cost').value) || 0;
-            estData["createdBy"] = document.getElementById('userNameDisplay').innerText;
+    window.saveEstimate = async function() {
+        const d = {
+            "estimateNo": document.getElementById('e-estNo').value,
+            "date": document.getElementById('e-date').value,
+            "jobNo": document.getElementById('e-jobNo').value,
+            "customerName": document.getElementById('e-name').value,
+            "modelNo": document.getElementById('e-model').value,
+            "cost": parseFloat(document.getElementById('e-cost').value) || 0,
+            "createdBy": document.getElementById('userNameDisplay').innerText
+        };
+        await db.from('estimates').insert([d]);
+        alert("Saved!"); location.reload();
+    }
 
-            const { error } = await db.from('estimates').insert([estData]);
-            if(error) alert("Error saving: " + error.message);
-            else { alert("Saved!"); window.toggleForm(); window.location.reload(); }
-        }
-
-        document.addEventListener("DOMContentLoaded", async () => {
-            const { data } = await db.auth.getSession();
-            if(data.session) {
-                let name = data.session.user.email.split('@')[0];
-                document.getElementById('userNameDisplay').innerText = name.charAt(0).toUpperCase() + name.slice(1);
-            }
-            // Add your fetchEstimates logic here
-        });
-    </script>
+    window.logOut = async () => { await db.auth.signOut(); location.href = 'login.html'; }
+    document.addEventListener("DOMContentLoaded", () => { checkAuth(); resetSidebarTimer(); fetchEstimates(); });
+    async function fetchEstimates() {
+        const { data } = await db.from('estimates').select('*').order('created_at', {ascending: false});
+        const tbody = document.getElementById('estimateTableBody');
+        if(data) data.forEach(r => tbody.innerHTML += `<tr><td>${r.estimateNo}</td><td>${r.date}</td><td>${r.jobNo}</td><td>${r.customerName}</td><td>${r.modelNo}</td><td>₹${r.cost}</td><td>${r.createdBy}</td></tr>`);
+    }
+</script>
 </body>
 </html>
