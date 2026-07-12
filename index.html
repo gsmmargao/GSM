@@ -15,7 +15,6 @@
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
         
-        /* Sidebar Styling */
         .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
@@ -23,7 +22,6 @@
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        /* Main Content Area */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
         
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
@@ -45,13 +43,14 @@
         .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
         .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
 
-        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; }
+        /* Form is now hidden by default */
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
         .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; }
         .form-group label span { color: red; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
         .form-group.full-width { grid-column: span 3; }
         
         .form-actions { display: flex; gap: 10px; margin-top: 20px; }
@@ -61,6 +60,8 @@
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
+
+        .status-btn { padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; color: white; border: none; width: 140px; text-align: center; }
     </style>
 </head>
 <body>
@@ -92,9 +93,9 @@
                 <p>Manage customer repair orders</p>
             </div>
             <div class="header-right">
-                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no, contact" onkeyup="searchTable()">
-                <button class="btn" onclick="fetchOrders()">↻ Refresh</button>
-                <button class="btn btn-primary" onclick="document.getElementById('customerName').focus()">+ New Order</button>
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no..." onkeyup="searchTable()">
+                <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Order</button>
             </div>
         </div>
 
@@ -118,7 +119,8 @@
                 </div>
             </div>
 
-            <div class="form-card">
+            <!-- Form is hidden by default using id="orderFormCard" -->
+            <div class="form-card" id="orderFormCard">
                 <div class="form-header">📄 NEW ORDER ENTRY</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Customer Name <span>*</span></label><input type="text" id="customerName" placeholder="Full name"></div>
@@ -131,7 +133,7 @@
                 <div class="form-grid" style="grid-template-columns: 1fr;"><div class="form-group full-width"><label>Problem Description</label><input type="text" id="problemDesc" placeholder="Describe the issue..."></div></div>
                 <div class="form-actions">
                     <button class="btn-save" onclick="saveOrder()">+ Save Order</button>
-                    <button class="btn" onclick="clearForm()">Cancel</button>
+                    <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
 
@@ -143,9 +145,9 @@
                             <th>Date</th>
                             <th>Job No.</th>
                             <th>Customer Name</th>
-                            <th>Contact No.</th>
                             <th>IMEI / Model</th>
                             <th>Problem</th>
+                            <th>Advance (₹)</th>
                             <th>Status</th>
                             <th>Action</th>
                         </tr>
@@ -163,7 +165,7 @@
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- SET YOUR ADMIN EMAIL HERE ---
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
+        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
         let currentUserEmail = '';
 
         async function checkAuth() {
@@ -171,7 +173,6 @@
             if (!data.session) {
                 window.location.href = 'login.html';
             } else {
-                // Save the logged-in user's email
                 currentUserEmail = data.session.user.email;
             }
         }
@@ -193,6 +194,17 @@
                 .subscribe();
         });
 
+        // Hide/Show Form
+        window.toggleForm = function() {
+            const form = document.getElementById('orderFormCard');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                document.getElementById('customerName').focus();
+            } else {
+                form.style.display = 'none';
+            }
+        }
+
         async function fetchOrders() {
             try {
                 const { data: repairOrders, error } = await supabaseClient
@@ -208,38 +220,39 @@
                 let pending = 0; let completed = 0; let delivered = 0;
 
                 repairOrders.forEach(order => {
-                    if(order.status === 'Pending') pending++;
-                    if(order.status === 'Repair Completed') completed++;
-                    if(order.status === 'Goods Delivered') delivered++;
+                    let statusColor = '';
+                    if(order.status === 'Pending') { pending++; statusColor = '#eab308'; } // Yellow
+                    if(order.status === 'Repair Completed') { completed++; statusColor = '#3b82f6'; } // Blue
+                    if(order.status === 'Goods Delivered') { delivered++; statusColor = '#22c55e'; } // Green
 
-                    // --- SECURITY CHECK FOR DELETE BUTTON ---
-                    let deleteButtonHtml = '';
+                    // Admin vs Staff logic for Advance Paid field
+                    let advanceHtml = '';
                     if (currentUserEmail === ADMIN_EMAIL) {
-                        deleteButtonHtml = `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>`;
+                        advanceHtml = `<input type="number" value="${order.advancePaid || 0}" onchange="updateAdvance('${order.jobNo}', this.value)" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">`;
                     } else {
-                        deleteButtonHtml = `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
+                        advanceHtml = `₹${order.advancePaid || 0}`;
                     }
-                    // ----------------------------------------
+
+                    // Admin vs Staff logic for Delete Button
+                    let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
+                        ? `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
+                        : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
                         <td>${order.customerName ? order.customerName.split(' ')[0] : 'Staff'}</td>
                         <td>${order.date || ''}</td>
                         <td><strong>${order.jobNo || ''}</strong></td>
-                        <td>${order.customerName || ''}</td>
-                        <td>${order.contactNo || ''}</td>
+                        <td>${order.customerName || ''}<br><small style="color:gray;">${order.contactNo || ''}</small></td>
                         <td>${order.modelNo || ''} <br><small style="color:gray;">${order.imeiNo || ''}</small></td>
                         <td>${order.problemDesc || ''}</td>
+                        <td style="color:#10b981; font-weight:bold;">${advanceHtml}</td>
                         <td>
-                            <select onchange="updateOrderStatus('${order.jobNo}', this.value)" style="padding: 6px; border-radius: 6px; border: 1px solid #e5e7eb; background: white; cursor: pointer;">
-                                <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''}>Pending</option>
-                                <option value="Repair Completed" ${order.status === 'Repair Completed' ? 'selected' : ''}>Repair Completed</option>
-                                <option value="Goods Delivered" ${order.status === 'Goods Delivered' ? 'selected' : ''}>Goods Delivered</option>
-                            </select>
+                            <button class="status-btn" style="background-color: ${statusColor};" onclick="toggleStatus('${order.jobNo}', '${order.status}')">
+                                ${order.status}
+                            </button>
                         </td>
-                        <td>
-                            ${deleteButtonHtml}
-                        </td>
+                        <td>${deleteButtonHtml}</td>
                     `;
                     tableBody.appendChild(row);
                 });
@@ -274,6 +287,7 @@
                 if (error) throw error;
                 alert("Repair order added successfully!");
                 clearForm();
+                toggleForm(); // Hide form after saving
             } catch (error) { alert("Error writing to database: " + error.message); }
         };
 
@@ -287,17 +301,32 @@
             document.getElementById('advancePaid').value = '0';
         }
 
-        window.updateOrderStatus = async function(jobNo, newStatus) {
+        // --- NEW STATUS TOGGLE LOGIC ---
+        window.toggleStatus = async function(jobNo, currentStatus) {
+            let nextStatus = 'Pending';
+            if (currentStatus === 'Pending') nextStatus = 'Repair Completed';
+            else if (currentStatus === 'Repair Completed') nextStatus = 'Goods Delivered';
+            else if (currentStatus === 'Goods Delivered') nextStatus = 'Pending';
+
+            if (!confirm(`Change order status to "${nextStatus}"?`)) return;
+
             try {
-                const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('jobNo', jobNo);
+                const { error } = await supabaseClient.from('repairOrders').update({ status: nextStatus }).eq('jobNo', jobNo);
                 if (error) throw error;
+                // Note: fetchOrders() is called automatically by Supabase Realtime!
             } catch (error) { alert("Failed to update status: " + error.message); }
         };
 
+        // --- NEW ADMIN ADVANCE UPDATE LOGIC ---
+        window.updateAdvance = async function(jobNo, newValue) {
+            try {
+                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: parseFloat(newValue) || 0 }).eq('jobNo', jobNo);
+                if (error) throw error;
+            } catch (error) { alert("Failed to update advance: " + error.message); }
+        };
+
         window.deleteOrder = async function(jobNo) {
-            if (currentUserEmail !== ADMIN_EMAIL) {
-                return alert("You do not have permission to delete orders.");
-            }
+            if (currentUserEmail !== ADMIN_EMAIL) return alert("You do not have permission to delete orders.");
             if (!confirm("Are you sure you want to delete this repair order?")) return;
 
             try {
