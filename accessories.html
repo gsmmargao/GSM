@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Accessories</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
+        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        
+        /* Sidebar (Reused from your other tabs) */
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding: 0; border: none; }
+        .logo-area { padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; display: flex; align-items: center; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); padding: 30px; }
+        .tab-btn { padding: 8px 20px; border: 1px solid var(--border-color); cursor: pointer; background: white; }
+        .tab-btn.active { background: black; color: white; }
+        
+        .form-card { background: white; padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); margin-bottom: 20px; }
+        input, select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; width: 100%; box-sizing: border-box; }
+        table { width: 100%; border-collapse: collapse; background: white; border-radius: 8px; }
+        th { background: #f9fafb; padding: 12px; text-align: left; border-bottom: 1px solid var(--border-color); font-size: 0.8rem; }
+        td { padding: 12px; border-bottom: 1px solid var(--border-color); font-size: 0.9rem; }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar">
+    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+    <a href="index.html" class="nav-item">📦 Order Details</a>
+    <a href="estimate.html" class="nav-item">🧾 Estimate</a>
+    <a href="billing.html" class="nav-item">Billing</a>
+    <a href="store-plus.html" class="nav-item">🏪 Store Plus</a>
+    <a href="accessories.html" class="nav-item active">📦 Accessories</a>
+    <div style="flex-grow: 1;"></div>
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; border-top: 1px solid var(--border-color);">
+        <span id="userNameDisplay">User</span> Logout ➔
+    </div>
+</div>
+
+<div class="main-content">
+    <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
+        <h1 style="margin:0;">Accessories</h1>
+        <div>
+            <button class="tab-btn active" id="btn-gst" onclick="setTab('gst')">GST Invoices</button>
+            <button class="tab-btn" id="btn-regular" onclick="setTab('regular')">Regular Invoices</button>
+        </div>
+    </div>
+
+    <div class="form-card">
+        <div id="gst-banner" style="background:#fffbeb; border:1px solid #d97706; padding:10px; margin-bottom:15px; font-size:0.8rem; display:none;">
+            Generating <b>GST Invoice</b> (Series #677+). Customer GSTIN is mandatory.
+        </div>
+        <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:15px;">
+            <input type="text" id="custName" placeholder="Customer Name">
+            <input type="text" id="mobile" placeholder="Mobile Number">
+            <input type="text" id="gstin" placeholder="GSTIN (Required for GST)">
+            <input type="text" id="item" placeholder="Item Name">
+            <input type="text" id="serial" placeholder="Serial Number">
+            <select id="mode"><option>Cash</option><option>UPI</option><option>Card</option></select>
+            <input type="number" id="amount" placeholder="Base Amount">
+            <button class="tab-btn active" onclick="saveAccessory()">+ Save Entry</button>
+        </div>
+    </div>
+
+    <table>
+        <thead><tr><th>Invoice</th><th>Date</th><th>Name</th><th>Mobile</th><th>Item</th><th>Base</th><th>GST</th><th>Total</th><th>Mode</th></tr></thead>
+        <tbody id="accTableBody"></tbody>
+    </table>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+    let currentTab = 'gst';
+
+    function setTab(tab) {
+        currentTab = tab;
+        document.getElementById('btn-gst').className = tab === 'gst' ? 'tab-btn active' : 'tab-btn';
+        document.getElementById('btn-regular').className = tab === 'regular' ? 'tab-btn active' : 'tab-btn';
+        document.getElementById('gst-banner').style.display = tab === 'gst' ? 'block' : 'none';
+        fetchAccessories();
+    }
+
+    async function saveAccessory() {
+        const data = {
+            invoiceType: currentTab,
+            customerName: document.getElementById('custName').value,
+            mobile: document.getElementById('mobile').value,
+            gstin: document.getElementById('gstin').value,
+            item: document.getElementById('item').value,
+            serialNo: document.getElementById('serial').value,
+            paymentMode: document.getElementById('mode').value,
+            amount: parseFloat(document.getElementById('amount').value),
+            date: new Date().toISOString().split('T')[0],
+            createdBy: document.getElementById('userNameDisplay').innerText
+        };
+        await db.from('accessories').insert([data]);
+        alert("Saved!"); fetchAccessories();
+    }
+
+    async function fetchAccessories() {
+        const { data } = await db.from('accessories').select('*').eq('invoiceType', currentTab).order('created_at', {ascending:false});
+        const tbody = document.getElementById('accTableBody');
+        tbody.innerHTML = '';
+        if(data) data.forEach(r => {
+            let gst = r.amount * 0.18;
+            tbody.innerHTML += `<tr><td>${r.id.slice(0,6)}</td><td>${r.date}</td><td>${r.customerName}</td><td>${r.mobile}</td><td>${r.item}</td><td>₹${r.amount}</td><td>₹${gst.toFixed(2)}</td><td>₹${(r.amount + gst).toFixed(2)}</td><td>${r.paymentMode}</td></tr>`;
+        });
+    }
+
+    document.addEventListener("DOMContentLoaded", fetchAccessories);
+</script>
+</body>
+</html>
