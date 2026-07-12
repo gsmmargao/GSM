@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>GSM Solution - Estimate Letter</title>
+    <title>GSM Solution - Estimate</title>
     <link rel="icon" href="data:,">
     
     <style>
@@ -56,7 +56,7 @@
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
         <a href="index.html" class="nav-item">📦 Order Details</a>
-        <a href="estimate.html" class="nav-item active">Estimate Letter</a>
+        <a href="estimate.html" class="nav-item active">🧾 Estimate</a>
         <a href="billing.html" class="nav-item">Billing</a>
         <div class="nav-item">Store Plus</div>
         <div class="nav-item">Accessories</div>
@@ -77,7 +77,7 @@
     <div class="main-content">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size:1.5rem;">Estimate Letters</h1>
+                <h1 style="margin:0; font-size:1.5rem;">Estimate</h1>
             </div>
             <div>
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
@@ -197,7 +197,7 @@
                 let nextNum = (data && data.length > 0 && data[0].estimateNo) ? parseInt(data[0].estimateNo.replace(/\D/g, '')) + 1 : 1000;
                 document.getElementById('e-estNo').value = `EST${nextNum}`;
                 document.getElementById('partsBody').innerHTML = '';
-                addPartRow(); // Add one empty row to start
+                addPartRow(); 
                 calculateTotals();
             }
         }
@@ -230,7 +230,6 @@
             let partsSubTotal = 0;
             const rows = document.querySelectorAll('#partsBody tr');
             
-            // Calculate Parts
             rows.forEach(row => {
                 const rate = parseFloat(row.querySelector('.p-rate').value) || 0;
                 const qty = parseFloat(row.querySelector('.p-qty').value) || 0;
@@ -274,7 +273,6 @@
         }
 
         window.saveEstimate = async function() {
-            // Gather Parts
             const partsList = [];
             document.querySelectorAll('#partsBody tr').forEach(row => {
                 const code = row.querySelector('.p-code').value.trim();
@@ -293,11 +291,11 @@
                 "jobNo": document.getElementById('e-jobNo').value.trim(),
                 "customerName": document.getElementById('e-name').value.trim(),
                 "modelNo": document.getElementById('e-model').value.trim(),
-                "remarks": document.getElementById('e-imei').value.trim(), // Storing IMEI in remarks for now
+                "remarks": document.getElementById('e-imei').value.trim(), 
                 "parts_list": partsList,
                 "labor_amount": laborAmt,
                 "total_amount": finalTotal,
-                "cost": finalTotal, // Fallback for older code
+                "cost": finalTotal, 
                 "createdBy": document.getElementById('userNameDisplay').innerText 
             };
 
@@ -309,12 +307,11 @@
             fetchEstimates();
         }
 
-        // --- PRINT FUNCTIONALITY (Matches Your Exact HTML Design) ---
+        // --- PRINT FUNCTIONALITY (Updated with Signatory & Tagline) ---
         window.printEstimate = function(index) {
             const est = allEstimatesData[index];
             if(!est) return;
 
-            // Calculations based on saved JSON array
             let partsRowsHtml = '';
             let partsSubTotal = 0;
 
@@ -426,6 +423,22 @@
                 <tr>
                     <td colspan="5" class="text-right font-bold" style="font-size: 12px; padding-top: 8px; padding-bottom: 8px;">BILL AMOUNT (E+K):</td>
                     <td class="text-right bill-amount" style="border: 2px solid #000; border-left: 1px solid #000;">${billAmount.toFixed(2)}</td>
+                </tr>
+                
+                <!-- SIGNATURE AND DISCLAIMER SECTION -->
+                <tr>
+                    <td colspan="6" class="no-bottom-border" style="padding-top: 20px;">
+                        <div style="float: right; text-align: center; font-weight: bold; margin-right: 20px;">
+                            For GSM SOLUTION<br><br><br><br>
+                            Authorised Signatory
+                        </div>
+                        <div style="clear: both;"></div>
+                    </td>
+                </tr>
+                <tr>
+                    <td colspan="6" class="no-top-border" style="font-size: 10px; padding: 15px 10px 10px 10px; text-align: justify;">
+                        <b>Note:</b> This quotation is valid for 7 days from the date of issue. The final repair cost may vary after detailed diagnosis and inspection of the device. Any additional charges will be communicated to the customer for approval before proceeding with the repair.
+                    </td>
                 </tr>
             </table>
             <script>
