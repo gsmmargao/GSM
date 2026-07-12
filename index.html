@@ -209,35 +209,31 @@
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         let currentUserEmail = '';
 
-        // Sidebar Auto-Collapse Logic
+        // --- Sidebar Logic ---
         let sidebarTimer;
-        
         window.resetSidebarTimer = function() {
             clearTimeout(sidebarTimer);
-            // Auto collapse after 5 seconds
             sidebarTimer = setTimeout(() => {
-                document.getElementById('sidebar').classList.add('collapsed');
-                document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
+                const sb = document.getElementById('sidebar');
+                const btn = document.getElementById('sidebarToggle');
+                if(sb && btn) {
+                    sb.classList.add('collapsed');
+                    btn.classList.add('sidebar-collapsed-btn');
+                }
             }, 5000);
         }
-
-        window.clearSidebarTimer = function() {
-            clearTimeout(sidebarTimer);
-        }
-
+        window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+        
         window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar');
+            const sb = document.getElementById('sidebar');
             const btn = document.getElementById('sidebarToggle');
-            sidebar.classList.toggle('collapsed');
-            btn.classList.toggle('sidebar-collapsed-btn');
-            
-            if(!sidebar.classList.contains('collapsed')) {
-                resetSidebarTimer(); // Restart timer if opened manually
-            } else {
-                clearSidebarTimer(); // Stop timer if closed manually
+            if(sb && btn) {
+                sb.classList.toggle('collapsed');
+                btn.classList.toggle('sidebar-collapsed-btn');
+                if(!sb.classList.contains('collapsed')) resetSidebarTimer();
+                else clearSidebarTimer();
             }
         }
-
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
             if (!data.session) {
