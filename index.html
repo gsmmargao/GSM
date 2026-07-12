@@ -310,7 +310,7 @@
 
                     const row = document.createElement('tr');
                     row.innerHTML = `
-                        <td>${order.customerName ? order.customerName.split(' ')[0] : 'Staff'}</td>
+                        <td style="text-transform: capitalize;">${order.createdBy || 'Admin'}</td>
                         <td>${order.date || ''}</td>
                         <td><strong>${order.jobNo || ''}</strong></td>
                         <td>${order.customerName || ''}<br><small style="color:gray;">${order.contactNo || ''}</small></td>
@@ -339,6 +339,9 @@
         }
 
         window.saveOrder = async function() {
+            // Get the name of the person who is logged in from the sidebar!
+            let creatorName = document.getElementById('userNameDisplay').innerText;
+
             const orderData = {
                 customerName: document.getElementById('customerName').value,
                 contactNo: document.getElementById('contactNo').value,
@@ -348,7 +351,8 @@
                 problemDesc: document.getElementById('problemDesc').value,
                 advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0,
                 date: new Date().toISOString().split('T')[0],
-                status: "Pending"
+                status: "Pending",
+                createdBy: creatorName // Saves who made it!
             };
 
             if(!orderData.customerName || !orderData.jobNo) {
@@ -387,7 +391,6 @@
                 nextStatus = 'Goods Delivered';
                 confirmMsg = `Mark job ${jobNo} as "Goods Delivered"?`;
             } else {
-                // If it's already Delivered, you can choose to ignore clicks or prompt to reset
                 return alert("This order is already marked as Goods Delivered.");
             }
 
