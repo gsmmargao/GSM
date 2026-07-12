@@ -61,7 +61,7 @@
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
-        /* --- NEW 3-WAY TOGGLE SWITCH CSS --- */
+        /* --- 3-WAY TOGGLE SWITCH CSS --- */
         .toggle-container {
             display: flex;
             align-items: center;
@@ -98,9 +98,6 @@
             line-height: 32px;
         }
         .status-Pending .opt-p, .status-Completed .opt-c, .status-Delivered .opt-d { color: white; }
-        
-        .locked-toggle { opacity: 0.6; cursor: not-allowed; }
-        .locked-toggle .toggle-option { cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -118,6 +115,9 @@
         <div class="nav-item">Sales Report</div>
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
+        
+        <!-- Protected Admin Users Tab (Hidden dynamically by default) -->
+        <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
         <div style="flex-grow: 1;"></div> 
         <div class="nav-item" onclick="logOut()" style="color: #dc2626 !important; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
@@ -203,7 +203,7 @@
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         // --- SET YOUR ADMIN EMAIL HERE ---
-        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         let currentUserEmail = '';
 
         async function checkAuth() {
@@ -212,6 +212,11 @@
                 window.location.href = 'login.html';
             } else {
                 currentUserEmail = data.session.user.email;
+                
+                // Magic rule: Automatically show the "Manage Users" button if they are Admin!
+                if (currentUserEmail === ADMIN_EMAIL) {
+                    document.getElementById('adminUsersTab').style.display = 'flex';
+                }
             }
         }
         
@@ -264,11 +269,7 @@
                     if(order.status === 'Repair Completed') { completed++; statusClass = 'status-Completed'; statusColor = '#3b82f6'; }
                     if(order.status === 'Goods Delivered') { delivered++; statusClass = 'status-Delivered'; statusColor = '#22c55e'; }
 
-                    // Lock switch if it's already delivered
-                    let isLocked = order.status === 'Goods Delivered';
-                    let lockedClass = isLocked ? 'locked-toggle' : '';
-
-                    // Advance Paid Logic
+                    // Advance Paid Form Element (Editable for Admin only)
                     let advanceHtml = '';
                     if (currentUserEmail === ADMIN_EMAIL) {
                         advanceHtml = `<input type="number" value="${order.advancePaid || 0}" onchange="updateAdvance('${order.jobNo}', this.value)" style="width: 70px; padding: 4px; border: 1px solid #ccc; border-radius: 4px;">`;
@@ -276,7 +277,7 @@
                         advanceHtml = `₹${order.advancePaid || 0}`;
                     }
 
-                    // Delete Logic
+                    // Delete Button Security
                     let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
                         ? `<button onclick="deleteOrder('${order.jobNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
                         : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
@@ -291,13 +292,13 @@
                         <td>${order.problemDesc || ''}</td>
                         <td style="color:#10b981; font-weight:bold;">${advanceHtml}</td>
                         
-                        <!-- 3-WAY TOGGLE SWITCH -->
+                        <!-- 3-WAY TOGGLE SWITCH (Unlocked for all stages so users can switch stages freely) -->
                         <td style="text-align: center;">
-                            <div class="toggle-container ${statusClass} ${lockedClass}">
+                            <div class="toggle-container ${statusClass}">
                                 <div class="toggle-slider"></div>
-                                <div class="toggle-option opt-p" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Pending')` : 'alertLocked()'}" title="Pending">P</div>
-                                <div class="toggle-option opt-c" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Repair Completed')` : 'alertLocked()'}" title="Repair Completed">C</div>
-                                <div class="toggle-option opt-d" onclick="${!isLocked ? `setOrderStatus('${order.jobNo}', '${order.status}', 'Goods Delivered')` : 'alertLocked()'}" title="Goods Delivered">D</div>
+                                <div class="toggle-option opt-p" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Pending')" title="Pending">P</div>
+                                <div class="toggle-option opt-c" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Repair Completed')" title="Repair Completed">C</div>
+                                <div class="toggle-option opt-d" onclick="setOrderStatus('${order.jobNo}', '${order.status}', 'Goods Delivered')" title="Goods Delivered">D</div>
                             </div>
                             <div style="font-size:0.75rem; font-weight:700; margin-top:5px; color:${statusColor}">${order.status}</div>
                         </td>
@@ -351,9 +352,8 @@
             document.getElementById('advancePaid').value = '0';
         }
 
-        // --- NEW STATUS TOGGLE LOGIC ---
         window.setOrderStatus = async function(jobNo, currentStatus, newStatus) {
-            if (currentStatus === newStatus) return; // Do nothing if clicking the same status
+            if (currentStatus === newStatus) return; 
             
             if (!confirm(`Are you sure you want to change the status to "${newStatus}"?`)) return;
 
@@ -361,10 +361,6 @@
                 const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('jobNo', jobNo);
                 if (error) throw error;
             } catch (error) { alert("Failed to update status: " + error.message); }
-        };
-
-        window.alertLocked = function() {
-            alert("This order is already marked as 'Goods Delivered' and is locked. Please contact the Admin to reverse it.");
         };
 
         window.updateAdvance = async function(jobNo, newValue) {
