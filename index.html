@@ -15,7 +15,7 @@
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        /* Sidebar Styling (with transition for collapse) */
+        /* Sidebar Styling */
         .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         
@@ -25,10 +25,10 @@
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        /*  Toggle Button */
-        .-toggle-btn {
+        /* Fixed Toggle Button CSS */
+        .sidebar-toggle-btn {
             position: absolute;
-            left: var(---width);
+            left: var(--sidebar-width);
             top: 50%;
             transform: translateY(-50%);
             background: black;
@@ -45,7 +45,7 @@
             transition: left 0.4s ease;
             font-weight: bold;
         }
-        .-collapsed-btn { left: 0 !important; }
+        .sidebar-collapsed-btn { left: 0 !important; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
         
@@ -85,14 +85,12 @@
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
-        /* Progress Button Styling */
         .status-btn { border: none; padding: 8px 16px; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: opacity 0.2s; width: 150px; }
         .status-btn:hover { opacity: 0.85; }
     </style>
 </head>
 <body>
 
-    <!--  with auto-collapse hover events -->
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
@@ -112,21 +110,11 @@
             <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
         </div>
     </div>
-    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
-        
-        <!-- Protected Admin Users Tab -->
-        <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
-
-        <div style="flex-grow: 1;"></div> 
-        <!-- Bold Black Logout Button -->
-        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
-        </div>
-    </div>
-
-    <!-- The floating sidebar toggle button -->
+    
+    <!-- Floating sidebar toggle button -->
     <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
+    <!-- Main Content -->
     <div class="main-content">
         <div class="header">
             <div class="header-left">
@@ -134,7 +122,6 @@
                 <p>Manage customer repair orders</p>
             </div>
             <div class="header-right">
-                <!-- Search bar is here, just before the refresh button -->
                 <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no..." onkeyup="searchTable()">
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
                 <button class="btn btn-primary" onclick="toggleForm()">+ New Order</button>
@@ -205,11 +192,10 @@
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
-        // --- SET YOUR ADMIN EMAIL HERE ---
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- CHANGE THIS
         let currentUserEmail = '';
 
-        // --- Sidebar Logic ---
+        // --- Corrected Sidebar Logic ---
         let sidebarTimer;
         window.resetSidebarTimer = function() {
             clearTimeout(sidebarTimer);
@@ -234,18 +220,17 @@
                 else clearSidebarTimer();
             }
         }
+
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
             if (!data.session) {
                 window.location.href = 'login.html';
             } else {
                 currentUserEmail = data.session.user.email;
-                
-                // Set the bold black user name on the logout button
                 let displayEmail = currentUserEmail.split('@')[0];
                 document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
                 
-                if (currentUserEmail === ADMIN_EMAIL) {
+                if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                     document.getElementById('adminUsersTab').style.display = 'flex';
                 }
             }
@@ -259,7 +244,7 @@
         document.addEventListener("DOMContentLoaded", async () => {
             await checkAuth(); 
             fetchOrders();
-            resetSidebarTimer(); // Start the 5 second collapse timer!
+            resetSidebarTimer(); 
 
             supabaseClient
                 .channel('public:repairOrders')
@@ -320,14 +305,11 @@
                         <td>${order.modelNo || ''} <br><small style="color:gray;">${order.imeiNo || ''}</small></td>
                         <td>${order.problemDesc || ''}</td>
                         <td style="color:#10b981; font-weight:bold;">${advanceHtml}</td>
-                        
-                        <!-- SIMPLIFIED ONE-CLICK STATUS BUTTON -->
                         <td style="text-align: center;">
                             <button class="status-btn" style="background-color: ${statusColor};" onclick="advanceStatus('${order.jobNo}', '${order.status}')">
                                 ${order.status}
                             </button>
                         </td>
-                        
                         <td>${deleteButtonHtml}</td>
                     `;
                     tableBody.appendChild(row);
@@ -342,7 +324,6 @@
         }
 
         window.saveOrder = async function() {
-            // Get the name of the person who is logged in from the sidebar!
             let creatorName = document.getElementById('userNameDisplay').innerText;
 
             const orderData = {
@@ -355,7 +336,7 @@
                 advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0,
                 date: new Date().toISOString().split('T')[0],
                 status: "Pending",
-                createdBy: creatorName // Saves who made it!
+                createdBy: creatorName 
             };
 
             if(!orderData.customerName || !orderData.jobNo) {
@@ -374,7 +355,6 @@
         window.clearForm = function() {
             document.getElementById('customerName').value = '';
             document.getElementById('contactNo').value = '';
-            // Restoring defaults requested by user!
             document.getElementById('jobNo').value = '4438768800';
             document.getElementById('imeiNo').value = '';
             document.getElementById('modelNo').value = 'SM-A356ELBJINS';
@@ -382,7 +362,6 @@
             document.getElementById('advancePaid').value = '0';
         }
 
-        // --- NEW ONE-CLICK STATUS PROGRESSION LOGIC ---
         window.advanceStatus = async function(jobNo, currentStatus) {
             let nextStatus = '';
             let confirmMsg = '';
@@ -413,7 +392,7 @@
         };
 
         window.deleteOrder = async function(jobNo) {
-            if (currentUserEmail !== ADMIN_EMAIL) return alert("You do not have permission to delete orders.");
+            if (currentUserEmail.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) return alert("You do not have permission to delete orders.");
             if (!confirm("Are you sure you want to delete this repair order?")) return;
 
             try {
