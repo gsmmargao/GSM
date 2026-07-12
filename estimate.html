@@ -95,9 +95,14 @@
                     <div class="form-group"><label>Estimate No.</label><input type="text" id="e-estNo" readonly style="background:#f3f4f6; font-weight:bold;"></div>
                     <div class="form-group"><label>Date</label><input type="date" id="e-date"></div>
                     <div class="form-group"><label>Job / Call No.</label><input type="text" id="e-jobNo" placeholder="e.g. 4438768800" onblur="fetchCustomerDetails()"></div>
+                    
                     <div class="form-group"><label>Customer Name</label><input type="text" id="e-name"></div>
+                    <div class="form-group"><label>Contact No.</label><input type="text" id="e-contact"></div>
                     <div class="form-group"><label>Model No.</label><input type="text" id="e-model"></div>
-                    <div class="form-group"><label>IMEI / Serial (Optional)</label><input type="text" id="e-imei"></div>
+                    
+                    <div class="form-group"><label>IMEI No.</label><input type="text" id="e-imei"></div>
+                    <div class="form-group"><label>Serial No.</label><input type="text" id="e-serial"></div>
+                    <div class="form-group"><label>Remarks (Optional)</label><input type="text" id="e-remarks" placeholder="Address or other notes"></div>
                 </div>
 
                 <div style="margin-top: 20px; font-weight: bold; font-size: 0.9rem;">🛠️ Parts Required</div>
@@ -205,9 +210,10 @@
         window.fetchCustomerDetails = async function() {
             const jobNo = document.getElementById('e-jobNo').value.trim();
             if(!jobNo) return;
-            const { data } = await db.from('repairOrders').select('customerName, modelNo, imeiNo').ilike('jobNo', jobNo).maybeSingle();
+            const { data } = await db.from('repairOrders').select('customerName, contactNo, modelNo, imeiNo').ilike('jobNo', jobNo).maybeSingle();
             if(data) {
                 document.getElementById('e-name').value = data.customerName || '';
+                document.getElementById('e-contact').value = data.contactNo || '';
                 document.getElementById('e-model').value = data.modelNo || '';
                 document.getElementById('e-imei').value = data.imeiNo || '';
             }
@@ -290,8 +296,11 @@
                 "date": document.getElementById('e-date').value,
                 "jobNo": document.getElementById('e-jobNo').value.trim(),
                 "customerName": document.getElementById('e-name').value.trim(),
+                "contactNo": document.getElementById('e-contact').value.trim(),
                 "modelNo": document.getElementById('e-model').value.trim(),
-                "remarks": document.getElementById('e-imei').value.trim(), 
+                "imei": document.getElementById('e-imei').value.trim(), 
+                "serialNo": document.getElementById('e-serial').value.trim(), 
+                "remarks": document.getElementById('e-remarks').value.trim(), 
                 "parts_list": partsList,
                 "labor_amount": laborAmt,
                 "total_amount": finalTotal,
@@ -307,7 +316,7 @@
             fetchEstimates();
         }
 
-        // --- PRINT FUNCTIONALITY (Updated with Signatory & Tagline) ---
+        // --- PRINT FUNCTIONALITY (Updated with separate IMEI and Serial No) ---
         window.printEstimate = function(index) {
             const est = allEstimatesData[index];
             if(!est) return;
@@ -379,8 +388,12 @@
                     <td colspan="3" class="no-bottom-border"><br><span class="font-bold">Model No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.modelNo || '-'}</span><br><br></td>
                 </tr>
                 <tr>
-                    <td colspan="3" class="font-bold">Address: &nbsp; - </td>
-                    <td colspan="3"><span class="font-bold">IMEI/Serial:</span> &nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.remarks || '-'}</span></td>
+                    <td colspan="3" class="font-bold">Address: &nbsp; ${est.remarks || '-'}</td>
+                    <td colspan="3"><span class="font-bold">IMEI No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.imei || '-'}</span></td>
+                </tr>
+                <tr>
+                    <td colspan="3" class="font-bold">MOBILE: &nbsp; ${est.contactNo || '-'}</td>
+                    <td colspan="3"><span class="font-bold">Serial No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.serialNo || '-'}</span></td>
                 </tr>
                 
                 <tr class="font-bold text-center">
