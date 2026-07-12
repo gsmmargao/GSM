@@ -84,7 +84,7 @@
 
         <div class="dashboard-padding">
             
-            <!-- Summary Stats Grid (Replaces the bottom cards from your React code) -->
+            <!-- Summary Stats Grid -->
             <div class="stats-grid">
                 <div class="stat-card">
                     <h3>Sub Total</h3>
@@ -150,7 +150,6 @@
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- UPDATE THIS
         
-        // --- Sidebar Logic ---
         let sidebarTimer;
         window.resetSidebarTimer = function() {
             clearTimeout(sidebarTimer);
@@ -191,7 +190,11 @@
 
         window.fetchEntries = async function() {
             const { data, error } = await db.from('store_plus').select('*').order('created_at', { ascending: true });
-            if (error) return console.error(error);
+            
+            if (error) {
+                console.error("Fetch Error:", error);
+                return;
+            }
 
             const tbody = document.getElementById('storeTableBody');
             tbody.innerHTML = '';
@@ -200,7 +203,7 @@
             let globalIgst = 0;
             let globalTotal = 0;
 
-            if(data) {
+            if(data && data.length > 0) {
                 data.forEach(entry => {
                     const amount = parseFloat(entry.amount) || 0;
                     const igst = amount * 0.18;
@@ -211,7 +214,7 @@
                     globalTotal += total;
 
                     tbody.innerHTML += `<tr>
-                        <td><strong>${entry.invoiceNo}</strong></td>
+                        <td><strong>${entry.invoiceNo || '-'}</strong></td>
                         <td style="text-transform: capitalize;">${entry.createdBy || '-'}</td>
                         <td>${entry.date || '-'}</td>
                         <td>${entry.hsn || '-'}</td>
@@ -221,14 +224,14 @@
                         <td style="text-transform: uppercase;">${entry.gstNumber || '-'}</td>
                     </tr>`;
                 });
+            } else {
+                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: gray;">No entries found.</td></tr>';
             }
 
-            // Update Summary Grid
             document.getElementById('s-subtotal').innerText = '₹' + globalSubTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('s-igst').innerText = '₹' + globalIgst.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('s-total').innerText = '₹' + globalTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             
-            // Update Table Footer
             document.getElementById('tf-amount').innerText = '₹' + globalSubTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('tf-igst').innerText = '₹' + globalIgst.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
             document.getElementById('tf-total').innerText = '₹' + globalTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -238,31 +241,46 @@
             const amount = parseFloat(document.getElementById('sp-amount').value);
             if (!amount || amount <= 0) return alert("Please enter a valid amount.");
 
-            // Generate Invoice (e.g. ST051)
-            const { data: latest } = await db.from('store_plus').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
-            let nextNum = 50; 
-            if (latest && latest.length > 0 && latest[0].invoiceNo) {
-                nextNum = parseInt(latest[0].invoiceNo.replace(/\D/g, '')) + 1;
+            try {
+                // Generate Invoice (e.g. ST051)
+                const { data: latest, error: fetchErr } = await db.from('store_plus').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
+                
+                if (fetchErr) {
+                    alert("Database Error: " + fetchErr.message + "\n\nDid you create the 'store_plus' table in Supabase?");
+                    return;
+                }
+
+                let nextNum = 50; 
+                if (latest && latest.length > 0 && latest[0].invoiceNo) {
+                    nextNum = parseInt(latest[0].invoiceNo.replace(/\D/g, '')) + 1;
+                }
+                const invoiceNo = `ST0${nextNum}`;
+
+                const entryData = {
+                    "invoiceNo": invoiceNo,
+                    "date": document.getElementById('sp-date').value,
+                    "amount": amount,
+                    "hsn": document.getElementById('sp-hsn').value.trim(),
+                    "gstNumber": document.getElementById('sp-gst').value.trim().toUpperCase(),
+                    "createdBy": document.getElementById('userNameDisplay').innerText 
+                };
+
+                const { error: insertErr } = await db.from('store_plus').insert([entryData]);
+                
+                if (insertErr) {
+                    alert("Error saving data: " + insertErr.message);
+                    return;
+                }
+                
+                alert("Entry Added Successfully!");
+                document.getElementById('sp-amount').value = '';
+                document.getElementById('sp-hsn').value = '';
+                document.getElementById('sp-gst').value = '';
+                fetchEntries();
+                
+            } catch (err) {
+                alert("An unexpected error occurred: " + err.message);
             }
-            const invoiceNo = `ST0${nextNum}`;
-
-            const entryData = {
-                "invoiceNo": invoiceNo,
-                "date": document.getElementById('sp-date').value,
-                "amount": amount,
-                "hsn": document.getElementById('sp-hsn').value.trim(),
-                "gstNumber": document.getElementById('sp-gst').value.trim().toUpperCase(),
-                "createdBy": document.getElementById('userNameDisplay').innerText 
-            };
-
-            const { error } = await db.from('store_plus').insert([entryData]);
-            if (error) return alert("Error saving: " + error.message);
-            
-            // Reset Form and Refresh
-            document.getElementById('sp-amount').value = '';
-            document.getElementById('sp-hsn').value = '';
-            document.getElementById('sp-gst').value = '';
-            fetchEntries();
         }
     </script>
 </body>
