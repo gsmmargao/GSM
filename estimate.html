@@ -4,8 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>GSM Solution - Estimate Letter</title>
-    
-    <!-- Favicon Fix -->
     <link rel="icon" href="data:,">
     
     <style>
@@ -18,7 +16,7 @@
         
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
-        .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
@@ -51,7 +49,6 @@
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
         <a href="index.html" class="nav-item">📦 Order Details</a>
-        <!-- Estimate is now marked Active -->
         <a href="estimate.html" class="nav-item active">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
         <div class="nav-item">Store Plus</div>
@@ -60,25 +57,20 @@
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
         
-        <!-- Protected Admin Users Tab -->
         <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
         <div style="flex-grow: 1;"></div> 
-        <!-- Bold Black Logout Button -->
         <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
             <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
         </div>
     </div>
     
-    <!-- Sidebar Toggle Button -->
     <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
-    <!-- Main Content -->
     <div class="main-content">
         <div class="header">
             <div>
                 <h1 style="margin:0; font-size:1.5rem;">Estimate Letters</h1>
-                <p style="margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem;">Generate repair estimates for customers</p>
             </div>
             <div>
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
@@ -87,7 +79,6 @@
         </div>
 
         <div class="dashboard-padding">
-            <!-- Hidden Form -->
             <div class="form-card" id="estimateForm">
                 <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW ESTIMATE</div>
                 <div class="form-grid">
@@ -99,7 +90,7 @@
                     <div class="form-group"><label>Estimated Cost (₹)</label><input type="number" id="e-cost" placeholder="0"></div>
                 </div>
                 <div class="form-grid" style="grid-template-columns: 1fr;">
-                    <div class="form-group full-width"><label>Remarks / Issue Details</label><input type="text" id="e-remarks" placeholder="Enter parts needed or repair description..."></div>
+                    <div class="form-group full-width"><label>Remarks</label><input type="text" id="e-remarks" placeholder="Enter details..."></div>
                 </div>
                 <div style="margin-top:15px;">
                     <button class="btn btn-primary" style="background:#2563eb;" onclick="saveEstimate()">💾 Save Estimate</button>
@@ -107,19 +98,10 @@
                 </div>
             </div>
 
-            <!-- Data Table -->
             <div class="table-card">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Estimate No.</th>
-                            <th>Date</th>
-                            <th>Job Number</th>
-                            <th>Customer Name</th>
-                            <th>Device Model</th>
-                            <th>Estimated Cost</th>
-                            <th>Created By</th>
-                        </tr>
+                        <tr><th>Estimate No.</th><th>Date</th><th>Job Number</th><th>Customer Name</th><th>Device Model</th><th>Estimated Cost</th><th>Created By</th></tr>
                     </thead>
                     <tbody id="estimateTableBody"></tbody>
                 </table>
@@ -127,17 +109,11 @@
         </div>
     </div>
 
-    <!-- Supabase SDK Integration -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
-        const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
-        const db = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
-        let loggedInEmail = 'Staff';
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- CHANGE TO YOUR ADMIN EMAIL
+        const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- UPDATE THIS
 
-        // Sidebar Auto-Collapse Logic
         let sidebarTimer;
         window.resetSidebarTimer = function() {
             clearTimeout(sidebarTimer);
@@ -146,9 +122,7 @@
                 document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
             }, 5000);
         }
-        
         window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
-        
         window.toggleSidebar = function() {
             const sidebar = document.getElementById('sidebar');
             const btn = document.getElementById('sidebarToggle');
@@ -158,105 +132,64 @@
             else clearSidebarTimer();
         }
 
-        // Security Authentication
         async function checkAuth() {
             const { data } = await db.auth.getSession();
             if (!data.session) {
                 window.location.href = 'login.html';
             } else {
-                loggedInEmail = data.session.user.email.split('@')[0];
-                document.getElementById('userNameDisplay').innerText = loggedInEmail.charAt(0).toUpperCase() + loggedInEmail.slice(1);
-                
-                if (data.session.user.email === ADMIN_EMAIL) {
+                let email = data.session.user.email;
+                let name = email.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = name.charAt(0).toUpperCase() + name.slice(1);
+                if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                     document.getElementById('adminUsersTab').style.display = 'flex';
                 }
             }
         }
 
-        window.logOut = async function() {
-            await db.auth.signOut();
-            window.location.href = 'login.html';
-        }
+        window.logOut = async function() { await db.auth.signOut(); window.location.href = 'login.html'; }
 
         document.addEventListener("DOMContentLoaded", () => {
             checkAuth();
-            resetSidebarTimer(); 
+            resetSidebarTimer();
             document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
             fetchEstimates();
         });
 
-        // Generate Estimate Number (e.g., EST1000)
-        async function generateEstimateNo() {
-            try {
-                const { data } = await db.from('estimates').select('estimateNo').order('estimateNo', { ascending: false }).limit(1);
-                let nextNum = 1000; 
-                if (data && data.length > 0 && data[0].estimateNo) {
-                    const lastNum = parseInt(data[0].estimateNo.replace(/\D/g, ''));
-                    if (!isNaN(lastNum) && lastNum >= 1000) nextNum = lastNum + 1;
-                }
-                document.getElementById('e-estNo').value = `EST${nextNum}`;
-            } catch (err) {
-                document.getElementById('e-estNo').value = `EST1000`;
-            }
-        }
-
         window.toggleForm = function() {
             const form = document.getElementById('estimateForm');
-            if (form.style.display === 'none' || form.style.display === '') {
-                form.style.display = 'block';
-                document.getElementById('e-estNo').value = 'Loading...';
-                generateEstimateNo(); 
-            } else {
-                form.style.display = 'none';
-            }
+            form.style.display = (form.style.display === 'none' || form.style.display === '') ? 'block' : 'none';
+            if(form.style.display === 'block') generateEstNo();
         }
 
-        // Smart feature: Automatically pull customer data if Job No exists in repairOrders
+        async function generateEstNo() {
+            const { data } = await db.from('estimates').select('estimateNo').order('estimateNo', { ascending: false }).limit(1);
+            let nextNum = (data && data.length > 0) ? parseInt(data[0].estimateNo.replace(/\D/g, '')) + 1 : 1000;
+            document.getElementById('e-estNo').value = `EST${nextNum}`;
+        }
+
         window.fetchCustomerDetails = async function() {
             const jobNo = document.getElementById('e-jobNo').value.trim();
             if(!jobNo) return;
-            
-            const { data } = await db.from('repairOrders').select('customerName, modelNo').ilike('jobNo', jobNo).single();
+            const { data } = await db.from('repairOrders').select('customerName, modelNo').ilike('jobNo', jobNo).maybeSingle();
             if(data) {
-                if(data.customerName) document.getElementById('e-name').value = data.customerName;
-                if(data.modelNo) document.getElementById('e-model').value = data.modelNo;
+                document.getElementById('e-name').value = data.customerName || '';
+                document.getElementById('e-model').value = data.modelNo || '';
             }
         }
 
-        // Load Estimates Table
         window.fetchEstimates = async function() {
-            try {
-                const { data, error } = await db.from('estimates').select('*').order('created_at', { ascending: false });
-                if (error && error.code === '42P01') {
-                    // This means the table doesn't exist yet! We handle it gracefully.
-                    document.getElementById('estimateTableBody').innerHTML = '<tr><td colspan="7" style="text-align:center; color:gray;">Please create the "estimates" table in your Supabase Database.</td></tr>';
-                    return;
-                }
-                
-                const tbody = document.getElementById('estimateTableBody');
-                tbody.innerHTML = '';
-                
-                if(data) {
-                    data.forEach(est => {
-                        tbody.innerHTML += `<tr>
-                            <td><strong>${est.estimateNo}</strong></td>
-                            <td>${est.date}</td>
-                            <td style="color:#2563eb; font-weight:bold;">${est.jobNo || '-'}</td>
-                            <td>${est.customerName || '-'}</td>
-                            <td>${est.modelNo || '-'}</td>
-                            <td style="color:#d97706; font-weight:bold;">₹${est.cost || 0}</td>
-                            <td style="text-transform: capitalize;">${est.createdBy || 'System'}</td>
-                        </tr>`;
-                    });
-                }
-            } catch (err) {
-                console.error(err);
+            const { data } = await db.from('estimates').select('*').order('created_at', { ascending: false });
+            const tbody = document.getElementById('estimateTableBody');
+            tbody.innerHTML = '';
+            if(data) {
+                data.forEach(est => {
+                    tbody.innerHTML += `<tr><td><strong>${est.estimateNo}</strong></td><td>${est.date}</td><td>${est.jobNo || '-'}</td><td>${est.customerName || '-'}</td><td>${est.modelNo || '-'}</td><td style="color:#d97706; font-weight:bold;">₹${est.cost || 0}</td><td style="text-transform: capitalize;">${est.createdBy || '-'}</td></tr>`;
+                });
             }
         }
 
-        // Save Estimate
         window.saveEstimate = async function() {
-            const estimateData = {
+            const estData = {
                 estimateNo: document.getElementById('e-estNo').value,
                 date: document.getElementById('e-date').value,
                 jobNo: document.getElementById('e-jobNo').value.trim(),
@@ -266,24 +199,11 @@
                 remarks: document.getElementById('e-remarks').value.trim(),
                 createdBy: document.getElementById('userNameDisplay').innerText 
             };
-
-            const { error } = await db.from('estimates').insert([estimateData]);
-            
-            if (error) {
-                alert("Error saving Estimate: " + error.message + "\n\nMake sure you have created the 'estimates' table in Supabase!");
-                return;
-            } 
-            
-            alert("Estimate Saved Successfully!");
-            window.toggleForm();
-            window.fetchEstimates();
-            
-            // Clear inputs
-            document.getElementById('e-jobNo').value = '';
-            document.getElementById('e-name').value = '';
-            document.getElementById('e-model').value = '';
-            document.getElementById('e-cost').value = '';
-            document.getElementById('e-remarks').value = '';
+            const { error } = await db.from('estimates').insert([estData]);
+            if(error) return alert("Error: " + error.message);
+            alert("Estimate Saved!");
+            toggleForm();
+            fetchEstimates();
         }
     </script>
 </body>
