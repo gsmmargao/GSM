@@ -25,10 +25,10 @@
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        /* Sidebar Toggle Button */
-        .sidebar-toggle-btn {
+        /*  Toggle Button */
+        .-toggle-btn {
             position: absolute;
-            left: var(--sidebar-width);
+            left: var(---width);
             top: 50%;
             transform: translateY(-50%);
             background: black;
@@ -45,7 +45,7 @@
             transition: left 0.4s ease;
             font-weight: bold;
         }
-        .sidebar-collapsed-btn { left: 0 !important; }
+        .-collapsed-btn { left: 0 !important; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
         
@@ -92,8 +92,8 @@
 </head>
 <body>
 
-    <!-- Sidebar with auto-collapse hover events -->
-    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+    <!--  with auto-collapse hover events -->
+    <div class="" id="" onmouseenter="clearTimer()" onmouseleave="resetTimer()">
         <div class="logo-area">
             <div class="logo-icon">GSM</div>
             SOLUTION
@@ -101,11 +101,11 @@
         <a href="index.html" class="nav-item active">📦 Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
-        <div class="nav-item">Store Plus</div>
-        <div class="nav-item">Accessories</div>
-        <div class="nav-item">Sales Report</div>
-        <div class="nav-item">UPI Book</div>
-        <div class="nav-item">Cashbook</div>
+        <a href="store-plus.html" class="nav-item">🏪 Store Plus</a>
+        <"nav-item">Accessories</div>
+        <"nav-item">Sales Report</div>
+        <"nav-item">UPI Book</div>
+        <"nav-item">Cashbook</div>
         
         <!-- Protected Admin Users Tab -->
         <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
