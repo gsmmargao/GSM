@@ -7,16 +7,23 @@
     <link rel="icon" href="data:,">
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; }
+        /* Auto-Collapsing Sidebar CSS */
+        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
         .nav-item { padding: 12px 20px; color: #4b5563; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; }
+        /* Sidebar Toggle Button */
+        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.4s ease; font-weight: bold; }
+        .sidebar-collapsed-btn { left: 0 !important; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
         .btn-primary { background: black; color: white; border: none; }
@@ -36,9 +43,10 @@
 </head>
 <body>
 
-    <div class="sidebar">
+    <!-- Sidebar -->
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-        <a href="index.html" class="nav-item">Order Details</a>
+        <a href="index.html" class="nav-item">📦 Order Details</a>
         <a href="estimate.html" class="nav-item">Estimate Letter</a>
         <a href="billing.html" class="nav-item">Billing</a>
         <div class="nav-item">Store Plus</div>
@@ -46,23 +54,24 @@
         <div class="nav-item">Sales Report</div>
         <div class="nav-item">UPI Book</div>
         <div class="nav-item">Cashbook</div>
-        <!-- Admin Users Tab -->
+        
         <a href="users.html" class="nav-item active" style="color: #2563eb; font-weight:bold;">👥 Manage Users</a>
         
         <div style="flex-grow: 1;"></div> 
-        <div class="nav-item" onclick="logOut()" style="color: #dc2626; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; cursor: pointer;">🚪 Log Out</div>
+        <!-- Bold Black Logout Button -->
+        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
+        </div>
     </div>
+    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
     <div class="main-content">
         <div class="header">
             <div><h1 style="margin:0; font-size:1.5rem;">Manage Staff & Users</h1></div>
-            <div>
-                <button class="btn btn-primary" onclick="toggleForm()">+ Add New User</button>
-            </div>
+            <div><button class="btn btn-primary" onclick="toggleForm()">+ Add New User</button></div>
         </div>
 
         <div class="dashboard-padding">
-            
             <div class="form-card" id="userForm">
                 <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">👤 CREATE NEW ACCOUNT</div>
                 <div class="form-grid">
@@ -87,12 +96,7 @@
             <div class="table-card">
                 <table>
                     <thead>
-                        <tr>
-                            <th>Full Name</th>
-                            <th>Email / Username</th>
-                            <th>Role</th>
-                            <th>Action</th>
-                        </tr>
+                        <tr><th>Full Name</th><th>Email / Username</th><th>Role</th><th>Action</th></tr>
                     </thead>
                     <tbody id="usersTableBody"></tbody>
                 </table>
@@ -105,24 +109,42 @@
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         
-        // 1. Main database client
         const db = window.supabase.createClient(supabaseUrl, supabaseKey);
-        
-        // 2. Secret "Silent" client so the Admin doesn't get logged out when creating a user!
         const adminSilentDb = window.supabase.createClient(supabaseUrl, supabaseKey, {
             auth: { storageKey: 'silent-admin', persistSession: false }
         });
 
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- CHANGE THIS TO YOUR ADMIN EMAIL
+        const ADMIN_EMAIL = 'admin@gsmsolution.com'; 
 
-        // SECURE THE PAGE
+        // Sidebar Auto-Collapse Logic
+        let sidebarTimer;
+        window.resetSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+            sidebarTimer = setTimeout(() => {
+                document.getElementById('sidebar').classList.add('collapsed');
+                document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
+            }, 5000);
+        }
+        window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+        window.toggleSidebar = function() {
+            const sidebar = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarToggle');
+            sidebar.classList.toggle('collapsed');
+            btn.classList.toggle('sidebar-collapsed-btn');
+            if(!sidebar.classList.contains('collapsed')) resetSidebarTimer();
+            else clearSidebarTimer();
+        }
+
         async function checkAuth() {
             const { data } = await db.auth.getSession();
             if (!data.session) {
                 window.location.href = 'login.html';
             } else if (data.session.user.email !== ADMIN_EMAIL) {
                 alert("Security Alert: Only Administrators can access this page.");
-                window.location.href = 'index.html'; // Kicks staff back to Order Details
+                window.location.href = 'index.html'; 
+            } else {
+                let loggedInEmail = data.session.user.email.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = loggedInEmail.charAt(0).toUpperCase() + loggedInEmail.slice(1);
             }
         }
 
@@ -133,6 +155,7 @@
 
         document.addEventListener("DOMContentLoaded", () => {
             checkAuth();
+            resetSidebarTimer();
             window.fetchUsers();
         });
 
@@ -168,13 +191,10 @@
             const role = document.getElementById('u-role').value;
 
             if(!email || !password || !fullName) return alert("Please fill out all fields.");
-            if(password.length < 6) return alert("Password must be at least 6 characters long.");
-
-            // 1. Create the user in Supabase Authentication securely
+            
             const { error: authError } = await adminSilentDb.auth.signUp({ email: email, password: password });
             if (authError) return alert("Error creating login: " + authError.message);
 
-            // 2. Save their Role and Name to your database
             const { error: dbError } = await db.from('user_profiles').insert([{ email, fullName, role }]);
             if (dbError) return alert("Error saving profile: " + dbError.message);
 
@@ -188,7 +208,7 @@
         }
 
         window.deleteUserProfile = async function(email) {
-            if(!confirm(`Remove role for ${email}? (Note: To completely delete their login, you must do it in the Supabase Dashboard)`)) return;
+            if(!confirm(`Remove role for ${email}?`)) return;
             await db.from('user_profiles').delete().eq('email', email);
             window.fetchUsers();
         }
