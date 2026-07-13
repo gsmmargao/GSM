@@ -189,7 +189,11 @@
             const { data } = await db.auth.getSession();
             if (!data.session) return window.location.href = 'login.html';
             let email = data.session.user.email;
-            document.getElementById('userNameDisplay').innerText = email.split('@')[0].toUpperCase();
+            
+            // This section was updated to capitalize only the first letter
+            let displayEmail = email.split('@')[0];
+            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+            
             if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                 document.getElementById('adminUsersTab').style.display = 'flex';
             }
