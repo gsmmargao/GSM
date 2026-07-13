@@ -253,6 +253,29 @@
             document.getElementById('b-advance').value = '0';
             document.getElementById('b-amount').value = '0';
         }
+        // Add this utility function to billing.html
+window.recordBillingPayment = async function(invoiceNo, jobNo, customerName, paidAmount) {
+    if (!paidAmount || paidAmount <= 0) return;
+
+    const cashEntry = {
+        description: `Invoice #${invoiceNo} - Job ${jobNo} (Cash)`,
+        category: 'Billing',
+        amount: paidAmount,
+        type: 'in',
+        created_by: currentUserEmail
+    };
+
+    try {
+        const { error } = await supabaseClient.from('cashbook_entries').insert([cashEntry]);
+        if (error) throw error;
+        console.log("Payment recorded in Cashbook successfully.");
+    } catch (error) {
+        console.error("Failed to log payment to cashbook:", error.message);
+    }
+};
+
+// Example of how to trigger it when saving a bill:
+// recordBillingPayment('8543', '4438590163', 'John Doe', 2320.00);
     </script>
 </body>
 </html>
