@@ -1,0 +1,504 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Profit Book</title>
+    <link rel="icon" href="data:,">
+    
+    <style>
+        :root {
+            --bg-color: #f4f5f7;
+            --sidebar-width: 250px;
+            --border-color: #e5e7eb;
+            --c-green: #10b981;
+            --bg-green-light: #f0fdf4;
+            --c-red: #ef4444;
+            --bg-red-light: #fef2f2;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
+
+        .sidebar-toggle-btn {
+            position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%);
+            background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.4s ease; font-weight: bold;
+        }
+        .sidebar-collapsed-btn { left: 0 !important; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px;}
+        
+        .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; border-bottom: 1px solid var(--border-color); padding-bottom: 15px;}
+        .header-title h1 { margin: 0; font-size: 1.5rem; color: #111827; }
+        .header-title p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+        .header-right { font-size: 0.9rem; color: #6b7280; font-weight: 500; display: flex; align-items: center; gap: 10px;}
+
+        /* Month Selector */
+        .month-selector { display: flex; align-items: center; gap: 10px; background: white; border: 1px solid var(--border-color); border-radius: 6px; padding: 5px; }
+        .month-btn { background: white; border: 1px solid var(--border-color); border-radius: 4px; padding: 5px 10px; cursor: pointer; color: #4b5563; }
+        .month-btn:hover { background: #f3f4f6; }
+        .month-display { font-weight: bold; color: #111827; font-size: 0.9rem; padding: 0 10px; display: flex; align-items: center; gap: 8px;}
+        .month-display input[type="month"] { border: none; font-weight: 500; outline: none; background: transparent; cursor: pointer; font-size: 0.9rem; font-family: inherit;}
+
+        /* Main Grid Layout */
+        .profit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+
+        /* General Card */
+        .card { background: white; border-radius: 8px; padding: 20px; border: 1px solid var(--border-color); display: flex; flex-direction: column; }
+        
+        /* Left Column (Green Theme) */
+        .card-income { border: 1px solid #bbf7d0; box-shadow: 0 2px 4px rgba(16, 185, 129, 0.05); }
+        .card-header-green { color: var(--c-green); font-size: 0.85rem; font-weight: bold; display: flex; align-items: center; gap: 8px; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        
+        .ow-profit-box { background: var(--bg-green-light); border: 1px solid #bbf7d0; border-radius: 6px; padding: 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;}
+        .ow-text h4 { margin: 0; color: #065f46; font-size: 0.95rem; }
+        .ow-text p { margin: 3px 0 0 0; font-size: 0.75rem; color: var(--c-green); }
+        .ow-amount { font-size: 1.2rem; font-weight: bold; color: var(--c-green); }
+
+        .add-income-box { border: 1px dashed var(--border-color); border-radius: 6px; padding: 15px; margin-bottom: 20px; background: #fafafa;}
+        .add-income-box h5 { margin: 0 0 10px 0; font-size: 0.75rem; color: #6b7280; text-transform: uppercase; }
+        .input-group { display: flex; gap: 10px; margin-bottom: 10px; }
+        .input-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; flex: 1; outline: none; font-size: 0.9rem;}
+        .input-group input:focus { border-color: var(--c-green); }
+        .btn-add { background: #9ca3af; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: 0.2s;}
+        .btn-add:hover { background: #6b7280; }
+
+        .other-income-list { margin-bottom: 20px; max-height: 150px; overflow-y: auto;}
+        .other-item { display: flex; justify-content: space-between; padding: 8px 0; border-bottom: 1px solid #f3f4f6; font-size: 0.85rem;}
+
+        .total-row-green { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #065f46; font-size: 1.1rem; padding-top: 15px; border-top: 1px solid #bbf7d0; margin-top: auto;}
+
+        /* Right Column (Red Theme) */
+        .card-expenses { border: 1px solid #fecaca; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.05); }
+        .card-header-red { color: var(--c-red); font-size: 0.85rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .card-header-red a { color: #f87171; text-decoration: none; font-size: 0.75rem; font-weight: normal; display: flex; align-items: center; gap: 5px;}
+        .card-header-red a:hover { text-decoration: underline; }
+
+        .expense-list { flex: 1; overflow-y: auto; max-height: 350px; }
+        .expense-item { border: 1px solid var(--border-color); border-radius: 6px; padding: 12px 15px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; background: white;}
+        .expense-info h4 { margin: 0; color: #111827; font-size: 0.9rem; }
+        .expense-info p { margin: 4px 0 0 0; color: #6b7280; font-size: 0.75rem; }
+        .expense-amount-date { text-align: right; }
+        .expense-amount-date h4 { margin: 0; color: var(--c-red); font-size: 1rem; }
+        .expense-amount-date p { margin: 4px 0 0 0; color: #9ca3af; font-size: 0.75rem; }
+
+        .total-row-red { display: flex; justify-content: space-between; align-items: center; font-weight: bold; color: #b91c1c; font-size: 1.1rem; padding-top: 15px; border-top: 1px solid #fecaca; margin-top: auto;}
+
+        /* EBITDA Card */
+        .ebitda-card { background: var(--bg-green-light); border: 2px solid #a7f3d0; border-radius: 8px; padding: 25px 30px; display: flex; justify-content: space-between; align-items: center; }
+        .ebitda-title h2 { margin: 0; color: var(--c-green); font-size: 1rem; text-transform: uppercase; letter-spacing: 1px;}
+        .ebitda-title p { margin: 5px 0 0 0; color: #65a30d; font-size: 0.8rem; }
+        .ebitda-value-box { text-align: right; }
+        .ebitda-value { font-size: 2.2rem; font-weight: 800; color: var(--c-green); margin: 0; line-height: 1;}
+        .ebitda-calc { margin: 8px 0 0 0; font-size: 0.75rem; color: #65a30d; }
+        
+        .no-data { text-align: center; color: #9ca3af; font-size: 0.85rem; padding: 20px 0; font-style: italic;}
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+    <a href="index.html" class="nav-item">📋 Order Details</a>
+    <a href="estimate.html" class="nav-item">🧾 Estimate Letter</a>
+    <a href="billing.html" class="nav-item">💳 Billing</a>
+    <a href="store-plus.html" class="nav-item">📦 Store Plus</a>
+    <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
+    <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
+    <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+    <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
+    <a href="expenses.html" class="nav-item">💸 Expenses</a>
+    <a href="profit.html" class="nav-item active">📈 Profit Book</a>
+    
+    <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+
+    <div style="flex-grow: 1;"></div> 
+    
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="userNameDisplay">User</span> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+    </div>
+</div>    
+<div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+
+<div class="main-content">
+    <div class="header-top">
+        <div class="header-title">
+            <h1>Profit Book</h1>
+            <p>Monthly profit & expense summary</p>
+        </div>
+        <div class="header-right">
+            <div class="month-selector">
+                <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+                <div class="month-display">
+                    <input type="month" id="monthInput" onchange="fetchData()">
+                </div>
+                <button class="month-btn" onclick="changeMonth(1)">›</button>
+            </div>
+            <span id="currentDateDisplay" style="margin-left: 15px;"></span>
+        </div>
+    </div>
+
+    <div class="profit-grid">
+        <!-- LEFT COLUMN -->
+        <div class="card card-income">
+            <div class="card-header-green">↗ INCOME / PROFIT</div>
+            
+            <div class="ow-profit-box">
+                <div class="ow-text">
+                    <h4>Profit From OW Parts</h4>
+                    <p>Auto - from Sales Report</p>
+                </div>
+                <div class="ow-amount" id="owProfitDisplay">₹0.00</div>
+            </div>
+
+            <div class="add-income-box">
+                <h5>ADD OTHER INCOME</h5>
+                <div class="input-group">
+                    <input type="text" id="otherIncomeLabel" placeholder="Income label (e.g. Labour charges)">
+                </div>
+                <div class="input-group">
+                    <span style="display:flex; align-items:center; border: 1px solid var(--border-color); border-radius: 6px; padding: 0 10px; background: white;">₹</span>
+                    <input type="number" id="otherIncomeAmount" placeholder="0.00" style="border: none; flex: 1; outline:none;">
+                    <button class="btn-add" onclick="addOtherIncome()">+ Add</button>
+                </div>
+            </div>
+            
+            <div class="other-income-list" id="otherIncomeList">
+                <!-- Manual income populated here -->
+            </div>
+
+            <div class="total-row-green">
+                <span>Total Income</span>
+                <span id="totalIncomeDisplay">₹0.00</span>
+            </div>
+        </div>
+
+        <!-- RIGHT COLUMN -->
+        <div class="card card-expenses">
+            <div class="card-header-red">
+                <span>↘ EXPENSES</span>
+                <a href="expenses.html">⇱ from Expenses tab</a>
+            </div>
+
+            <div class="expense-list" id="expensesList">
+                <!-- Expenses populated here -->
+            </div>
+
+            <div class="total-row-red">
+                <span>Total Expenses</span>
+                <span id="totalExpensesDisplay">₹0.00</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- BOTTOM EBITDA -->
+    <div class="ebitda-card">
+        <div class="ebitda-title">
+            <h2 id="ebitdaTitleText">EBITDA — [MONTH]</h2>
+            <p>Earnings Before Interest, Taxes, Depreciation & Amortisation</p>
+        </div>
+        <div class="ebitda-value-box">
+            <h2 class="ebitda-value" id="ebitdaTotalDisplay">₹0.00</h2>
+            <p class="ebitda-calc" id="ebitdaCalcText">₹0.00 income - ₹0.00 expenses</p>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    // Supabase Configuration
+    const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
+    const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
+    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+    let currentUserEmail = '';
+    
+    // Totals State
+    let state = {
+        owProfit: 0,
+        otherIncome: 0,
+        totalExpenses: 0
+    };
+
+    // Sidebar Logic
+    let sidebarTimer;
+    window.resetSidebarTimer = function() {
+        clearTimeout(sidebarTimer);
+        sidebarTimer = setTimeout(() => {
+            const sb = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarToggle');
+            if(sb && btn) {
+                sb.classList.add('collapsed');
+                btn.classList.add('sidebar-collapsed-btn');
+            }
+        }, 5000);
+    }
+    window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+    window.toggleSidebar = function() {
+        const sb = document.getElementById('sidebar');
+        const btn = document.getElementById('sidebarToggle');
+        if(sb && btn) {
+            sb.classList.toggle('collapsed');
+            btn.classList.toggle('sidebar-collapsed-btn');
+            if(!sb.classList.contains('collapsed')) resetSidebarTimer();
+            else clearSidebarTimer();
+        }
+    }
+
+    // Set Date Formats
+    const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+    document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
+    
+    const monthInput = document.getElementById('monthInput');
+    let currentDate = new Date();
+    // Default to current month
+    monthInput.value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
+
+    async function checkAuth() {
+        const { data } = await supabaseClient.auth.getSession();
+        if (!data.session) window.location.href = 'login.html';
+        else {
+            currentUserEmail = data.session.user.email;
+            let displayEmail = currentUserEmail.split('@')[0];
+            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+            if (currentUserEmail.trim().toLowerCase() === 'gsmmargao@gmail.com') {
+                document.getElementById('adminUsersTab').style.display = 'flex';
+            }
+        }
+    }
+    async function logOut() {
+        await supabaseClient.auth.signOut();
+        window.location.href = 'login.html';
+    }
+
+    // --- Format Currency ---
+    function formatMoney(amount) {
+        return amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+    }
+    function formatMonthYear(dateString) {
+        const d = new Date(dateString + "-01");
+        return d.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    }
+
+    // --- Month Navigation ---
+    window.changeMonth = function(offset) {
+        let current = new Date(monthInput.value + "-01");
+        current.setMonth(current.getMonth() + offset);
+        monthInput.value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+        fetchData();
+    }
+
+    // --- Main Fetch ---
+    window.fetchData = async function() {
+        const selectedMonth = monthInput.value; // YYYY-MM
+        const startOfMonth = `${selectedMonth}-01`;
+        
+        // Calculate end of month dynamically
+        const dateObj = new Date(startOfMonth);
+        const nextMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 1);
+        const endOfMonthDate = new Date(nextMonth - 1);
+        const endOfMonth = endOfMonthDate.toISOString().split('T')[0];
+
+        document.getElementById('ebitdaTitleText').innerText = `EBITDA — ${formatMonthYear(selectedMonth).toUpperCase()}`;
+
+        // Reset state
+        state = { owProfit: 0, otherIncome: 0, totalExpenses: 0 };
+
+        await Promise.all([
+            fetchOWProfit(startOfMonth, endOfMonth),
+            fetchOtherIncomeData(startOfMonth, endOfMonth),
+            fetchExpensesData(startOfMonth, endOfMonth)
+        ]);
+
+        updateTotalsUI();
+    }
+
+    // 1. Fetch Sales Report Profit
+    async function fetchOWProfit(start, end) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('sales_reports')
+                .select('unit_price_base, retail_price_base')
+                .gte('date', start)
+                .lte('date', end);
+
+            if (error) throw error;
+
+            let totalProfit = 0;
+            const gstRate = 0.18;
+
+            data.forEach(item => {
+                const unitTotal = parseFloat(item.unit_price_base) * (1 + gstRate);
+                const retailTotal = parseFloat(item.retail_price_base) * (1 + gstRate);
+                totalProfit += (retailTotal - unitTotal);
+            });
+
+            state.owProfit = totalProfit;
+            document.getElementById('owProfitDisplay').innerText = formatMoney(totalProfit);
+        } catch (error) { console.error("Error fetching Sales Profit:", error.message); }
+    }
+
+    // 2. Fetch Other Income
+    async function fetchOtherIncomeData(start, end) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('profit_other_income')
+                .select('*')
+                .gte('date', start)
+                .lte('date', end)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+
+            const listDiv = document.getElementById('otherIncomeList');
+            listDiv.innerHTML = '';
+            let sum = 0;
+
+            if(data.length === 0) {
+                listDiv.innerHTML = `<div class="no-data">No other income recorded</div>`;
+            }
+
+            data.forEach(item => {
+                const amt = parseFloat(item.amount);
+                sum += amt;
+                
+                const div = document.createElement('div');
+                div.className = 'other-item';
+                div.innerHTML = `
+                    <span style="color:#4b5563;">${item.label}</span>
+                    <div style="display:flex; align-items:center; gap:10px;">
+                        <span style="font-weight:bold; color:var(--c-green);">${formatMoney(amt)}</span>
+                        ${currentUserEmail === 'gsmmargao@gmail.com' ? `<button onclick="deleteOtherIncome('${item.id}')" style="background:none; border:none; color:red; cursor:pointer; font-size:12px;">✕</button>` : ''}
+                    </div>
+                `;
+                listDiv.appendChild(div);
+            });
+
+            state.otherIncome = sum;
+        } catch (error) { console.error("Error fetching Other Income:", error.message); }
+    }
+
+    // 3. Fetch Expenses
+    async function fetchExpensesData(start, end) {
+        try {
+            const { data, error } = await supabaseClient
+                .from('expenses')
+                .select('*')
+                .gte('date', start)
+                .lte('date', end)
+                .order('date', { ascending: false });
+
+            if (error) throw error;
+
+            const listDiv = document.getElementById('expensesList');
+            listDiv.innerHTML = '';
+            let sum = 0;
+
+            if(data.length === 0) {
+                listDiv.innerHTML = `<div class="no-data">No expenses recorded for this month</div>`;
+            }
+
+            data.forEach(item => {
+                const amt = parseFloat(item.amount);
+                sum += amt;
+                const d = new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+
+                const div = document.createElement('div');
+                div.className = 'expense-item';
+                div.innerHTML = `
+                    <div class="expense-info">
+                        <h4>${item.title}</h4>
+                        <p>${item.description || ''}</p>
+                    </div>
+                    <div class="expense-amount-date">
+                        <h4>${formatMoney(amt)}</h4>
+                        <p>${d}</p>
+                    </div>
+                `;
+                listDiv.appendChild(div);
+            });
+
+            state.totalExpenses = sum;
+            document.getElementById('totalExpensesDisplay').innerText = formatMoney(sum);
+        } catch (error) { console.error("Error fetching Expenses:", error.message); }
+    }
+
+    // Calculate and Update Final UI
+    function updateTotalsUI() {
+        const totalIncome = state.owProfit + state.otherIncome;
+        const ebitda = totalIncome - state.totalExpenses;
+
+        document.getElementById('totalIncomeDisplay').innerText = formatMoney(totalIncome);
+        document.getElementById('ebitdaTotalDisplay').innerText = formatMoney(ebitda);
+        
+        // The bottom calc text
+        document.getElementById('ebitdaCalcText').innerText = `${formatMoney(totalIncome)} income - ${formatMoney(state.totalExpenses)} expenses`;
+
+        // Color toggle for EBITDA depending on profit/loss
+        const ebitdaValText = document.getElementById('ebitdaTotalDisplay');
+        if (ebitda < 0) {
+            ebitdaValText.style.color = 'var(--c-red)';
+        } else {
+            ebitdaValText.style.color = 'var(--c-green)';
+        }
+    }
+
+    // --- Add / Delete Manual Income ---
+    window.addOtherIncome = async function() {
+        const label = document.getElementById('otherIncomeLabel').value.trim();
+        const amount = parseFloat(document.getElementById('otherIncomeAmount').value);
+
+        if (!label || isNaN(amount) || amount <= 0) {
+            return alert("Please enter a valid label and amount.");
+        }
+
+        // Save to current selected month with day as 01 for reference
+        const insertDate = `${monthInput.value}-01`;
+
+        try {
+            const { error } = await supabaseClient.from('profit_other_income').insert([{
+                date: insertDate,
+                label: label,
+                amount: amount,
+                created_by: currentUserEmail
+            }]);
+
+            if (error) throw error;
+            
+            document.getElementById('otherIncomeLabel').value = '';
+            document.getElementById('otherIncomeAmount').value = '';
+            fetchData();
+        } catch (error) { alert("Failed to add income: " + error.message); }
+    }
+
+    window.deleteOtherIncome = async function(id) {
+        if(!confirm("Delete this income record?")) return;
+        try {
+            const { error } = await supabaseClient.from('profit_other_income').delete().eq('id', id);
+            if (error) throw error;
+            fetchData();
+        } catch (error) { alert("Failed to delete: " + error.message); }
+    }
+
+    // Initialization
+    document.addEventListener("DOMContentLoaded", async () => {
+        await checkAuth();
+        resetSidebarTimer();
+        fetchData();
+    });
+</script>
+</body>
+</html>
