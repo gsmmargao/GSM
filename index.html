@@ -331,34 +331,53 @@
         }
 
         window.saveOrder = async function() {
-            let creatorName = document.getElementById('userNameDisplay').innerText;
+    let creatorName = document.getElementById('userNameDisplay').innerText;
+    let advanceAmt = parseFloat(document.getElementById('advancePaid').value) || 0;
+    let jobNoVal = document.getElementById('jobNo').value;
+    let custName = document.getElementById('customerName').value;
 
-            const orderData = {
-                customerName: document.getElementById('customerName').value,
-                contactNo: document.getElementById('contactNo').value,
-                jobNo: document.getElementById('jobNo').value,
-                imeiNo: document.getElementById('imeiNo').value,
-                modelNo: document.getElementById('modelNo').value,
-                problemDesc: document.getElementById('problemDesc').value,
-                advancePaid: parseFloat(document.getElementById('advancePaid').value) || 0,
-                date: new Date().toISOString().split('T')[0],
-                status: "Pending",
-                createdBy: creatorName 
+    const orderData = {
+        customerName: custName,
+        contactNo: document.getElementById('contactNo').value,
+        jobNo: jobNoVal,
+        imeiNo: document.getElementById('imeiNo').value,
+        modelNo: document.getElementById('modelNo').value,
+        problemDesc: document.getElementById('problemDesc').value,
+        advancePaid: advanceAmt,
+        date: new Date().toISOString().split('T')[0],
+        status: "Pending",
+        createdBy: creatorName 
+    };
+
+    if(!orderData.customerName || !orderData.jobNo) {
+        return alert("Please complete Customer Name and Job Number.");
+    }
+
+    try {
+        // Step 1: Save the Repair Order
+        const { error: orderError } = await supabaseClient.from('repairOrders').insert([orderData]);
+        if (orderError) throw orderError;
+        
+        // Step 2: Push to Cashbook if Advance is paid
+        if (advanceAmt > 0) {
+            const cashEntry = {
+                description: `Advance - Job ${jobNoVal} (${custName})`,
+                category: 'Advances',
+                amount: advanceAmt,
+                type: 'in',
+                created_by: currentUserEmail
             };
+            const { error: cashError } = await supabaseClient.from('cashbook_entries').insert([cashEntry]);
+            if (cashError) console.error("Failed to log advance to cashbook:", cashError.message);
+        }
 
-            if(!orderData.customerName || !orderData.jobNo) {
-                return alert("Please complete Customer Name and Job Number.");
-            }
-
-            try {
-                const { error } = await supabaseClient.from('repairOrders').insert([orderData]);
-                if (error) throw error;
-                alert("Repair order added successfully!");
-                clearForm();
-                toggleForm();
-            } catch (error) { alert("Error writing to database: " + error.message); }
-        };
-
+        alert("Repair order added successfully!");
+        clearForm();
+        toggleForm();
+    } catch (error) { 
+        alert("Error writing to database: " + error.message); 
+    }
+};
         window.clearForm = function() {
             document.getElementById('customerName').value = '';
             document.getElementById('contactNo').value = '';
