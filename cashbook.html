@@ -146,22 +146,80 @@
 <!-- Main Content -->
 <div class="main-content">
     
-    <div class="header-controls">
-        <div>
-            <h1>Cashbook</h1>
-            <p>Cash transactions only - IST 7:00 AM → 6:00 AM (daily)</p>
-        </div>
-        <div class="action-bar">
-            <span style="font-size: 0.85rem; color: #6b7280; margin-right: 10px;" id="currentDateDisplay">Mon, 13 Jul, 2026 | GSM SOLUTION</span>
-            <div class="toggle-group">
-                <button class="toggle-btn active">Daily</button>
-                <button class="toggle-btn">Period</button>
-            </div>
-            <input type="date" class="date-picker" id="ledgerDate">
-            <button class="btn" onclick="fetchCashbook()">↻ Refresh</button>
-            <button class="btn btn-black" onclick="openModal()">+ Cash Out</button>
-        </div>
+    <!-- Replace your existing Header Controls with this -->
+<div class="header-controls">
+    <div>
+        <h1>Cashbook</h1>
+        <p>Cash transactions only - <span id="modeLabel">Daily</span></p>
     </div>
+    <div class="action-bar">
+        <div class="toggle-group">
+            <button class="toggle-btn active" id="btnDaily" onclick="setMode('Daily')">Daily</button>
+            <button class="toggle-btn" id="btnPeriod" onclick="setMode('Period')">Period</button>
+        </div>
+        <div id="dateInputs" style="display: flex; gap: 5px;">
+            <input type="date" class="date-picker" id="ledgerDate">
+            <span id="rangeInputs" style="display:none; gap: 5px;">
+                <input type="date" class="date-picker" id="fromDate">
+                <input type="date" class="date-picker" id="toDate">
+            </span>
+        </div>
+        <button class="btn" onclick="fetchCashbook()">↻ Refresh</button>
+        <button class="btn btn-black" onclick="openModal()">+ Cash Out</button>
+    </div>
+</div>
+
+<script>
+    let currentMode = 'Daily';
+    let allEntries = []; // Cache all entries locally to filter easily
+
+    window.setMode = (mode) => {
+        currentMode = mode;
+        document.getElementById('btnDaily').classList.toggle('active', mode === 'Daily');
+        document.getElementById('btnPeriod').classList.toggle('active', mode === 'Period');
+        document.getElementById('modeLabel').innerText = mode;
+        document.getElementById('dateInputs').innerHTML = mode === 'Daily' 
+            ? '<input type="date" class="date-picker" id="ledgerDate">' 
+            : '<input type="date" class="date-picker" id="fromDate"><input type="date" class="date-picker" id="toDate">';
+        fetchCashbook();
+    };
+
+    window.fetchCashbook = async function() {
+        // Fetch all data once and filter locally
+        if(allEntries.length === 0) {
+            const { data } = await db.from('cashbook_entries').select('*').order('created_at', { ascending: true });
+            allEntries = data || [];
+        }
+
+        const filtered = allEntries.filter(row => {
+            const rowDate = new Date(row.created_at).toISOString().split('T')[0];
+            if(currentMode === 'Daily') {
+                const target = document.getElementById('ledgerDate').value || new Date().toISOString().split('T')[0];
+                return rowDate === target;
+            } else {
+                const from = document.getElementById('fromDate').value;
+                const to = document.getElementById('toDate').value;
+                return (!from || rowDate >= from) && (!to || rowDate <= to);
+            }
+        });
+
+        renderData(filtered);
+    };
+
+    function renderData(data) {
+        // ... (Keep your existing rendering logic, just use 'data' instead of 'allEntries')
+    }
+</script>
+
+<!-- Add this CSS to make breakdown tables scrollable -->
+<style>
+    .breakdown-container { 
+        max-height: 300px; 
+        overflow-y: auto; 
+        border-top: 1px solid var(--border-color);
+    }
+    /* Wrap your breakdown <table> in <div class="breakdown-container"> */
+</style>
 
     <!-- Top Stats -->
     <div class="stats-grid">
