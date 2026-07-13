@@ -76,7 +76,8 @@
         /* Inline Icon Styles */
         .edit-icon { cursor: pointer; color: #9ca3af; margin-left: 8px; vertical-align: middle; transition: color 0.2s;}
         .edit-icon:hover { color: #374151; }
-        .eye-icon { color: #6b7280; vertical-align: middle; margin-right: 5px; }
+        .eye-icon { cursor: pointer; color: #6b7280; vertical-align: middle; margin-right: 5px; transition: color 0.2s; }
+        .eye-icon:hover { color: #111827; }
         
         .hwc-badge { background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;}
 
@@ -285,6 +286,19 @@
         </div>
     </div>
 
+    <!-- 4. View Text Modal (For the Eye Icon) -->
+    <div class="modal-overlay" id="modalView">
+        <div class="modal-container">
+            <h2 class="modal-title" id="modalViewTitle">View</h2>
+            <div class="modal-body" style="margin-top: 15px;">
+                <p id="modalViewContent" style="font-size: 0.95rem; color: #374151; line-height: 1.5; white-space: pre-wrap; margin: 0; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;"></p>
+            </div>
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="closeModal('modalView')">Close</button>
+            </div>
+        </div>
+    </div>
+
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
@@ -301,6 +315,12 @@
         // --- SVGs ---
         const pencilSvg = `<svg class="edit-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 3a2.828 2.828 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5L17 3z"></path></svg>`;
         const eyeSvg = `<svg class="eye-icon" xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>`;
+
+        // Helper to safely escape strings for JS function calls
+        function escapeHtml(str) {
+            if (!str) return '';
+            return str.replace(/"/g, '&quot;').replace(/'/g, '&#39;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/`/g, '&#96;');
+        }
 
         // --- Sidebar Logic ---
         let sidebarTimer;
@@ -374,7 +394,6 @@
 
         async function fetchOrders() {
             try {
-                // Fetching ID ensures we update uniquely
                 const { data: repairOrders, error } = await supabaseClient
                     .from('repairOrders')
                     .select('*')
@@ -408,10 +427,10 @@
                             let methodText = order.payment_method === 'UPI' ? `<br><small style="color:#2563eb;">UPI</small>` : '';
                             advanceHtml = `
                                 <span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span>${methodText}
-                                <span onclick="openAdvanceModal('${order.id}', '${order.advancePaid}', '${order.payment_method || 'Cash'}', '${order.jobNo}', '${order.customerName}')">${pencilSvg}</span>
+                                <span onclick="openAdvanceModal('${order.id}', '${order.advancePaid}', '${order.payment_method || 'Cash'}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
                             `;
                         } else {
-                            advanceHtml = `— <span onclick="openAdvanceModal('${order.id}', '0', 'Cash', '${order.jobNo}', '${order.customerName}')">${pencilSvg}</span>`;
+                            advanceHtml = `— <span onclick="openAdvanceModal('${order.id}', '0', 'Cash', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
                         }
                     } else {
                         advanceHtml = order.advancePaid > 0 
@@ -419,11 +438,18 @@
                             : `—`;
                     }
 
-                    // Format Texts with Eye Icon
-                    let probHtml = order.problemDesc ? `${eyeSvg} ${order.problemDesc}` : '—';
+                    // Eye Icon + Truncation logic
+                    let safeProb = escapeHtml(order.problemDesc);
+                    let shortProb = order.problemDesc && order.problemDesc.length > 20 ? order.problemDesc.substring(0, 20) + '...' : order.problemDesc;
+                    let probHtml = order.problemDesc 
+                        ? `<span onclick="viewText('Problem Description', '${safeProb}')">${eyeSvg}</span> ${shortProb}` 
+                        : '—';
+
+                    let safeNotes = escapeHtml(order.notes);
+                    let shortNotes = order.notes && order.notes.length > 15 ? order.notes.substring(0, 15) + '...' : order.notes;
                     let notesHtml = order.notes 
-                        ? `${eyeSvg} ${order.notes} <span onclick="openNotesModal('${order.id}', \`${order.notes.replace(/`/g, '')}\`, '${order.jobNo}', '${order.customerName}')">${pencilSvg}</span>` 
-                        : `— <span onclick="openNotesModal('${order.id}', '', '${order.jobNo}', '${order.customerName}')">${pencilSvg}</span>`;
+                        ? `<span onclick="viewText('Notes', '${safeNotes}')">${eyeSvg}</span> ${shortNotes} <span onclick="openNotesModal('${order.id}', '${safeNotes}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>` 
+                        : `— <span onclick="openNotesModal('${order.id}', '', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
 
                     let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
                         ? `<button onclick="deleteOrder('${order.id}')" style="background: transparent; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
@@ -440,7 +466,7 @@
                         </td>
                         <td>
                             <strong>${order.jobNo || ''}</strong>
-                            <span onclick="openJobModal('${order.id}', '${order.jobNo}', '${order.customerName}')">${pencilSvg}</span>
+                            <span onclick="openJobModal('${order.id}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
                         </td>
                         <td>${order.customerName || ''}<br><small style="color:gray;">${order.contactNo || ''}</small></td>
                         <td>
@@ -555,6 +581,13 @@
             currentEditId = null;
         }
 
+        // Action for Eye Icon
+        window.viewText = function(title, content) {
+            document.getElementById('modalViewTitle').innerText = title;
+            document.getElementById('modalViewContent').innerText = content;
+            document.getElementById('modalView').style.display = 'flex';
+        }
+
         // 1. Job Number
         window.openJobModal = function(id, currentJob, customerName) {
             currentEditId = id;
@@ -613,7 +646,7 @@
             } catch (error) { alert("Update failed: " + error.message); }
         }
 
-        // --- Status & Delete using unique ID ---
+        // --- Status & Delete ---
         window.advanceStatus = async function(id, currentStatus) {
             let nextStatus = '';
             if (currentStatus === 'Pending') nextStatus = 'Repair Completed';
