@@ -33,6 +33,7 @@
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group label span { color: red; }
         .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
 
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
@@ -89,7 +90,7 @@
                 <div class="form-grid">
                     <div class="form-group"><label>Invoice No. (Auto)</label><input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold;"></div>
                     <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
-                    <div class="form-group"><label>Job Number (Optional)</label><input type="text" id="b-jobNo" placeholder="e.g. 4438768800" onblur="fetchAdvancePaid()"></div>
+                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="b-jobNo" placeholder="e.g. 4438768800" onblur="fetchAdvancePaid()"></div>
                     <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="b-advance" value="0"></div>
                     <div class="form-group"><label>Final Amount Paid (₹)</label><input type="number" id="b-amount" value="0"></div>
                     <div class="form-group">
@@ -126,7 +127,7 @@
         let allBillingData = [];
         let currentPage = 1;
         const rowsPerPage = 10;
-        let currentUserEmail = ''; // Updated variable name to match helpers
+        let currentUserEmail = ''; 
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
 
         // Sidebar Auto-Collapse Logic
@@ -177,15 +178,18 @@
 
         async function generateInvoiceNo() {
             try {
-                const { data } = await db.from('billing').select('invoiceNo').order('invoiceNo', { ascending: false }).limit(1);
-                let nextNum = 10000; 
+                // Safely order by created_at to get the most recent row, preventing alphabetical sorting bugs
+                const { data } = await db.from('billing').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
+                let nextNum = 1000; 
                 if (data && data.length > 0 && data[0].invoiceNo) {
-                    const lastNum = parseInt(data[0].invoiceNo.replace(/\D/g, ''));
-                    if (!isNaN(lastNum) && lastNum >= 10000) nextNum = lastNum + 1;
+                    const lastNum = parseInt(String(data[0].invoiceNo).replace(/\D/g, ''));
+                    if (!isNaN(lastNum)) {
+                        nextNum = lastNum >= 1000 ? lastNum + 1 : 1000;
+                    }
                 }
-                document.getElementById('b-invoice').value = `INV${nextNum}`;
+                document.getElementById('b-invoice').value = nextNum;
             } catch (err) {
-                document.getElementById('b-invoice').value = `INV10000`;
+                document.getElementById('b-invoice').value = 1000;
             }
         }
 
@@ -235,12 +239,18 @@
 
         window.saveBill = async function() {
             const rawJobNo = document.getElementById('b-jobNo').value.trim();
+            
+            // Validation: Make Job Number mandatory
+            if(!rawJobNo) {
+                return alert("Please enter a valid Job Number.");
+            }
+
             const billData = {
-                invoiceNo: document.getElementById('b-invoice').value,
+                invoiceNo: document.getElementById('b-invoice').value.toString(),
                 date: document.getElementById('b-date').value,
                 jobNo: rawJobNo,
                 advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
-                amountPaid: parseFloat(document.getElementById('b-amount').value) || 0,
+                amountPaid: parseFloat(document.getElementById('b-amount').value) || 0, // This is the only one sent to cashbook
                 paymentMode: document.getElementById('b-mode').value,
                 createdBy: document.getElementById('userNameDisplay').innerText 
             };
@@ -248,13 +258,11 @@
             const { error: billError } = await db.from('billing').insert([billData]);
             if (billError) return alert("Error saving Bill: " + billError.message);
             
-            if(rawJobNo !== '') {
-                let updateData = { status: 'Goods Delivered' };
-                if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
-                await db.from('repairOrders').update(updateData).ilike('jobNo', rawJobNo);
-            }
+            let updateData = { status: 'Goods Delivered' };
+            if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
+            await db.from('repairOrders').update(updateData).ilike('jobNo', rawJobNo);
 
-            // INTEGRATION: Push to Cashbook if mode is Cash
+            // INTEGRATION: Push ONLY the final amount paid to Cashbook if mode is Cash
             if (billData.paymentMode === 'Cash' && billData.amountPaid > 0) {
                 await recordBillingPayment(billData.invoiceNo, billData.jobNo, billData.amountPaid);
             }
@@ -267,7 +275,6 @@
             document.getElementById('b-amount').value = '0';
         }
 
-        // Utility function updated to use the local 'db' instance
         window.recordBillingPayment = async function(invoiceNo, jobNo, paidAmount) {
             if (!paidAmount || paidAmount <= 0) return;
 
