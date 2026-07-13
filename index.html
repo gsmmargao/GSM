@@ -91,7 +91,6 @@
 </head>
 <body>
 
-<!-- Sidebar Updated -->
 <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
     <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
     <a href="index.html" class="nav-item active">📋 Order Details</a>
@@ -108,9 +107,15 @@
     <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
-    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-        <span id="userNameDisplay" style="margin-right: 5px;">User</<span style="display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; background-color: red; color: white; border-radius: 50%; font-weight: bold; font-size: 16px; cursor: pointer;">
-  &#10142;
+    
+    <!-- Updated Logout Button -->
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="userNameDisplay">User</span> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
     </div>
 </div>    
     <!-- Floating sidebar toggle button -->
