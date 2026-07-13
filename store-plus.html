@@ -40,7 +40,7 @@
         .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
         .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
 
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
@@ -52,20 +52,28 @@
     <!-- Sidebar -->
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-        <a href="index.html" class="nav-item">📦 Order Details</a>
-        <a href="estimate.html" class="nav-item">🧾 Estimate</a>
-        <a href="billing.html" class="nav-item">Billing</a>
-        <a href="store-plus.html" class="nav-item active">🏪 Store Plus</a>
-        <a href="accessories.html" class="nav-item">Accessories</a>
-        <a href="sales-report.html" class="nav-item">Sales Report</a>
-        <a href="upi-book.html" class="nav-item">UPI Book</a>
-        <a href="cashbook.html" class="nav-item">Cashbook</a>
+        <a href="index.html" class="nav-item">📋 Order Details</a>
+        <a href="estimate.html" class="nav-item">🧾 Estimate Letter</a>
+        <a href="billing.html" class="nav-item">💳 Billing</a>
+        <a href="store-plus.html" class="nav-item active">📦 Store Plus</a>
+        <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
+        <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
+        <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+        <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
         
+        <!-- Admin Only Tabs -->
+        <a href="expenses.html" class="nav-item" id="adminExpensesTab" style="display: none;">💸 Expenses</a>
+        <a href="profit.html" class="nav-item" id="adminProfitTab" style="display: none;">📈 Profit Book</a>
         <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
         <div style="flex-grow: 1;"></div> 
-        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-            <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
+        <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+            <span id="userNameDisplay">User</span> 
+            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                <polyline points="16 17 21 12 16 7"></polyline>
+                <line x1="21" y1="12" x2="9" y2="12"></line>
+            </svg>
         </div>
     </div>
     <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
@@ -127,6 +135,7 @@
                             <th>IGST (18%)</th>
                             <th>Total</th>
                             <th>GST Number</th>
+                            <th style="text-align: center;">Action</th>
                         </tr>
                     </thead>
                     <tbody id="storeTableBody"></tbody>
@@ -136,6 +145,7 @@
                             <td id="tf-amount">₹0.00</td>
                             <td id="tf-igst" style="color: #f97316;">₹0.00</td>
                             <td id="tf-total" style="color: #16a34a;">₹0.00</td>
+                            <td></td>
                             <td></td>
                         </tr>
                     </tfoot>
@@ -148,7 +158,8 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- UPDATE THIS
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
+        let currentUserEmail = ''; // Added to track current user
         
         let sidebarTimer;
         window.resetSidebarTimer = function() {
@@ -169,16 +180,23 @@
         async function checkAuth() {
             const { data } = await db.auth.getSession();
             if (!data.session) return window.location.href = 'login.html';
-            let email = data.session.user.email;
-            document.getElementById('userNameDisplay').innerText = email.split('@')[0].toUpperCase();
-            if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+            
+            currentUserEmail = data.session.user.email;
+            let displayEmail = currentUserEmail.split('@')[0];
+            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+            
+            // Unhide Admin-only elements
+            if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                 document.getElementById('adminUsersTab').style.display = 'flex';
+                document.getElementById('adminExpensesTab').style.display = 'flex';
+                document.getElementById('adminProfitTab').style.display = 'flex';
             }
         }
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAuth(); resetSidebarTimer();
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); 
+            resetSidebarTimer();
             document.getElementById('sp-date').value = new Date().toISOString().split('T')[0];
             fetchEntries();
         });
@@ -213,6 +231,11 @@
                     globalIgst += igst;
                     globalTotal += total;
 
+                    // Generate Action button based on Admin Status
+                    let actionBtnHtml = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase() 
+                        ? `<button onclick="deleteEntry('${entry.invoiceNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
+                        : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
+
                     tbody.innerHTML += `<tr>
                         <td><strong>${entry.invoiceNo || '-'}</strong></td>
                         <td style="text-transform: capitalize;">${entry.createdBy || '-'}</td>
@@ -222,10 +245,11 @@
                         <td style="color: #f97316;">₹${igst.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td style="color: #16a34a; font-weight: bold;">₹${total.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td style="text-transform: uppercase;">${entry.gstNumber || '-'}</td>
+                        <td style="text-align: center;">${actionBtnHtml}</td>
                     </tr>`;
                 });
             } else {
-                tbody.innerHTML = '<tr><td colspan="8" style="text-align: center; color: gray;">No entries found.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="9" style="text-align: center; color: gray;">No entries found.</td></tr>';
             }
 
             document.getElementById('s-subtotal').innerText = '₹' + globalSubTotal.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
@@ -282,6 +306,23 @@
                 alert("An unexpected error occurred: " + err.message);
             }
         }
+
+        // --- Delete Entry Logic ---
+        window.deleteEntry = async function(invoiceNo) {
+            if (currentUserEmail.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) {
+                return alert("You do not have permission to delete entries.");
+            }
+            if (!confirm("Are you sure you want to delete this Store Plus entry?")) return;
+
+            try {
+                const { error } = await db.from('store_plus').delete().eq('invoiceNo', invoiceNo);
+                if (error) throw error;
+                fetchEntries(); // Refresh table
+            } catch (error) {
+                alert("Failed to delete entry: " + error.message);
+            }
+        };
+
     </script>
 </body>
 </html>
