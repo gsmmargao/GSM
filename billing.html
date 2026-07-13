@@ -45,23 +45,30 @@
 <body>
 
     <!-- Sidebar -->
-    <!-- Sidebar -->
 <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
     <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-    <a href="index.html" class="nav-item">📦 Order Details</a>
-    <a href="estimate.html" class="nav-item">🧾 Estimate</a>
-    <a href="billing.html" class="nav-item active">Billing</a>
-    <a href="store-plus.html" class="nav-item">🏪 Store Plus</a>
-    <a href="accessories.html" class="nav-item">Accessories</a>
-    <a href="sales-report.html" class="nav-item">Sales Report</a>
-    <a href="upi-book.html" class="nav-item">UPI Book</a>
-    <a href="cashbook.html" class="nav-item">Cashbook</a>
+    <a href="index.html" class="nav-item">📋 Order Details</a>
+    <a href="estimate.html" class="nav-item">🧾 Estimate Letter</a>
+    <a href="billing.html" class="nav-item active">💳 Billing</a>
+    <a href="store-plus.html" class="nav-item">📦 Store Plus</a>
+    <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
+    <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
+    <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+    <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
+    <a href="expenses.html" class="nav-item">💸 Expenses</a>
+    <a href="profit.html" class="nav-item">📈 Profit Book</a>
     
     <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
-    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
-        <span id="userNameDisplay" style="margin-right: 5px;">User</span> Logout ➔
+    
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="userNameDisplay">User</span> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
     </div>
 </div>
     <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
@@ -119,7 +126,7 @@
         let allBillingData = [];
         let currentPage = 1;
         const rowsPerPage = 10;
-        let loggedInEmail = 'Staff';
+        let currentUserEmail = ''; // Updated variable name to match helpers
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
 
         // Sidebar Auto-Collapse Logic
@@ -146,10 +153,11 @@
             if (!data.session) {
                 window.location.href = 'login.html';
             } else {
-                loggedInEmail = data.session.user.email.split('@')[0];
-                document.getElementById('userNameDisplay').innerText = loggedInEmail.charAt(0).toUpperCase() + loggedInEmail.slice(1);
+                currentUserEmail = data.session.user.email;
+                let displayEmail = currentUserEmail.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
                 
-                if (data.session.user.email === ADMIN_EMAIL) {
+                if (data.session.user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                     document.getElementById('adminUsersTab').style.display = 'flex';
                 }
             }
@@ -245,6 +253,11 @@
                 if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
                 await db.from('repairOrders').update(updateData).ilike('jobNo', rawJobNo);
             }
+
+            // INTEGRATION: Push to Cashbook if mode is Cash
+            if (billData.paymentMode === 'Cash' && billData.amountPaid > 0) {
+                await recordBillingPayment(billData.invoiceNo, billData.jobNo, billData.amountPaid);
+            }
             
             alert("Bill Generated Successfully!");
             window.toggleForm();
@@ -253,29 +266,28 @@
             document.getElementById('b-advance').value = '0';
             document.getElementById('b-amount').value = '0';
         }
-        // Add this utility function to billing.html
-window.recordBillingPayment = async function(invoiceNo, jobNo, customerName, paidAmount) {
-    if (!paidAmount || paidAmount <= 0) return;
 
-    const cashEntry = {
-        description: `Invoice #${invoiceNo} - Job ${jobNo} (Cash)`,
-        category: 'Billing',
-        amount: paidAmount,
-        type: 'in',
-        created_by: currentUserEmail
-    };
+        // Utility function updated to use the local 'db' instance
+        window.recordBillingPayment = async function(invoiceNo, jobNo, paidAmount) {
+            if (!paidAmount || paidAmount <= 0) return;
 
-    try {
-        const { error } = await supabaseClient.from('cashbook_entries').insert([cashEntry]);
-        if (error) throw error;
-        console.log("Payment recorded in Cashbook successfully.");
-    } catch (error) {
-        console.error("Failed to log payment to cashbook:", error.message);
-    }
-};
+            const cashEntry = {
+                description: `Invoice #${invoiceNo} - Job ${jobNo || 'N/A'} (Cash)`,
+                category: 'Billing',
+                amount: paidAmount,
+                type: 'in',
+                created_by: currentUserEmail
+            };
 
-// Example of how to trigger it when saving a bill:
-// recordBillingPayment('8543', '4438590163', 'John Doe', 2320.00);
+            try {
+                const { error } = await db.from('cashbook_entries').insert([cashEntry]);
+                if (error) throw error;
+                console.log("Payment recorded in Cashbook successfully.");
+            } catch (error) {
+                console.error("Failed to log payment to cashbook:", error.message);
+            }
+        };
+
     </script>
 </body>
 </html>
