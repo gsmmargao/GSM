@@ -308,8 +308,10 @@
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         let currentUserEmail = '';
 
-        // State variables for editing
+        // State variables for editing & sync logic
         let currentEditId = null;
+        let currentEditJobNo = '';
+        let currentEditCustomerName = '';
         let selectedPaymentMode = 'Cash';
 
         // --- SVGs ---
@@ -452,7 +454,7 @@
                         : `— <span onclick="openNotesModal('${order.id}', '', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
 
                     let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
-                        ? `<button onclick="deleteOrder('${order.id}')" style="background: transparent; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
+                        ? `<button onclick="deleteOrder('${order.id}', '${escapeHtml(order.jobNo)}')" style="background: transparent; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
                         : `<span style="color: gray; font-size: 0.8rem;">—</span>`;
 
                     let hwcIndicator = order.hwc ? `<span class="hwc-badge">HWC</span>` : '';
@@ -526,30 +528,33 @@
             };
 
             try {
+                // Save Order
                 const { error: orderError } = await supabaseClient.from('repairOrders').insert([orderData]);
                 if (orderError) throw orderError;
                 
+                // Save Initial Ledger Entries
                 if (advanceAmt > 0) {
+                    const desc = `Advance - Job ${jobNoVal} (${custName})`;
                     if (payMethod === 'Cash') {
-                        const cashEntry = {
-                            description: `Advance - Job ${jobNoVal} (${custName})`,
+                        const { error: cashError } = await supabaseClient.from('cashbook_entries').insert([{
+                            description: desc,
                             category: 'Advances',
                             amount: advanceAmt,
-                            type: 'in',
+                            type: 'in', // Explicit standard designation for Income
                             date: currentDate,
                             created_by: currentUserEmail
-                        };
-                        supabaseClient.from('cashbook_entries').insert([cashEntry]).then();
+                        }]);
+                        if (cashError) console.error("Cashbook Sync Error:", cashError.message);
                     } else if (payMethod === 'UPI') {
-                        const upiEntry = {
+                        const { error: upiError } = await supabaseClient.from('upi_transactions').insert([{
                             date: currentDate,
                             time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' }),
-                            description: `Advance - Job ${jobNoVal} (${custName})`,
+                            description: desc,
                             source: 'Advance Towards Repair',
                             amount: advanceAmt,
                             created_by: currentUserEmail
-                        };
-                        supabaseClient.from('upi_transactions').insert([upiEntry]).then();
+                        }]);
+                        if (upiError) console.error("UPI Sync Error:", upiError.message);
                     }
                 }
 
@@ -623,9 +628,11 @@
             } catch (error) { alert("Update failed: " + error.message); }
         }
 
-        // 3. Advance (Admin Only)
+        // 3. Advance (Admin Only) & Ledger Sync
         window.openAdvanceModal = function(id, currentAdv, currentMethod, jobNo, customerName) {
             currentEditId = id;
+            currentEditJobNo = jobNo;
+            currentEditCustomerName = customerName;
             document.getElementById('modalAdvanceSubtitle').innerHTML = `Order <strong>${jobNo}</strong> — ${customerName}`;
             document.getElementById('modalAdvanceInput').value = currentAdv;
             setPaymentMode(currentMethod || 'Cash');
@@ -639,8 +646,41 @@
         window.saveAdvance = async function() {
             let newAmt = parseFloat(document.getElementById('modalAdvanceInput').value) || 0;
             try {
+                // Update Main Order
                 const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: selectedPaymentMode }).eq('id', currentEditId);
                 if (error) throw error;
+                
+                // Ledger Sync: Remove old entries for this JobNo to prevent duplicates across both ledgers
+                const searchString = `Advance - Job ${currentEditJobNo}%`;
+                const exactDesc = `Advance - Job ${currentEditJobNo} (${currentEditCustomerName})`;
+                
+                await supabaseClient.from('cashbook_entries').delete().like('description', searchString);
+                await supabaseClient.from('upi_transactions').delete().like('description', searchString);
+
+                // Ledger Sync: Insert new Entry if Amount > 0
+                if (newAmt > 0) {
+                    let currentDate = new Date().toISOString().split('T')[0];
+                    if (selectedPaymentMode === 'Cash') {
+                        await supabaseClient.from('cashbook_entries').insert([{
+                            description: exactDesc,
+                            category: 'Advances',
+                            amount: newAmt,
+                            type: 'in',
+                            date: currentDate,
+                            created_by: currentUserEmail
+                        }]);
+                    } else if (selectedPaymentMode === 'UPI') {
+                        await supabaseClient.from('upi_transactions').insert([{
+                            date: currentDate,
+                            time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' }),
+                            description: exactDesc,
+                            source: 'Advance Towards Repair',
+                            amount: newAmt,
+                            created_by: currentUserEmail
+                        }]);
+                    }
+                }
+
                 closeModal('modalAdvance');
                 fetchOrders();
             } catch (error) { alert("Update failed: " + error.message); }
@@ -662,13 +702,20 @@
             } catch (error) { alert("Failed to update status: " + error.message); }
         };
 
-        window.deleteOrder = async function(id) {
+        window.deleteOrder = async function(id, jobNo) {
             if (currentUserEmail.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) return;
-            if (!confirm("Are you sure you want to delete this repair order?")) return;
+            if (!confirm("Are you sure you want to delete this repair order? This will also remove associated ledger entries.")) return;
 
             try {
+                // Cleanup Ledgers
+                const searchString = `Advance - Job ${jobNo}%`;
+                await supabaseClient.from('cashbook_entries').delete().like('description', searchString);
+                await supabaseClient.from('upi_transactions').delete().like('description', searchString);
+                
+                // Delete Order
                 const { error } = await supabaseClient.from('repairOrders').delete().eq('id', id);
                 if (error) throw error;
+                
                 fetchOrders();
             } catch (error) { alert("Failed to delete order: " + error.message); }
         };
