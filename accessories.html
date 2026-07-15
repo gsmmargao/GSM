@@ -44,14 +44,25 @@
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.8rem; color: #4b5563; margin-bottom: 5px; font-weight: 600;}
         .form-group label span { color: red; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none;}
         .form-group.col-span-2 { grid-column: span 2; }
+
+        /* Dynamic Items Section */
+        .items-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #fdfdfd;}
+        .item-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end;}
+        
+        /* Payment Toggle Segmented Input */
+        .segmented-input { display: flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #fdfdfd; width: fit-content; }
+        .segmented-input .pay-btn { border: none; background: transparent; color: #4b5563; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: background 0.2s, color 0.2s; border-right: 1px solid var(--border-color);}
+        .segmented-input .pay-btn:last-child { border-right: none; }
+        .segmented-input .pay-btn.active { background: #111827; color: white; }
 
         /* Table */
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px; }
         table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.85rem;}
         th { padding: 15px; background: #f9fafb; color: #4b5563; border-bottom: 1px solid var(--border-color); font-weight: 600; }
         td { padding: 15px; border-bottom: 1px solid var(--border-color); color: #111827; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
         
         .pill { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: bold; display: inline-block;}
         .pill-cash { background: #dcfce7; color: #166534; }
@@ -140,24 +151,23 @@
                 </div>
             </div>
 
+            <!-- Dynamic Items Box -->
+            <div class="items-section">
+                <div style="font-size: 0.8rem; font-weight: bold; color: #4b5563; margin-bottom: 15px;">ITEMS INCLUDED IN INVOICE</div>
+                <div id="invoiceItemsContainer">
+                    <!-- JavaScript will inject item rows here -->
+                </div>
+                <button class="btn" style="font-size: 0.8rem;" onclick="addInvoiceItem()">+ Add Another Item</button>
+            </div>
+
             <div class="form-grid">
                 <div class="form-group col-span-2">
-                    <label>Item <span>*</span></label>
-                    <select id="inv-item" onchange="handleItemSelect()">
-                        <option value="">Select item from catalog...</option>
-                    </select>
-                </div>
-                <div class="form-group">
-                    <label>Serial Number (optional)</label>
-                    <input type="text" id="inv-serial" placeholder="Item serial no.">
-                </div>
-                <div class="form-group">
-                    <label>Payment Mode</label>
-                    <select id="inv-mode">
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                        <option value="Card">Card</option>
-                    </select>
+                    <label>Payment Mode <span>*</span></label>
+                    <div class="segmented-input">
+                        <button type="button" class="pay-btn active" id="payCash" onclick="setPaymentMode('Cash')">Cash</button>
+                        <button type="button" class="pay-btn" id="payUPI" onclick="setPaymentMode('UPI')">UPI</button>
+                        <button type="button" class="pay-btn" id="payCard" onclick="setPaymentMode('Card')">Card</button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label>Date</label>
@@ -178,9 +188,7 @@
                         <th>Date</th>
                         <th>Name</th>
                         <th>Mobile</th>
-                        <th>Item</th>
-                        <th>HSN</th>
-                        <th>Serial No.</th>
+                        <th>Items Summary</th>
                         <th>Base Amt</th>
                         <th>GST</th>
                         <th>Total (₹)</th>
@@ -192,6 +200,11 @@
                     <!-- Data injected via JS -->
                 </tbody>
             </table>
+            <div class="pagination">
+                <button class="btn" onclick="prevPage()">Previous</button>
+                <span id="pageInfo" style="font-size:0.9rem; font-weight:bold;">Page 1</span>
+                <button class="btn" onclick="nextPage()">Next</button>
+            </div>
         </div>
     </div>
 
@@ -247,6 +260,11 @@
         let currentTab = 'Regular'; 
         let catalogItems = [];
         let allInvoices = [];
+        let selectedPaymentMode = 'Cash';
+        
+        // Pagination vars
+        let currentPage = 1;
+        const rowsPerPage = 10;
 
         // --- Auth & Setup ---
         async function checkAuth() {
@@ -288,11 +306,13 @@
             
             await fetchCatalog();
             await fetchInvoices();
+            addInvoiceItem(); // Initialize with one empty row
         });
 
         // --- Tab Management ---
         window.switchTab = function(type) {
             currentTab = type;
+            currentPage = 1; // reset pagination
             document.getElementById('btnRegular').classList.toggle('active', type === 'Regular');
             document.getElementById('btnGST').classList.toggle('active', type === 'GST');
             
@@ -314,21 +334,53 @@
             renderInvoiceTable();
         }
 
+        // --- Payment Toggle ---
+        window.setPaymentMode = function(mode) {
+            selectedPaymentMode = mode;
+            document.getElementById('payCash').className = mode === 'Cash' ? 'pay-btn active' : 'pay-btn';
+            document.getElementById('payUPI').className = mode === 'UPI' ? 'pay-btn active' : 'pay-btn';
+            document.getElementById('payCard').className = mode === 'Card' ? 'pay-btn active' : 'pay-btn';
+        }
+
+        // --- Dynamic Items Logic ---
+        window.addInvoiceItem = function() {
+            const container = document.getElementById('invoiceItemsContainer');
+            const row = document.createElement('div');
+            row.className = 'item-row';
+            
+            let options = '<option value="">Select item...</option>';
+            catalogItems.forEach(item => {
+                options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+            });
+
+            row.innerHTML = `
+                <div class="form-group"><label>Select Item from Catalog</label><select class="item-select">${options}</select></div>
+                <div class="form-group"><label>Serial (Optional)</label><input type="text" class="item-serial" placeholder="Serial no."></div>
+                <button class="btn-icon" style="color:red; height: 38px; margin-bottom:2px;" onclick="this.parentElement.remove()" title="Remove Item">🗑️</button>
+            `;
+            container.appendChild(row);
+        }
+
         // --- Catalog Modal Logic ---
         window.openCatalogModal = () => document.getElementById('catalogModal').style.display = 'flex';
-        window.closeCatalogModal = () => document.getElementById('catalogModal').style.display = 'none';
+        window.closeCatalogModal = () => {
+            document.getElementById('catalogModal').style.display = 'none';
+            // Re-render item dropdowns to include new catalog items
+            document.querySelectorAll('.item-select').forEach(select => {
+                let currentVal = select.value;
+                let options = '<option value="">Select item...</option>';
+                catalogItems.forEach(item => {
+                    options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+                });
+                select.innerHTML = options;
+                select.value = currentVal;
+            });
+        };
 
         window.fetchCatalog = async function() {
             const { data, error } = await db.from('accessories_catalog').select('*').order('created_at', { ascending: false });
             if (error) return console.error(error);
             catalogItems = data || [];
-            
-            // Populate Dropdown
-            const select = document.getElementById('inv-item');
-            select.innerHTML = '<option value="">Select item from catalog...</option>';
-            catalogItems.forEach(item => {
-                select.innerHTML += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
-            });
 
             // Populate Modal Table
             const tbody = document.getElementById('catalogTableBody');
@@ -380,14 +432,11 @@
         }
 
         // --- Invoice Logic ---
-        window.handleItemSelect = function() {
-            // Optional: Auto-fill logic could go here if needed
-        }
-
         window.fetchInvoices = async function() {
             const { data, error } = await db.from('accessories_invoices').select('*').order('created_at', { ascending: false });
             if (error) return console.error(error);
             allInvoices = data || [];
+            currentPage = 1; // Reset to page 1
             renderInvoiceTable();
         }
 
@@ -398,16 +447,27 @@
             const filteredInvoices = allInvoices.filter(inv => inv.invoice_type === currentTab);
             
             if(filteredInvoices.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="13" style="text-align: center; color: gray;">No ${currentTab} invoices yet. Add an entry above.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: gray;">No ${currentTab} invoices yet. Add an entry above.</td></tr>`;
+                document.getElementById('pageInfo').innerText = `Page 1 of 1`;
                 return;
             }
 
-            filteredInvoices.forEach(inv => {
+            // Pagination logic
+            const start = (currentPage - 1) * rowsPerPage;
+            const paginatedItems = filteredInvoices.slice(start, start + rowsPerPage);
+
+            paginatedItems.forEach(inv => {
                 let pillClass = inv.payment_mode === 'Cash' ? 'pill-cash' : (inv.payment_mode === 'UPI' ? 'pill-upi' : 'pill-card');
                 
                 let deleteBtn = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()
-                    ? `<button onclick="deleteInvoice(${inv.id})" style="color:red; background:none; border:none; cursor:pointer;" title="Delete">🗑️</button>`
+                    ? `<button onclick="deleteInvoice(${inv.id}, '${inv.invoice_no}')" style="color:red; background:none; border:none; cursor:pointer;" title="Delete">🗑️</button>`
                     : `-`;
+
+                // Handle legacy entries vs new items JSON array
+                let summaryDesc = inv.item_desc;
+                if (inv.items && inv.items.length > 1) {
+                    summaryDesc = `${inv.items.length} items (Total: ₹${inv.total_amt})`;
+                }
 
                 tbody.innerHTML += `
                     <tr>
@@ -416,9 +476,7 @@
                         <td>${inv.date}</td>
                         <td style="font-weight:bold;">${inv.customer_name}</td>
                         <td>${inv.mobile}</td>
-                        <td>${inv.item_desc}</td>
-                        <td>${inv.hsn || '-'}</td>
-                        <td style="color:gray; font-size:0.75rem;">${inv.serial_no || '-'}</td>
+                        <td style="color:#4b5563;">${summaryDesc}</td>
                         <td>₹${inv.base_amt.toFixed(2)}</td>
                         <td style="color:#f59e0b;">₹${inv.gst_amt.toFixed(2)}</td>
                         <td style="font-weight:bold; color:black;">₹${inv.total_amt.toFixed(2)}</td>
@@ -430,27 +488,61 @@
                     </tr>
                 `;
             });
+
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(filteredInvoices.length / rowsPerPage) || 1}`;
+        }
+
+        window.prevPage = function() { if (currentPage > 1) { currentPage--; renderInvoiceTable(); } }
+        window.nextPage = function() { 
+            const filteredInvoices = allInvoices.filter(inv => inv.invoice_type === currentTab);
+            if (currentPage < Math.ceil(filteredInvoices.length / rowsPerPage)) { currentPage++; renderInvoiceTable(); } 
         }
 
         window.saveInvoice = async function() {
             const name = document.getElementById('inv-name').value.trim();
             const mobile = document.getElementById('inv-mobile').value.trim();
             const gstin = document.getElementById('inv-gstin').value.trim();
-            const itemId = document.getElementById('inv-item').value;
-            const serial = document.getElementById('inv-serial').value.trim();
-            const mode = document.getElementById('inv-mode').value;
             const date = document.getElementById('inv-date').value;
 
-            if(!name || !mobile || !itemId) return alert("Please fill required fields (Name, Mobile, Item).");
+            if(!name || !mobile) return alert("Please fill required Customer details.");
             if(currentTab === 'GST' && !gstin) return alert("Customer GSTIN is required for GST Invoices.");
 
-            const item = catalogItems.find(c => c.id == itemId);
-            if(!item) return alert("Invalid item selected.");
+            // Aggregate items
+            const itemRows = document.querySelectorAll('.item-row');
+            const itemsArray = [];
+            let grandTotal = 0;
+            let grandBase = 0;
+            let grandGst = 0;
 
-            // Calculations
-            const totalAmt = parseFloat(item.amount_incl_gst);
-            const baseAmt = totalAmt / (1 + (item.tax_percent / 100));
-            const gstAmt = totalAmt - baseAmt;
+            itemRows.forEach(row => {
+                const selectVal = row.querySelector('.item-select').value;
+                const serialVal = row.querySelector('.item-serial').value.trim();
+                
+                if (selectVal) {
+                    const catalogItem = catalogItems.find(c => c.id == selectVal);
+                    if (catalogItem) {
+                        const total = parseFloat(catalogItem.amount_incl_gst);
+                        const base = total / (1 + (catalogItem.tax_percent / 100));
+                        const gst = total - base;
+
+                        grandTotal += total;
+                        grandBase += base;
+                        grandGst += gst;
+
+                        itemsArray.push({
+                            desc: catalogItem.description,
+                            hsn: catalogItem.hsn,
+                            serial: serialVal,
+                            tax_percent: catalogItem.tax_percent,
+                            base_amt: base,
+                            gst_amt: gst,
+                            total_amt: total
+                        });
+                    }
+                }
+            });
+
+            if (itemsArray.length === 0) return alert("Please select at least one item.");
 
             // Generate Invoice No
             const prefix = currentTab === 'Regular' ? 'AC' : 'GSM';
@@ -465,7 +557,10 @@
                 const lastNum = parseInt(latest[0].invoice_no.replace(/\D/g, ''));
                 if(!isNaN(lastNum)) nextNum = lastNum + 1;
             }
-            const invoiceNoStr = `${prefix}${String(nextNum).padStart(2, '0')}`; // e.g. AC01 or GSM01
+            const invoiceNoStr = `${prefix}${String(nextNum).padStart(2, '0')}`;
+
+            // Create a summary description for backward compatibility / single string view
+            const summaryDesc = itemsArray.map(i => i.desc).join(', ');
 
             const invData = {
                 invoice_no: invoiceNoStr,
@@ -473,14 +568,15 @@
                 customer_name: name,
                 mobile: mobile,
                 gstin: gstin,
-                item_desc: item.description,
-                hsn: item.hsn,
-                serial_no: serial,
-                base_amt: baseAmt,
-                gst_amt: gstAmt,
-                total_amt: totalAmt,
-                tax_percent: item.tax_percent,
-                payment_mode: mode,
+                item_desc: summaryDesc, // Legacy/Summary
+                items: itemsArray,      // New JSON Array
+                hsn: itemsArray[0].hsn, // Store first HSN for backward compatibility
+                serial_no: itemsArray[0].serial,
+                base_amt: grandBase,
+                gst_amt: grandGst,
+                total_amt: grandTotal,
+                tax_percent: itemsArray[0].tax_percent, 
+                payment_mode: selectedPaymentMode,
                 created_by: document.getElementById('userNameDisplay').innerText,
                 date: date
             };
@@ -489,24 +585,28 @@
             if(error) return alert("Error saving invoice: " + error.message);
 
             // INTEGRATION: Push to Cashbook or UPI Book
-            if(mode === 'Cash') {
+            let currentDate = new Date().toISOString().split('T')[0];
+            let currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
+            let desc = `Acc. Invoice #${invoiceNoStr} - ${name} (${selectedPaymentMode})`;
+
+            if(selectedPaymentMode === 'Cash') {
                 await db.from('cashbook_entries').insert([{
-                    description: `Acc. Invoice #${invoiceNoStr} - ${name} (Cash)`,
+                    description: desc,
                     category: 'Accessories',
-                    amount: totalAmt,
+                    amount: grandTotal,
                     type: 'in',
+                    date: currentDate,
                     created_by: currentUserEmail
                 }]);
-            } else if (mode === 'UPI') {
-                // If table doesn't exist, it fails silently in console. 
-                const { error: upiErr } = await db.from('upi_book_entries').insert([{
-                    description: `Acc. Invoice #${invoiceNoStr} - ${name} (UPI)`,
-                    category: 'Accessories',
-                    amount: totalAmt,
-                    type: 'in',
+            } else if (selectedPaymentMode === 'UPI' || selectedPaymentMode === 'Card') {
+                await db.from('upi_transactions').insert([{
+                    date: currentDate,
+                    time: currentTime,
+                    description: desc,
+                    source: 'Accessories',
+                    amount: grandTotal,
                     created_by: currentUserEmail
                 }]);
-                if(upiErr) console.warn("Failed to push to UPI book. Ensure table exists.", upiErr);
             }
 
             alert("Invoice Saved successfully!");
@@ -515,14 +615,21 @@
             document.getElementById('inv-name').value = '';
             document.getElementById('inv-mobile').value = '';
             document.getElementById('inv-gstin').value = '';
-            document.getElementById('inv-item').value = '';
-            document.getElementById('inv-serial').value = '';
+            document.getElementById('invoiceItemsContainer').innerHTML = '';
+            addInvoiceItem(); // add one empty row back
+            setPaymentMode('Cash');
             
             fetchInvoices();
         }
 
-        window.deleteInvoice = async function(id) {
-            if(!confirm("Are you sure you want to delete this invoice? Note: This will NOT automatically delete the Cash/UPI book entry.")) return;
+        window.deleteInvoice = async function(id, invoiceNoStr) {
+            if(!confirm("Are you sure you want to delete this invoice? Associated ledger entries will also be removed.")) return;
+            
+            // Cleanup Ledgers
+            const searchString = `Acc. Invoice #${invoiceNoStr}%`;
+            await db.from('cashbook_entries').delete().like('description', searchString);
+            await db.from('upi_transactions').delete().like('description', searchString);
+
             await db.from('accessories_invoices').delete().eq('id', id);
             fetchInvoices();
         }
@@ -544,9 +651,32 @@
 
         // --- Print Template Logic ---
         window.printInvoice = function(inv) {
-            const halfTax = (inv.tax_percent / 2).toFixed(1);
-            const cgstAmt = (inv.gst_amt / 2).toFixed(3);
             const amountInWords = numberToWords(Math.round(inv.total_amt));
+            
+            // Build Items HTML dynamically
+            let itemsHtml = '';
+            let itemsList = inv.items || [{
+                desc: inv.item_desc, hsn: inv.hsn, serial: inv.serial_no,
+                base_amt: inv.base_amt, gst_amt: inv.gst_amt, total_amt: inv.total_amt, tax_percent: inv.tax_percent
+            }];
+
+            itemsList.forEach((item, index) => {
+                let halfTax = (item.tax_percent / 2).toFixed(1);
+                let cgstAmt = (item.gst_amt / 2).toFixed(2);
+                itemsHtml += `
+                    <tr>
+                        <td>${index + 1}</td>
+                        <td style="font-weight:bold;">${item.desc}</td>
+                        <td class="text-center" style="color:gray;">${item.hsn || '-'}</td>
+                        <td style="color:gray; font-size:10px;">${item.serial || '-'}</td>
+                        <td class="text-center">${halfTax}%</td>
+                        <td class="text-right">₹${item.base_amt.toFixed(2)}</td>
+                        <td class="text-right">₹${cgstAmt}</td>
+                        <td class="text-right">₹${cgstAmt}</td>
+                        <td class="text-right" style="font-weight:bold;">₹${item.total_amt.toFixed(2)}</td>
+                    </tr>
+                `;
+            });
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
@@ -632,26 +762,18 @@
                 <thead>
                     <tr>
                         <th style="width: 5%;">#</th>
-                        <th style="width: 35%;">ITEM DESCRIPTION</th>
+                        <th style="width: 30%;">ITEM DESCRIPTION</th>
                         <th class="text-center">HSN</th>
                         <th>SERIAL NO.</th>
+                        <th class="text-center">CGST/SGST %</th>
                         <th class="text-right">BASE AMT</th>
-                        <th class="text-right">CGST ${halfTax}%</th>
-                        <th class="text-right">SGST ${halfTax}%</th>
+                        <th class="text-right">CGST</th>
+                        <th class="text-right">SGST</th>
                         <th class="text-right">TOTAL</th>
                     </tr>
                 </thead>
                 <tbody>
-                    <tr>
-                        <td>1</td>
-                        <td style="font-weight:bold;">${inv.item_desc}</td>
-                        <td class="text-center" style="color:gray;">${inv.hsn || '-'}</td>
-                        <td style="color:gray; font-size:10px;">${inv.serial_no || '-'}</td>
-                        <td class="text-right">₹${inv.base_amt.toFixed(2)}</td>
-                        <td class="text-right">₹${cgstAmt}</td>
-                        <td class="text-right">₹${cgstAmt}</td>
-                        <td class="text-right" style="font-weight:bold;">₹${inv.total_amt.toFixed(2)}</td>
-                    </tr>
+                    ${itemsHtml}
                 </tbody>
             </table>
 
@@ -661,16 +783,12 @@
                 </div>
                 <div class="totals-box">
                     <div class="totals-row">
-                        <span>Taxable Amount</span>
+                        <span>Total Taxable Amount</span>
                         <strong>₹${inv.base_amt.toFixed(2)}</strong>
                     </div>
                     <div class="totals-row">
-                        <span>CGST @ ${halfTax}%</span>
-                        <strong>₹${cgstAmt}</strong>
-                    </div>
-                    <div class="totals-row">
-                        <span>SGST @ ${halfTax}%</span>
-                        <strong>₹${cgstAmt}</strong>
+                        <span>Total GST</span>
+                        <strong>₹${inv.gst_amt.toFixed(2)}</strong>
                     </div>
                     <div class="totals-row grand">
                         <span>Grand Total</span>
