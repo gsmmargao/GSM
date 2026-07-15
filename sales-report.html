@@ -77,6 +77,7 @@
         .th-group { text-align: center; border-bottom: none; padding-bottom: 5px; }
         .th-sub { background: #f9fafb; font-size: 0.8rem; }
         td { color: #111827; }
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
         
         .c-orange { color: #d97706; font-weight: 600; }
         .c-green { color: #059669; font-weight: bold; }
@@ -177,7 +178,7 @@
 
     <!-- Table Card -->
     <div class="card table-card">
-        <table>
+        <table id="salesTable">
             <thead>
                 <tr>
                     <th rowspan="2" style="border-right: 1px solid #e5e7eb;">Date</th>
@@ -186,7 +187,7 @@
                     <th rowspan="2" style="border-right: 1px solid #e5e7eb;">Part</th>
                     <th colspan="3" class="th-group" style="border-right: 1px solid #e5e7eb;">Unit Price</th>
                     <th colspan="3" class="th-group" style="border-right: 1px solid #e5e7eb;">Retail Price</th>
-                    <th rowspan="2" style="text-align: center; border-right: 1px solid #e5e7eb;">Profit</th>
+                    <th rowspan="2" class="profit-col" style="text-align: center; border-right: 1px solid #e5e7eb;">Profit</th>
                     <th rowspan="2" style="text-align: center;">🗑️</th>
                 </tr>
                 <tr>
@@ -202,6 +203,11 @@
                 <!-- Data populated by JS -->
             </tbody>
         </table>
+        <div class="pagination">
+            <button class="btn" onclick="prevPage()">Previous</button>
+            <span id="pageInfo" style="font-size:0.9rem; font-weight:bold;">Page 1</span>
+            <button class="btn" onclick="nextPage()">Next</button>
+        </div>
     </div>
 </div>
 
@@ -216,6 +222,12 @@
     let currentUserEmail = '';
     let currentUserName = '';
     let partCounter = 1;
+    let isAdmin = false;
+
+    // Pagination State
+    let allSalesData = [];
+    let currentPage = 1;
+    const rowsPerPage = 10;
 
     // Sidebar Logic
     let sidebarTimer;
@@ -259,11 +271,17 @@
             currentUserName = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
             document.getElementById('userNameDisplay').innerText = currentUserName;
             
-            // Show admin tabs only if user is admin
+            // Handle Admin Privileges
             if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                isAdmin = true;
                 document.getElementById('adminUsersTab').style.display = 'flex';
                 document.getElementById('navExpenses').style.display = 'flex';
                 document.getElementById('navProfit').style.display = 'flex';
+            } else {
+                isAdmin = false;
+                // Hide Profit column for non-admins
+                const profitCols = document.querySelectorAll('.profit-col');
+                profitCols.forEach(col => col.style.display = 'none');
             }
         }
     }
@@ -298,19 +316,17 @@
         if(row) row.remove();
     }
 
-    // Initialize with 3 rows exactly like the screenshot
+    // Initialize with 1 row 
     function initializeRows() {
         document.getElementById('partsContainer').innerHTML = '';
         partCounter = 1;
-        addPartRow();
-        addPartRow();
         addPartRow();
     }
 
     // Save Entry to Supabase
     window.saveSalesEntry = async function() {
         const date = document.getElementById('entryDate').value;
-        const jobNo = document.getElementById('entryJobNo').value.trim(); // Added .trim() here to ensure it's not just spaces
+        const jobNo = document.getElementById('entryJobNo').value.trim(); 
         
         if (!date || !jobNo) {
             return alert("Date and Job Number are required.");
@@ -353,12 +369,16 @@
         }
     }
 
-    // Fetch and Calculate Table Data
+    // Fetch Table Data
     window.fetchSalesReports = async function() {
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate = document.getElementById('filterToDate').value;
 
-        let query = supabaseClient.from('sales_reports').select('*').order('date', { ascending: false });
+        // Order by Date, then by created_at so newest entries show at the top of the day
+        let query = supabaseClient.from('sales_reports')
+            .select('*')
+            .order('date', { ascending: false })
+            .order('created_at', { ascending: false });
 
         if (fromDate) query = query.gte('date', fromDate);
         if (toDate) query = query.lte('date', toDate);
@@ -367,58 +387,91 @@
             const { data, error } = await query;
             if (error) throw error;
 
-            const tableBody = document.getElementById('salesTableBody');
-            tableBody.innerHTML = '';
-
-            data.forEach(item => {
-                // GST Calculations based on standard 18% assumption matching the screenshot
-                const gstRate = 0.18;
-                
-                const unitBase = parseFloat(item.unit_price_base);
-                const unitGst = unitBase * gstRate;
-                const unitTotal = unitBase + unitGst;
-
-                const retailBase = parseFloat(item.retail_price_base);
-                const retailGst = retailBase * gstRate;
-                const retailTotal = retailBase + retailGst;
-
-                // Profit matching accounting flow: Retail Total - Unit Total
-                const profit = retailTotal - unitTotal;
-
-                let deleteBtn = '';
-                if (currentUserEmail === ADMIN_EMAIL) {
-                    deleteBtn = `<button class="action-delete" onclick="deleteEntry('${item.id}')">🗑️</button>`;
-                }
-
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td class="c-bold" style="border-right: 1px solid #e5e7eb;">${item.date}</td>
-                    <td class="c-bold" style="border-right: 1px solid #e5e7eb;">${item.job_no}</td>
-                    <td style="border-right: 1px solid #e5e7eb;">${item.created_by || 'Admin'}</td>
-                    <td style="border-right: 1px solid #e5e7eb;">${item.part_label}</td>
-                    
-                    <!-- Unit Breakdown -->
-                    <td>₹${unitBase.toFixed(2)}</td>
-                    <td class="c-orange">₹${unitGst.toFixed(3)}</td>
-                    <td class="c-bold" style="border-right: 1px solid #e5e7eb;">₹${unitTotal.toFixed(3)}</td>
-                    
-                    <!-- Retail Breakdown -->
-                    <td>₹${retailBase.toFixed(2)}</td>
-                    <td class="c-orange">₹${retailGst.toFixed(3)}</td>
-                    <td class="c-bold" style="border-right: 1px solid #e5e7eb;">₹${retailTotal.toFixed(3)}</td>
-                    
-                    <!-- Profit -->
-                    <td class="c-green" style="text-align: center; border-right: 1px solid #e5e7eb;">₹${profit.toFixed(3)}</td>
-                    
-                    <!-- Action -->
-                    <td style="text-align: center;">${deleteBtn}</td>
-                `;
-                tableBody.appendChild(tr);
-            });
+            allSalesData = data || [];
+            currentPage = 1; // Reset to page 1 on new fetch
+            renderTable();
 
         } catch (error) {
             console.error("Error fetching report:", error.message);
         }
+    }
+
+    // Render Paginated Table
+    function renderTable() {
+        const tableBody = document.getElementById('salesTableBody');
+        tableBody.innerHTML = '';
+
+        if(allSalesData.length === 0) {
+            tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: gray;">No entries found.</td></tr>`;
+            document.getElementById('pageInfo').innerText = `Page 1 of 1`;
+            return;
+        }
+
+        const start = (currentPage - 1) * rowsPerPage;
+        const paginatedItems = allSalesData.slice(start, start + rowsPerPage);
+
+        paginatedItems.forEach(item => {
+            const gstRate = 0.18;
+            
+            const unitBase = parseFloat(item.unit_price_base);
+            const unitGst = unitBase * gstRate;
+            const unitTotal = unitBase + unitGst;
+
+            const retailBase = parseFloat(item.retail_price_base);
+            const retailGst = retailBase * gstRate;
+            const retailTotal = retailBase + retailGst;
+
+            const profit = retailTotal - unitTotal;
+
+            let deleteBtn = isAdmin
+                ? `<button class="action-delete" onclick="deleteEntry('${item.id}')">🗑️</button>`
+                : `<span style="color:gray;">-</span>`;
+
+            let profitCell = isAdmin 
+                ? `<td class="profit-col c-green" style="text-align: center; border-right: 1px solid #e5e7eb;">₹${profit.toFixed(3)}</td>` 
+                : `<td class="profit-col" style="display:none;"></td>`;
+
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="c-bold" style="border-right: 1px solid #e5e7eb;">${item.date}</td>
+                <td class="c-bold" style="border-right: 1px solid #e5e7eb;">${item.job_no}</td>
+                <td style="border-right: 1px solid #e5e7eb;">${item.created_by || 'Admin'}</td>
+                <td style="border-right: 1px solid #e5e7eb;">${item.part_label}</td>
+                
+                <!-- Unit Breakdown -->
+                <td>₹${unitBase.toFixed(2)}</td>
+                <td class="c-orange">₹${unitGst.toFixed(3)}</td>
+                <td class="c-bold" style="border-right: 1px solid #e5e7eb;">₹${unitTotal.toFixed(3)}</td>
+                
+                <!-- Retail Breakdown -->
+                <td>₹${retailBase.toFixed(2)}</td>
+                <td class="c-orange">₹${retailGst.toFixed(3)}</td>
+                <td class="c-bold" style="border-right: 1px solid #e5e7eb;">₹${retailTotal.toFixed(3)}</td>
+                
+                <!-- Profit -->
+                ${profitCell}
+                
+                <!-- Action -->
+                <td style="text-align: center;">${deleteBtn}</td>
+            `;
+            tableBody.appendChild(tr);
+        });
+
+        document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allSalesData.length / rowsPerPage) || 1}`;
+    }
+
+    // Pagination Controls
+    window.prevPage = function() { 
+        if (currentPage > 1) { 
+            currentPage--; 
+            renderTable(); 
+        } 
+    }
+    window.nextPage = function() { 
+        if (currentPage < Math.ceil(allSalesData.length / rowsPerPage)) { 
+            currentPage++; 
+            renderTable(); 
+        } 
     }
 
     window.clearFilter = function() {
@@ -428,7 +481,7 @@
     }
 
     window.deleteEntry = async function(id) {
-        if (currentUserEmail !== ADMIN_EMAIL) return alert("Only admins can delete entries.");
+        if (!isAdmin) return alert("Only admins can delete entries.");
         if (!confirm("Are you sure you want to delete this part entry?")) return;
 
         try {
