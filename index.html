@@ -15,6 +15,7 @@
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
+        /* Sidebar Styling */
         .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         
@@ -32,117 +33,93 @@
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
         
-        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); position: sticky; top: 0; z-index: 30; }
+        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
         .header-left h1 { margin: 0; font-size: 1.5rem; }
         .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
         .header-right { display: flex; gap: 10px; align-items: center; }
-        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; font-size: 0.9rem; outline: none; }
-        .search-bar:focus { border-color: #9ca3af; }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; font-size: 0.9rem; }
-        .btn:hover { background: #f3f4f6; }
+        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
         .btn-primary { background: black; color: white; border: none; }
-        .btn-primary:hover { background: #1f2937; }
 
         .dashboard-padding { padding: 20px 30px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 25px; }
-        .stat-card { background: white; padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
-        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.8rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
-        .stat-card .number { margin: 0; font-size: 2rem; font-weight: bold; color: #111827; }
+        .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; }
+        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: #111827; }
         .c-blue { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
         .c-orange { color: #d97706; background: #fffbeb; border-color: #fde68a; }
         .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
         .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
 
-        .form-card { background: white; border-radius: 10px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
-        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 12px; gap: 8px; }
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
+        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;}
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.82rem; color: #374151; margin-bottom: 5px; font-weight: 500; }
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; }
         .form-group label span { color: red; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-        .form-group input:focus, .form-group select:focus { border-color: #9ca3af; box-shadow: 0 0 0 2px rgba(156,163,175,0.15); }
+        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .form-group input:focus { border-color: #9ca3af; }
+        .form-group.full-width { grid-column: span 3; }
         
         .form-actions { display: flex; gap: 10px; margin-top: 20px; }
-        .btn-save { background: black; color: white; border: none; padding: 10px 24px; border-radius: 6px; cursor: pointer; font-weight: bold; font-size: 0.9rem; transition: background 0.2s; }
-        .btn-save:hover { background: #1f2937; }
+        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
 
-        /* Payment Split UI in Form */
-        .payment-split-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px; }
-        .payment-split-card { background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; }
-        .payment-split-card.cash-card { border-left: 3px solid #10b981; }
-        .payment-split-card.upi-card { border-left: 3px solid #3b82f6; }
-        .payment-split-card label { font-size: 0.82rem; font-weight: 600; color: #374151; display: flex; align-items: center; gap: 6px; margin-bottom: 8px; }
-        .payment-split-card input { width: 100%; box-sizing: border-box; padding: 9px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: white; }
-        .payment-split-card input:focus { border-color: #9ca3af; }
-        .total-advance-display { background: #111827; color: white; border-radius: 8px; padding: 12px 16px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; }
-        .total-advance-display span:first-child { font-size: 0.82rem; color: #9ca3af; }
-        .total-advance-display span:last-child { font-size: 1.1rem; font-weight: bold; }
-
-        .table-card { background: white; border-radius: 10px; border: 1px solid var(--border-color); overflow-x: auto; margin-bottom: 50px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px;}
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 13px 15px; background: #f9fafb; font-size: 0.78rem; color: #6b7280; border-bottom: 1px solid var(--border-color); font-weight: 600; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
-        td { padding: 14px 15px; font-size: 0.88rem; border-bottom: 1px solid var(--border-color); color: #111827; vertical-align: middle; }
-        tr:last-child td { border-bottom: none; }
-        tr:hover td { background: #fafafa; }
+        th { padding: 12px 15px; background: #f9fafb; font-size: 0.82rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        td { padding: 12px 15px; font-size: 0.88rem; border-bottom: 1px solid var(--border-color); color: #111827; vertical-align: middle; }
 
-        /* Payment columns */
-        .cash-col { background: #f0fdf4; }
-        .upi-col { background: #eff6ff; }
-        th.cash-th { background: #dcfce7; color: #166534; }
-        th.upi-th { background: #dbeafe; color: #1e40af; }
-
-        .amount-cell { font-weight: 600; }
-        .amount-cash { color: #059669; }
-        .amount-upi { color: #2563eb; }
-        .amount-zero { color: #d1d5db; font-weight: 400; }
-
-        .status-btn { border: none; padding: 7px 14px; border-radius: 20px; color: white; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; font-size: 0.78rem; white-space: nowrap; }
-        .status-btn:hover { opacity: 0.85; transform: scale(1.02); }
+        .status-btn { border: none; padding: 8px 16px; border-radius: 6px; color: white; font-weight: bold; cursor: pointer; transition: opacity 0.2s; width: 150px; }
+        .status-btn:hover { opacity: 0.85; }
         
-        .edit-icon { cursor: pointer; color: #d1d5db; margin-left: 6px; vertical-align: middle; transition: color 0.2s; display: inline-block; }
+        /* Inline Icon Styles */
+        .edit-icon { cursor: pointer; color: #9ca3af; margin-left: 8px; vertical-align: middle; transition: color 0.2s;}
         .edit-icon:hover { color: #374151; }
-        .eye-icon { cursor: pointer; color: #9ca3af; vertical-align: middle; margin-right: 4px; transition: color 0.2s; display: inline-block; }
+        .eye-icon { cursor: pointer; color: #6b7280; vertical-align: middle; margin-right: 5px; transition: color 0.2s; }
         .eye-icon:hover { color: #111827; }
         
-        .hwc-badge { background-color: #ef4444; color: white; font-size: 0.65rem; font-weight: bold; padding: 2px 6px; border-radius: 4px; margin-right: 6px; vertical-align: middle; letter-spacing: 0.05em; }
+        .hwc-badge { background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle; display: inline-block; margin-bottom: 4px;}
+
+        /* Payment Column Styles */
+        .payment-col { text-align: center; }
+        .payment-amount { font-weight: bold; font-size: 0.9rem; }
+        .payment-amount.cash { color: #059669; }
+        .payment-amount.upi { color: #2563eb; }
+        .payment-nil { color: #d1d5db; font-size: 0.85rem; }
 
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.45); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(3px); }
-        .modal-container { background: white; padding: 28px; border-radius: 14px; width: 420px; max-width: 92%; box-shadow: 0 20px 50px rgba(0,0,0,0.15); animation: modalIn 0.2s ease; }
-        @keyframes modalIn { from { opacity: 0; transform: scale(0.95) translateY(10px); } to { opacity: 1; transform: scale(1) translateY(0); } }
-        .modal-title { font-size: 1.1rem; font-weight: bold; color: #111827; margin: 0 0 4px 0; }
-        .modal-subtitle { font-size: 0.82rem; color: #6b7280; margin: 0 0 20px 0; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
+        .modal-container { background: white; padding: 25px; border-radius: 12px; width: 420px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .modal-title { font-size: 1.1rem; font-weight: bold; color: #111827; margin: 0 0 5px 0; }
+        .modal-subtitle { font-size: 0.8rem; color: #6b7280; margin: 0 0 20px 0; }
         .modal-body { margin-bottom: 20px; }
-        .modal-body input, .modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; outline: none; transition: border-color 0.2s; }
-        .modal-body input:focus, .modal-body textarea:focus { border-color: #9ca3af; box-shadow: 0 0 0 2px rgba(156,163,175,0.15); }
+        .modal-body input, .modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; outline: none; }
+        .modal-body input:focus, .modal-body textarea:focus { border-color: #9ca3af; }
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
         
-        .btn-cancel { padding: 9px 18px; border-radius: 6px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; font-weight: 500; font-size: 0.85rem; transition: background 0.2s; }
+        /* Modal Buttons */
+        .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; font-weight: 500; font-size: 0.85rem;}
         .btn-cancel:hover { background: #f3f4f6; }
-        .btn-confirm { padding: 9px 18px; border-radius: 6px; border: none; background: #111827; color: white; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: background 0.2s; }
-        .btn-confirm:hover { background: #374151; }
+        .btn-confirm { padding: 8px 16px; border-radius: 6px; border: none; background: #374151; color: white; cursor: pointer; font-weight: bold; font-size: 0.85rem;}
+        .btn-confirm:hover { background: #111827; }
 
-        /* Modal Payment Split */
-        .modal-payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 12px; }
-        .modal-pay-card { border-radius: 8px; padding: 12px; border: 1px solid var(--border-color); }
-        .modal-pay-card.cash { border-left: 3px solid #10b981; background: #f0fdf4; }
-        .modal-pay-card.upi { border-left: 3px solid #3b82f6; background: #eff6ff; }
-        .modal-pay-card label { font-size: 0.78rem; font-weight: 600; display: flex; align-items: center; gap: 5px; margin-bottom: 6px; }
-        .modal-pay-card.cash label { color: #065f46; }
-        .modal-pay-card.upi label { color: #1e40af; }
-        .modal-pay-card input { width: 100%; box-sizing: border-box; padding: 8px 10px; border: 1px solid #d1d5db; border-radius: 5px; font-size: 0.88rem; outline: none; background: white; }
-        .modal-total-row { background: #111827; color: white; border-radius: 6px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
-        .modal-total-row span:first-child { font-size: 0.78rem; color: #9ca3af; }
-        .modal-total-row span:last-child { font-weight: bold; font-size: 1rem; }
+        /* Payment Mode Toggle UI */
+        .payment-toggle { display: flex; gap: 10px; margin-top: 10px; }
+        .pay-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+        .pay-btn.active-cash { background: #059669; color: white; border-color: #059669; }
+        .pay-btn.active-upi { background: #2563eb; color: white; border-color: #2563eb; }
+        .pay-btn.active-card { background: #7c3aed; color: white; border-color: #7c3aed; }
 
-        @media (max-width: 768px) {
-            .stats-grid { grid-template-columns: repeat(2, 1fr); }
-            .form-grid { grid-template-columns: 1fr; }
-            .payment-split-grid { grid-template-columns: 1fr; }
-            .header-right { flex-wrap: wrap; }
-            .search-bar { width: 160px; }
-        }
+        /* Dual payment input in form */
+        .dual-payment-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .payment-input-box { border: 1px solid var(--border-color); border-radius: 8px; padding: 10px 12px; }
+        .payment-input-box label { font-size: 0.75rem; font-weight: 700; display: block; margin-bottom: 6px; }
+        .payment-input-box.cash-box label { color: #059669; }
+        .payment-input-box.upi-box label { color: #2563eb; }
+        .payment-input-box input { border: none; outline: none; width: 100%; font-size: 0.95rem; font-weight: 600; padding: 0; background: transparent; }
+        .payment-input-box.cash-box { background: #f0fdf4; border-color: #a7f3d0; }
+        .payment-input-box.upi-box { background: #eff6ff; border-color: #bfdbfe; }
     </style>
 </head>
 <body>
@@ -157,18 +134,68 @@
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
     <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
-    <a href="expenses.html" class="nav-item admin-only" style="display:none;">💸 Expenses</a>
-    <a href="profit.html" class="nav-item admin-only" style="display:none;">📈 Profit Book</a>
-    <a href="users.html" class="nav-item admin-only" style="display:none;">👥 Manage Users</a>
-    <div style="flex-grow:1;"></div>
-    <div class="nav-item" onclick="logOut()" style="color:black !important; font-weight:bold; cursor:pointer; border-top:1px solid var(--border-color); padding-top:15px; margin:10px 20px; display:flex; justify-content:space-between; align-items:center;">
-        <span id="userNameDisplay">User</span>
+    
+    <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
+    <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+
+    <div style="flex-grow: 1;"></div> 
+    
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="userNameDisplay">User</span> 
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
             <polyline points="16 17 21 12 16 7"></polyline>
             <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
     </div>
-</div>
+</div>    
+    
+    <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
-<div class="
+    <div class="main-content">
+        <div class="header">
+            <div class="header-left">
+                <h1>Order Details</h1>
+                <p>Manage customer repair orders</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no..." onkeyup="searchTable()">
+                <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+                <button class="btn btn-primary" onclick="toggleForm()">+ New Order</button>
+            </div>
+        </div>
+
+        <div class="dashboard-padding">
+            <div class="stats-grid">
+                <div class="stat-card c-blue">
+                    <h3 style="color: #2563eb;">Total Orders</h3>
+                    <p class="number" id="totalOrdersCount">0</p>
+                </div>
+                <div class="stat-card c-orange">
+                    <h3 style="color: #d97706;">Pending</h3>
+                    <p class="number" id="pendingCount">0</p>
+                </div>
+                <div class="stat-card c-purple">
+                    <h3 style="color: #7c3aed;">Repair Completed</h3>
+                    <p class="number" id="completedCount">0</p>
+                </div>
+                <div class="stat-card c-green">
+                    <h3 style="color: #059669;">Goods Delivered</h3>
+                    <p class="number" id="deliveredCount">0</p>
+                </div>
+            </div>
+
+            <!-- New Order Form -->
+            <div class="form-card" id="orderFormCard">
+                <div class="form-header">📄 NEW ORDER ENTRY</div>
+                <div class="form-grid">
+                    <div class="form-group"><label>Customer Name <span>*</span></label><input type="text" id="customerName" placeholder="Full name"></div>
+                    <div class="form-group"><label>Contact No.</label><input type="text" id="contactNo" placeholder="Phone number"></div>
+                    <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="jobNo" placeholder="Job number"></div>
+                    <div class="form-group"><label>IMEI No.</label><input type="text" id="imeiNo" placeholder="15-digit IMEI"></div>
+                    <div class="form-group"><label>Model No.</label><input type="text" id="modelNo" placeholder="Model No."></div>
+                    <div class="form-group">
+                        <label>Notes & Flags</label>
+                        <div style="display: flex; gap: 10px; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; padding: 0 10px; height: 42px;">
+                            <input type="checkbox" id="hwcCheck" style="width: auto; margin
