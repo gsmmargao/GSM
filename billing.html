@@ -7,7 +7,7 @@
     <link rel="icon" href="data:,">
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* Auto-Collapsing Sidebar CSS */
         .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
@@ -25,20 +25,27 @@
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
-        .btn-primary { background: black; color: white; border: none; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
+        .btn:hover { background: #f9fafb; }
+        .btn-primary { background: black; color: white; border: none; font-weight: bold;}
+        .btn-primary:hover { opacity: 0.8; }
         .dashboard-padding { padding: 20px 30px; }
 
         .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
+        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 8px; font-weight: 500;}
         .form-group label span { color: red; }
-        .form-group input, .form-group select { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: #fdfdfd;}
+        .form-group input:focus { border-color: #9ca3af; background: white;}
 
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        /* Styled Split Payments Section */
+        .split-payment-box { grid-column: span 3; background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 20px; margin-top: 10px;}
+        .split-payment-title { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 15px; text-transform: uppercase;}
+        
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 40px;}
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); font-weight: 600;}
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
         .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
     </style>
@@ -86,31 +93,57 @@
         </div>
 
         <div class="dashboard-padding">
+            <!-- Form Card -->
             <div class="form-card" id="billingForm">
-                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW BILL</div>
+                <div style="font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding-bottom: 10px;">
+                    📄 CREATE NEW BILL
+                </div>
+                
                 <div class="form-grid">
-                    <div class="form-group"><label>Invoice No. (Auto)</label><input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold;"></div>
+                    <div class="form-group"><label>Invoice No. (Auto)</label><input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold; color: #6b7280;"></div>
                     <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
                     <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="b-jobNo" placeholder="e.g. 4438768800" onblur="fetchAdvancePaid()"></div>
                     
-                    <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="b-advance" value="0"></div>
-                    
-                    <!-- Split Payment Fields -->
-                    <div class="form-group"><label>Cash Paid (₹)</label><input type="number" id="b-cashAmount" value="0" placeholder="0"></div>
-                    <div class="form-group"><label>UPI Paid (₹)</label><input type="number" id="b-upiAmount" value="0" placeholder="0"></div>
-                    <div class="form-group"><label>Card Paid (₹)</label><input type="number" id="b-cardAmount" value="0" placeholder="0"></div>
+                    <div class="form-group"><label>Advance Already Paid (₹)</label><input type="number" id="b-advance" value="0" readonly style="background:#f3f4f6;"></div>
                 </div>
-                <div style="margin-top:15px;">
-                    <button class="btn btn-primary" style="background:#10b981;" onclick="saveBill()">💾 Save Bill</button>
+
+                <!-- Split Payment Box -->
+                <div class="split-payment-box">
+                    <div class="split-payment-title">Final Amount Received Now</div>
+                    <div class="form-grid" style="margin-bottom: 0;">
+                        <div class="form-group">
+                            <label>Cash Paid (₹)</label>
+                            <input type="number" id="b-cashAmount" value="0" placeholder="0.00" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #2563eb;">UPI Paid (₹)</label>
+                            <input type="number" id="b-upiAmount" value="0" placeholder="0.00" min="0">
+                        </div>
+                        <div class="form-group">
+                            <label style="color: #9333ea;">Card Paid (₹)</label>
+                            <input type="number" id="b-cardAmount" value="0" placeholder="0.00" min="0">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="margin-top:25px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" style="background:#10b981;" onclick="saveBill()">💾 Save Bill & Sync</button>
                     <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
 
+            <!-- Table Card -->
             <div class="table-card">
                 <table>
                     <thead>
                         <tr id="tableHeaderRow">
-                            <th>Invoice No.</th><th>Created By</th><th>Date</th><th>Job Number</th><th>Advance Paid</th><th>Amount Paid</th><th>Mode</th>
+                            <th>Invoice No.</th>
+                            <th>Created By</th>
+                            <th>Date</th>
+                            <th>Job Number</th>
+                            <th>Advance Paid</th>
+                            <th>Final Amount Paid</th>
+                            <th>Payment Split</th>
                         </tr>
                     </thead>
                     <tbody id="billingTableBody"></tbody>
@@ -171,7 +204,7 @@
                     document.getElementById('navProfit').style.display = 'flex';
                     
                     // Add Action Header for Delete button
-                    document.getElementById('tableHeaderRow').innerHTML += '<th>Action</th>';
+                    document.getElementById('tableHeaderRow').innerHTML += '<th style="text-align: center;">Action</th>';
                 }
             }
         }
@@ -222,18 +255,36 @@
 
         window.fetchBilling = async function() {
             const { data } = await db.from('billing').select('*').order('created_at', { ascending: false });
-            if (data) { allBillingData = data; currentPage = 1; renderTable(); }
+            if (data) { 
+                allBillingData = data; 
+                renderTable(); 
+            }
         }
 
         function renderTable() {
             const tbody = document.getElementById('billingTableBody');
             tbody.innerHTML = '';
+            
+            // Pagination Math
             const start = (currentPage - 1) * rowsPerPage;
             const paginatedItems = allBillingData.slice(start, start + rowsPerPage);
 
             paginatedItems.forEach(bill => {
-                let actionCol = isAdmin ? `<td><button class="btn" style="padding:4px 8px; font-size:0.8rem; color:white; background:#ef4444; border:none;" onclick="deleteBill('${bill.invoiceNo}')">🗑️ Delete</button></td>` : '';
+                let actionCol = isAdmin ? `<td style="text-align: center;"><button class="btn" style="padding:4px 8px; font-size:0.8rem; color:white; background:#ef4444; border:none;" onclick="deleteBill('${bill.invoiceNo}')">🗑️ Delete</button></td>` : '';
                 
+                // Show split nicely
+                let modes = [];
+                let amt = parseFloat(bill.amountPaid) || 0;
+                let upi = parseFloat(bill.upiAmount) || 0;
+                let card = parseFloat(bill.cardAmount) || 0;
+                let cash = amt - upi - card;
+
+                if (cash > 0) modes.push(`Cash: ₹${cash}`);
+                if (upi > 0) modes.push(`UPI: ₹${upi}`);
+                if (card > 0) modes.push(`Card: ₹${card}`);
+                
+                let splitLabel = modes.length > 0 ? modes.join(' | ') : bill.paymentMode || 'None';
+
                 tbody.innerHTML += `<tr>
                     <td><strong>${bill.invoiceNo}</strong></td>
                     <td style="text-transform: capitalize;">${bill.createdBy || 'Administrator'}</td>
@@ -241,15 +292,27 @@
                     <td style="color:#2563eb; font-weight:bold;">${bill.jobNo || '-'}</td>
                     <td>₹${bill.advancePaid || 0}</td>
                     <td style="color:#10b981; font-weight:bold;">₹${bill.amountPaid || 0}</td>
-                    <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px;">${bill.paymentMode || 'None'}</span></td>
+                    <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px; font-size: 0.8rem;">${splitLabel}</span></td>
                     ${actionCol}
                 </tr>`;
             });
+            
             document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allBillingData.length / rowsPerPage) || 1}`;
         }
 
-        window.prevPage = function() { if (currentPage > 1) { currentPage--; renderTable(); } }
-        window.nextPage = function() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
+        // Pagination Triggers
+        window.prevPage = function() { 
+            if (currentPage > 1) { 
+                currentPage--; 
+                renderTable(); 
+            } 
+        }
+        window.nextPage = function() { 
+            if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { 
+                currentPage++; 
+                renderTable(); 
+            } 
+        }
 
         window.deleteBill = async function(invoiceNo) {
             if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This will also remove the payment from the ledgers.`)) return;
