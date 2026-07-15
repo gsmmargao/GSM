@@ -56,9 +56,10 @@
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
     <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
-    <a href="expenses.html" class="nav-item">💸 Expenses</a>
-    <a href="profit.html" class="nav-item">📈 Profit Book</a>
     
+    <!-- Admin Only Links Hidden by Default -->
+    <a href="expenses.html" class="nav-item" id="navExpenses" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item" id="navProfit" style="display: none;">📈 Profit Book</a>
     <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
@@ -91,12 +92,13 @@
                     <div class="form-group"><label>Invoice No. (Auto)</label><input type="text" id="b-invoice" readonly style="background:#f3f4f6; font-weight:bold;"></div>
                     <div class="form-group"><label>Date</label><input type="date" id="b-date"></div>
                     <div class="form-group"><label>Job Number <span>*</span></label><input type="text" id="b-jobNo" placeholder="e.g. 4438768800" onblur="fetchAdvancePaid()"></div>
+                    
                     <div class="form-group"><label>Advance Paid (₹)</label><input type="number" id="b-advance" value="0"></div>
-                    <div class="form-group"><label>Final Amount Paid (₹)</label><input type="number" id="b-amount" value="0"></div>
-                    <div class="form-group">
-                        <label>Payment Mode</label>
-                        <select id="b-mode"><option value="Cash">Cash</option><option value="UPI">UPI</option><option value="Card">Card</option></select>
-                    </div>
+                    
+                    <!-- Split Payment Fields -->
+                    <div class="form-group"><label>Cash Paid (₹)</label><input type="number" id="b-cashAmount" value="0" placeholder="0"></div>
+                    <div class="form-group"><label>UPI Paid (₹)</label><input type="number" id="b-upiAmount" value="0" placeholder="0"></div>
+                    <div class="form-group"><label>Card Paid (₹)</label><input type="number" id="b-cardAmount" value="0" placeholder="0"></div>
                 </div>
                 <div style="margin-top:15px;">
                     <button class="btn btn-primary" style="background:#10b981;" onclick="saveBill()">💾 Save Bill</button>
@@ -107,7 +109,9 @@
             <div class="table-card">
                 <table>
                     <thead>
-                        <tr><th>Invoice No.</th><th>Created By</th><th>Date</th><th>Job Number</th><th>Advance Paid</th><th>Amount Paid</th><th>Mode</th></tr>
+                        <tr id="tableHeaderRow">
+                            <th>Invoice No.</th><th>Created By</th><th>Date</th><th>Job Number</th><th>Advance Paid</th><th>Amount Paid</th><th>Mode</th>
+                        </tr>
                     </thead>
                     <tbody id="billingTableBody"></tbody>
                 </table>
@@ -129,6 +133,7 @@
         const rowsPerPage = 10;
         let currentUserEmail = ''; 
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
+        let isAdmin = false; // Track admin status
 
         // Sidebar Auto-Collapse Logic
         let sidebarTimer;
@@ -158,8 +163,15 @@
                 let displayEmail = currentUserEmail.split('@')[0];
                 document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
                 
+                // Show admin tabs and enable features if email matches
                 if (data.session.user.email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                    isAdmin = true;
                     document.getElementById('adminUsersTab').style.display = 'flex';
+                    document.getElementById('navExpenses').style.display = 'flex';
+                    document.getElementById('navProfit').style.display = 'flex';
+                    
+                    // Add Action Header for Delete button
+                    document.getElementById('tableHeaderRow').innerHTML += '<th>Action</th>';
                 }
             }
         }
@@ -169,16 +181,15 @@
             window.location.href = 'login.html';
         }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAuth();
-            resetSidebarTimer(); // Start timer
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); // Wait for auth to set isAdmin flag
+            resetSidebarTimer(); 
             document.getElementById('b-date').value = new Date().toISOString().split('T')[0];
             window.fetchBilling();
         });
 
         async function generateInvoiceNo() {
             try {
-                // Safely order by created_at to get the most recent row, preventing alphabetical sorting bugs
                 const { data } = await db.from('billing').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
                 let nextNum = 1000; 
                 if (data && data.length > 0 && data[0].invoiceNo) {
@@ -221,6 +232,8 @@
             const paginatedItems = allBillingData.slice(start, start + rowsPerPage);
 
             paginatedItems.forEach(bill => {
+                let actionCol = isAdmin ? `<td><button class="btn" style="padding:4px 8px; font-size:0.8rem; color:white; background:#ef4444; border:none;" onclick="deleteBill('${bill.invoiceNo}')">🗑️ Delete</button></td>` : '';
+                
                 tbody.innerHTML += `<tr>
                     <td><strong>${bill.invoiceNo}</strong></td>
                     <td style="text-transform: capitalize;">${bill.createdBy || 'Administrator'}</td>
@@ -228,7 +241,8 @@
                     <td style="color:#2563eb; font-weight:bold;">${bill.jobNo || '-'}</td>
                     <td>₹${bill.advancePaid || 0}</td>
                     <td style="color:#10b981; font-weight:bold;">₹${bill.amountPaid || 0}</td>
-                    <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px;">${bill.paymentMode}</span></td>
+                    <td><span style="background:#f3f4f6; padding:4px 8px; border-radius:4px;">${bill.paymentMode || 'None'}</span></td>
+                    ${actionCol}
                 </tr>`;
             });
             document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allBillingData.length / rowsPerPage) || 1}`;
@@ -237,49 +251,82 @@
         window.prevPage = function() { if (currentPage > 1) { currentPage--; renderTable(); } }
         window.nextPage = function() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
 
+        window.deleteBill = async function(invoiceNo) {
+            if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This cannot be undone.`)) return;
+            
+            const { error } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
+            if (error) {
+                alert("Error deleting bill: " + error.message);
+            } else {
+                fetchBilling();
+            }
+        }
+
         window.saveBill = async function() {
             const rawJobNo = document.getElementById('b-jobNo').value.trim();
             
-            // Validation: Make Job Number mandatory
             if(!rawJobNo) {
                 return alert("Please enter a valid Job Number.");
             }
+
+            // Gather Payment Splits
+            const cashAmount = parseFloat(document.getElementById('b-cashAmount').value) || 0;
+            const upiAmount = parseFloat(document.getElementById('b-upiAmount').value) || 0;
+            const cardAmount = parseFloat(document.getElementById('b-cardAmount').value) || 0;
+            const totalAmountPaid = cashAmount + upiAmount + cardAmount;
+
+            // Generate Mode Label Based on what fields have values
+            let modes = [];
+            if (cashAmount > 0) modes.push("Cash");
+            if (upiAmount > 0) modes.push("UPI");
+            if (cardAmount > 0) modes.push("Card");
+            const finalPaymentMode = modes.length > 0 ? modes.join(' + ') : 'None';
 
             const billData = {
                 invoiceNo: document.getElementById('b-invoice').value.toString(),
                 date: document.getElementById('b-date').value,
                 jobNo: rawJobNo,
                 advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
-                amountPaid: parseFloat(document.getElementById('b-amount').value) || 0, // This is the only one sent to cashbook
-                paymentMode: document.getElementById('b-mode').value,
+                amountPaid: totalAmountPaid,
+                paymentMode: finalPaymentMode,
                 createdBy: document.getElementById('userNameDisplay').innerText 
             };
 
             const { error: billError } = await db.from('billing').insert([billData]);
             if (billError) return alert("Error saving Bill: " + billError.message);
             
+            // Update Repair Orders Table
             let updateData = { status: 'Goods Delivered' };
             if (billData.advancePaid > 0) updateData.advancePaid = billData.advancePaid;
             await db.from('repairOrders').update(updateData).ilike('jobNo', rawJobNo);
 
-            // INTEGRATION: Push ONLY the final amount paid to Cashbook if mode is Cash
-            if (billData.paymentMode === 'Cash' && billData.amountPaid > 0) {
-                await recordBillingPayment(billData.invoiceNo, billData.jobNo, billData.amountPaid);
+            // INTEGRATION: Push individual amounts to relevant books
+            if (cashAmount > 0) {
+                await recordPaymentBook('cashbook_entries', billData.invoiceNo, billData.jobNo, cashAmount, 'Cash');
+            }
+            if (upiAmount > 0) {
+                // IMPORTANT: Ensure your UPI table is named 'upi_entries'. If it's different, change it here!
+                await recordPaymentBook('upi_entries', billData.invoiceNo, billData.jobNo, upiAmount, 'UPI');
             }
             
             alert("Bill Generated Successfully!");
             window.toggleForm();
             window.fetchBilling();
+            
+            // Reset Form Fields
             document.getElementById('b-jobNo').value = '';
             document.getElementById('b-advance').value = '0';
-            document.getElementById('b-amount').value = '0';
+            document.getElementById('b-cashAmount').value = '0';
+            document.getElementById('b-upiAmount').value = '0';
+            document.getElementById('b-cardAmount').value = '0';
         }
 
-        window.recordBillingPayment = async function(invoiceNo, jobNo, paidAmount) {
+        // Generic function to post to either Cashbook or UPI Book
+        window.recordPaymentBook = async function(tableName, invoiceNo, jobNo, paidAmount, modeName) {
             if (!paidAmount || paidAmount <= 0) return;
 
-            const cashEntry = {
-                description: `Invoice #${invoiceNo} - Job ${jobNo || 'N/A'} (Cash)`,
+            const entry = {
+                description: `Invoice #${invoiceNo} - Job ${jobNo || 'N/A'} (${modeName})`,
                 category: 'Billing',
                 amount: paidAmount,
                 type: 'in',
@@ -287,11 +334,11 @@
             };
 
             try {
-                const { error } = await db.from('cashbook_entries').insert([cashEntry]);
+                const { error } = await db.from(tableName).insert([entry]);
                 if (error) throw error;
-                console.log("Payment recorded in Cashbook successfully.");
+                console.log(`${modeName} payment recorded in ${tableName} successfully.`);
             } catch (error) {
-                console.error("Failed to log payment to cashbook:", error.message);
+                console.error(`Failed to log ${modeName} payment to ${tableName}:`, error.message);
             }
         };
 
