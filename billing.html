@@ -289,6 +289,8 @@
                 advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
                 amountPaid: totalAmountPaid,
                 paymentMode: finalPaymentMode,
+                upiAmount: upiAmount,   // <--- ADD THIS LINE
+                cardAmount: cardAmount, // <--- ADD THIS LINE
                 createdBy: document.getElementById('userNameDisplay').innerText 
             };
 
