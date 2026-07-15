@@ -134,7 +134,7 @@
 
     <div class="header-top">
         <div class="header-title">
-            <h1>UPI Card Book</h1>
+            <h1>UPI Book</h1>
             <p>Mapped dynamically from Order Details, Billing, and Accessories</p>
         </div>
         
@@ -174,7 +174,7 @@
         <div class="stat-card">
             <h3>Accessories & Advance</h3>
             <div class="amount" id="statOtherAmount">₹0.00</div>
-            <div class="subtitle">UPI Book combined</div>
+            <div class="subtitle">UPI & Card combined</div>
         </div>
     </div>
 
@@ -292,7 +292,8 @@
             // 1. Fetch Repair Orders (Advance)
             const { data: repairs } = await supabaseClient.from('repairOrders').select('*');
             repairs?.forEach(r => {
-                let mode = r.advancePaymentMode || r.paymentMode || '';
+                // Now perfectly matching the Supabase column payment_method
+                let mode = r.payment_method || r.paymentMode || r.advancePaymentMode || '';
                 let amt = parseFloat(r.advancePaid) || 0;
                 let upi = 0, card = 0;
                 
@@ -316,7 +317,7 @@
             // 2. Fetch Billing
             const { data: bills } = await supabaseClient.from('billing').select('*');
             bills?.forEach(b => {
-                let mode = b.paymentMode || '';
+                let mode = b.paymentMode || b.payment_method || '';
                 let amt = parseFloat(b.amountPaid) || 0;
                 let upi = parseFloat(b.upiAmount) || 0;
                 let card = parseFloat(b.cardAmount) || 0;
@@ -345,7 +346,7 @@
             // 3. Fetch Accessories
             const { data: accessories } = await supabaseClient.from('accessories').select('*');
             accessories?.forEach(a => {
-                let mode = a.paymentMode || '';
+                let mode = a.paymentMode || a.payment_method || '';
                 let amt = parseFloat(a.totalAmount) || parseFloat(a.amount) || 0;
                 let upi = parseFloat(a.upiAmount) || 0;
                 let card = parseFloat(a.cardAmount) || 0;
