@@ -426,8 +426,8 @@
 
                     // Format Admin Advance Output
                     let advanceHtml = '';
-                    // Check for paymentMode, fallback to legacy payment_method if it exists
-                    let currentMethod = order.paymentMode || order.payment_method || 'Cash';
+                    // Read EXACTLY payment_method to match Supabase schema
+                    let currentMethod = order.payment_method || 'Cash';
                     
                     if (currentUserEmail === ADMIN_EMAIL) {
                         if (order.advancePaid && parseFloat(order.advancePaid) > 0) {
@@ -524,7 +524,7 @@
                 modelNo: document.getElementById('modelNo').value,
                 problemDesc: document.getElementById('problemDesc').value,
                 advancePaid: advanceAmt,
-                paymentMode: payMethod, // Saving with the correct unified column name
+                payment_method: payMethod, // Saving with the EXACT column name matching Supabase
                 hwc: isHwc,
                 notes: orderNotes,
                 date: currentDate,
@@ -551,7 +551,7 @@
                         }]);
                         if (cashError) console.error("Cashbook Sync Error:", cashError.message);
                     } else if (payMethod === 'UPI' || payMethod === 'Card') {
-                        // Inserting into upi_transactions as backup, though UPI book now fetches dynamically
+                        // Backup manual insert, though UPI book dynamic fetch is now primary
                         const { error: upiError } = await supabaseClient.from('upi_transactions').insert([{
                             date: currentDate,
                             time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' }),
@@ -654,8 +654,8 @@
         window.saveAdvance = async function() {
             let newAmt = parseFloat(document.getElementById('modalAdvanceInput').value) || 0;
             try {
-                // Update Main Order with the correct column name
-                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, paymentMode: selectedPaymentMode }).eq('id', currentEditId);
+                // Update Main Order with the exact column name payment_method
+                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: selectedPaymentMode }).eq('id', currentEditId);
                 if (error) throw error;
                 
                 // Ledger Sync: Remove old entries for this JobNo to prevent duplicates across both ledgers
