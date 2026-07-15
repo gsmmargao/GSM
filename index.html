@@ -186,6 +186,7 @@
                             <select id="paymentMethod" style="width: 50%;">
                                 <option value="Cash">Cash</option>
                                 <option value="UPI">UPI</option>
+                                <option value="Card">Card</option>
                             </select>
                         </div>
                     </div>
@@ -277,6 +278,7 @@
                 <div class="payment-toggle">
                     <button class="pay-btn active" id="btnPayCash" onclick="setPaymentMode('Cash')">Cash</button>
                     <button class="pay-btn" id="btnPayUPI" onclick="setPaymentMode('UPI')">UPI</button>
+                    <button class="pay-btn" id="btnPayCard" onclick="setPaymentMode('Card')">Card</button>
                 </div>
             </div>
             <div class="modal-footer">
@@ -424,19 +426,22 @@
 
                     // Format Admin Advance Output
                     let advanceHtml = '';
+                    // Check for paymentMode, fallback to legacy payment_method if it exists
+                    let currentMethod = order.paymentMode || order.payment_method || 'Cash';
+                    
                     if (currentUserEmail === ADMIN_EMAIL) {
                         if (order.advancePaid && parseFloat(order.advancePaid) > 0) {
-                            let methodText = order.payment_method === 'UPI' ? `<br><small style="color:#2563eb;">UPI</small>` : '';
+                            let methodText = currentMethod !== 'Cash' ? `<br><small style="color:#2563eb;">${currentMethod}</small>` : '';
                             advanceHtml = `
                                 <span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span>${methodText}
-                                <span onclick="openAdvanceModal('${order.id}', '${order.advancePaid}', '${order.payment_method || 'Cash'}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
+                                <span onclick="openAdvanceModal('${order.id}', '${order.advancePaid}', '${currentMethod}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
                             `;
                         } else {
                             advanceHtml = `— <span onclick="openAdvanceModal('${order.id}', '0', 'Cash', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
                         }
                     } else {
                         advanceHtml = order.advancePaid > 0 
-                            ? `<span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span> <br><small>${order.payment_method || ''}</small>`
+                            ? `<span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span> <br><small>${currentMethod}</small>`
                             : `—`;
                     }
 
@@ -519,7 +524,7 @@
                 modelNo: document.getElementById('modelNo').value,
                 problemDesc: document.getElementById('problemDesc').value,
                 advancePaid: advanceAmt,
-                payment_method: payMethod,
+                paymentMode: payMethod, // Saving with the correct unified column name
                 hwc: isHwc,
                 notes: orderNotes,
                 date: currentDate,
@@ -532,7 +537,7 @@
                 const { error: orderError } = await supabaseClient.from('repairOrders').insert([orderData]);
                 if (orderError) throw orderError;
                 
-                // Save Initial Ledger Entries
+                // Save Initial Ledger Entries (Legacy Sync if needed)
                 if (advanceAmt > 0) {
                     const desc = `Advance - Job ${jobNoVal} (${custName})`;
                     if (payMethod === 'Cash') {
@@ -540,12 +545,13 @@
                             description: desc,
                             category: 'Advances',
                             amount: advanceAmt,
-                            type: 'in', // Explicit standard designation for Income
+                            type: 'in', 
                             date: currentDate,
                             created_by: currentUserEmail
                         }]);
                         if (cashError) console.error("Cashbook Sync Error:", cashError.message);
-                    } else if (payMethod === 'UPI') {
+                    } else if (payMethod === 'UPI' || payMethod === 'Card') {
+                        // Inserting into upi_transactions as backup, though UPI book now fetches dynamically
                         const { error: upiError } = await supabaseClient.from('upi_transactions').insert([{
                             date: currentDate,
                             time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' }),
@@ -642,12 +648,14 @@
             selectedPaymentMode = mode;
             document.getElementById('btnPayCash').className = mode === 'Cash' ? 'pay-btn active' : 'pay-btn';
             document.getElementById('btnPayUPI').className = mode === 'UPI' ? 'pay-btn active' : 'pay-btn';
+            document.getElementById('btnPayCard').className = mode === 'Card' ? 'pay-btn active' : 'pay-btn';
         }
+        
         window.saveAdvance = async function() {
             let newAmt = parseFloat(document.getElementById('modalAdvanceInput').value) || 0;
             try {
-                // Update Main Order
-                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: selectedPaymentMode }).eq('id', currentEditId);
+                // Update Main Order with the correct column name
+                const { error } = await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, paymentMode: selectedPaymentMode }).eq('id', currentEditId);
                 if (error) throw error;
                 
                 // Ledger Sync: Remove old entries for this JobNo to prevent duplicates across both ledgers
@@ -669,7 +677,7 @@
                             date: currentDate,
                             created_by: currentUserEmail
                         }]);
-                    } else if (selectedPaymentMode === 'UPI') {
+                    } else if (selectedPaymentMode === 'UPI' || selectedPaymentMode === 'Card') {
                         await supabaseClient.from('upi_transactions').insert([{
                             date: currentDate,
                             time: new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' }),
