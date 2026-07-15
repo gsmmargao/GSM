@@ -133,7 +133,7 @@
         const rowsPerPage = 10;
         let currentUserEmail = ''; 
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
-        let isAdmin = false; // Track admin status
+        let isAdmin = false;
 
         // Sidebar Auto-Collapse Logic
         let sidebarTimer;
@@ -182,7 +182,7 @@
         }
 
         document.addEventListener("DOMContentLoaded", async () => {
-            await checkAuth(); // Wait for auth to set isAdmin flag
+            await checkAuth(); 
             resetSidebarTimer(); 
             document.getElementById('b-date').value = new Date().toISOString().split('T')[0];
             window.fetchBilling();
@@ -252,8 +252,14 @@
         window.nextPage = function() { if (currentPage < Math.ceil(allBillingData.length / rowsPerPage)) { currentPage++; renderTable(); } }
 
         window.deleteBill = async function(invoiceNo) {
-            if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This cannot be undone.`)) return;
+            if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This will also remove the payment from the ledgers.`)) return;
             
+            // Clean up Ledgers first
+            const searchString = `Invoice #${invoiceNo}%`;
+            await db.from('cashbook_entries').delete().like('description', searchString);
+            await db.from('upi_transactions').delete().like('description', searchString);
+
+            // Delete the Bill
             const { error } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
             if (error) {
                 alert("Error deleting bill: " + error.message);
@@ -275,7 +281,7 @@
             const cardAmount = parseFloat(document.getElementById('b-cardAmount').value) || 0;
             const totalAmountPaid = cashAmount + upiAmount + cardAmount;
 
-            // Generate Mode Label Based on what fields have values
+            // Generate Mode Label
             let modes = [];
             if (cashAmount > 0) modes.push("Cash");
             if (upiAmount > 0) modes.push("UPI");
@@ -289,8 +295,8 @@
                 advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
                 amountPaid: totalAmountPaid,
                 paymentMode: finalPaymentMode,
-                upiAmount: upiAmount,   // <--- ADD THIS LINE
-                cardAmount: cardAmount, // <--- ADD THIS LINE
+                upiAmount: upiAmount,
+                cardAmount: cardAmount,
                 createdBy: document.getElementById('userNameDisplay').innerText 
             };
 
@@ -303,12 +309,39 @@
             await db.from('repairOrders').update(updateData).ilike('jobNo', rawJobNo);
 
             // INTEGRATION: Push individual amounts to relevant books
+            let currentDate = new Date().toISOString().split('T')[0];
+            let currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
+            let desc = `Invoice #${billData.invoiceNo} - Job ${billData.jobNo || 'N/A'}`;
+
             if (cashAmount > 0) {
-                await recordPaymentBook('cashbook_entries', billData.invoiceNo, billData.jobNo, cashAmount, 'Cash');
+                await db.from('cashbook_entries').insert([{
+                    description: desc + ' (Cash)',
+                    category: 'Billing',
+                    amount: cashAmount,
+                    type: 'in',
+                    date: currentDate,
+                    created_by: currentUserEmail
+                }]);
             }
             if (upiAmount > 0) {
-                // IMPORTANT: Ensure your UPI table is named 'upi_entries'. If it's different, change it here!
-                await recordPaymentBook('upi_entries', billData.invoiceNo, billData.jobNo, upiAmount, 'UPI');
+                await db.from('upi_transactions').insert([{
+                    date: currentDate,
+                    time: currentTime,
+                    description: desc + ' (UPI)',
+                    source: 'Billing',
+                    amount: upiAmount,
+                    created_by: currentUserEmail
+                }]);
+            }
+            if (cardAmount > 0) {
+                await db.from('upi_transactions').insert([{
+                    date: currentDate,
+                    time: currentTime,
+                    description: desc + ' (Card)',
+                    source: 'Billing',
+                    amount: cardAmount,
+                    created_by: currentUserEmail
+                }]);
             }
             
             alert("Bill Generated Successfully!");
@@ -322,27 +355,6 @@
             document.getElementById('b-upiAmount').value = '0';
             document.getElementById('b-cardAmount').value = '0';
         }
-
-        // Generic function to post to either Cashbook or UPI Book
-        window.recordPaymentBook = async function(tableName, invoiceNo, jobNo, paidAmount, modeName) {
-            if (!paidAmount || paidAmount <= 0) return;
-
-            const entry = {
-                description: `Invoice #${invoiceNo} - Job ${jobNo || 'N/A'} (${modeName})`,
-                category: 'Billing',
-                amount: paidAmount,
-                type: 'in',
-                created_by: currentUserEmail
-            };
-
-            try {
-                const { error } = await db.from(tableName).insert([entry]);
-                if (error) throw error;
-                console.log(`${modeName} payment recorded in ${tableName} successfully.`);
-            } catch (error) {
-                console.error(`Failed to log ${modeName} payment to ${tableName}:`, error.message);
-            }
-        };
 
     </script>
 </body>
