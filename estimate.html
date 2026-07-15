@@ -62,9 +62,10 @@
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
     <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
-    <a href="expenses.html" class="nav-item">💸 Expenses</a>
-    <a href="profit.html" class="nav-item">📈 Profit Book</a>
     
+    <!-- Admin Only Links Hidden by Default -->
+    <a href="expenses.html" class="nav-item" id="navExpenses" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item" id="navProfit" style="display: none;">📈 Profit Book</a>
     <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
@@ -164,9 +165,10 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
-        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; // <--- UPDATE THIS
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         
         let allEstimatesData = [];
+        let isAdmin = false; // Track admin status
 
         // --- Sidebar Logic ---
         let sidebarTimer;
@@ -190,18 +192,24 @@
             if (!data.session) return window.location.href = 'login.html';
             let email = data.session.user.email;
             
-            // This section was updated to capitalize only the first letter
+            // Format Display Name
             let displayEmail = email.split('@')[0];
             document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
             
+            // Show hidden sections ONLY if user is admin
             if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                isAdmin = true;
                 document.getElementById('adminUsersTab').style.display = 'flex';
+                document.getElementById('navExpenses').style.display = 'flex';
+                document.getElementById('navProfit').style.display = 'flex';
             }
         }
+        
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
 
-        document.addEventListener("DOMContentLoaded", () => {
-            checkAuth(); resetSidebarTimer();
+        document.addEventListener("DOMContentLoaded", async () => {
+            await checkAuth(); // Wait for auth check before loading estimates
+            resetSidebarTimer();
             document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
             fetchEstimates();
         });
@@ -269,7 +277,7 @@
             document.getElementById('t-final').innerText = '₹' + finalTotal.toFixed(2);
         }
 
-        // --- Save and Load Data ---
+        // --- Save, Load, Delete Data ---
         window.fetchEstimates = async function() {
             const { data } = await db.from('estimates').select('*').order('created_at', { ascending: false });
             if(data) {
@@ -277,6 +285,12 @@
                 const tbody = document.getElementById('estimateTableBody');
                 tbody.innerHTML = '';
                 data.forEach((est, index) => {
+                    // Action Buttons (Print always, Delete only if admin)
+                    let actions = `<button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="printEstimate(${index})">🖨️ Print</button>`;
+                    if(isAdmin) {
+                        actions += `<button class="btn" style="padding:4px 8px; font-size:0.8rem; color:white; background:#ef4444; margin-left:5px; border:none;" onclick="deleteEstimate('${est.estimateNo}')">🗑️</button>`;
+                    }
+
                     tbody.innerHTML += `<tr>
                         <td><strong>${est.estimateNo}</strong></td>
                         <td>${est.date}</td>
@@ -285,9 +299,20 @@
                         <td>${est.modelNo || '-'}</td>
                         <td style="color:#10b981; font-weight:bold;">₹${est.total_amount || est.cost || 0}</td>
                         <td style="text-transform: capitalize;">${est.createdBy || '-'}</td>
-                        <td><button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="printEstimate(${index})">🖨️ Print</button></td>
+                        <td>${actions}</td>
                     </tr>`;
                 });
+            }
+        }
+
+        window.deleteEstimate = async function(estimateNo) {
+            if (!confirm(`Are you sure you want to delete ${estimateNo}? This cannot be undone.`)) return;
+            
+            const { error } = await db.from('estimates').delete().eq('estimateNo', estimateNo);
+            if (error) {
+                alert("Error deleting estimate: " + error.message);
+            } else {
+                fetchEstimates();
             }
         }
 
@@ -329,7 +354,7 @@
             fetchEstimates();
         }
 
-        // --- PRINT FUNCTIONALITY (Updated with separate IMEI and Serial No) ---
+        // --- PRINT FUNCTIONALITY ---
         window.printEstimate = function(index) {
             const est = allEstimatesData[index];
             if(!est) return;
