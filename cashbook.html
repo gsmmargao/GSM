@@ -13,18 +13,19 @@
             --c-green-bg: #f0fdf4; --c-green-text: #16a34a; --c-green-border: #bbf7d0;
             --c-red-bg: #fef2f2; --c-red-text: #dc2626; --c-red-border: #fecaca;
             --c-blue-bg: #eff6ff; --c-blue-text: #2563eb; --c-blue-border: #bfdbfe;
+            --sidebar-width: 250px;
         }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* Sidebar Styling */
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
         .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
-        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; }
+        .sidebar-toggle-btn { position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.2);}
         .sidebar-collapsed-btn { left: 0 !important; }
 
         /* Main Content */
@@ -40,7 +41,8 @@
         .toggle-btn { padding: 8px 12px; border: none; background: white; cursor: pointer; font-size: 0.85rem; }
         .toggle-btn.active { background: black; color: white; }
         
-        .date-picker { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: white; font-size: 0.85rem; }
+        .date-picker { padding: 8px; border: 1px solid var(--border-color); border-radius: 6px; background: white; font-size: 0.85rem; outline: none; }
+        .date-picker:focus { border-color: #9ca3af; }
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; font-size: 0.85rem;}
         .btn:hover { background: #f3f4f6; }
         .btn-black { background: black; color: white; border: none; }
@@ -74,7 +76,7 @@
         
         /* SCROLLABLE TABLE WRAPPER */
         .ledger-wrapper {
-            max-height: 550px; /* Allows showing ~15 entries comfortably */
+            max-height: 550px; 
             overflow-y: auto;
             position: relative;
         }
@@ -140,11 +142,9 @@
     <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
-    <a href="cashbook.html" class="nav-item active">💵 Cashbook</a>
-    <a href="expenses.html" class="nav-item">💸 Expenses</a>
-    <a href="profit.html" class="nav-item">📈 Profit Book</a>
-
-    <!-- Hidden from non-admins -->
+    
+    <!-- Admin Only Links (Cashbook is now fully admin only) -->
+    <a href="cashbook.html" class="nav-item admin-only active" style="display: none;">💵 Cashbook</a>
     <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
     <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
     <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
@@ -167,7 +167,7 @@
     <!-- Header Controls -->
     <div class="header-controls">
         <div>
-            <h1>Cashbook</h1>
+            <h1>Cashbook <span style="font-size: 0.8rem; background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 4px; vertical-align: middle; margin-left: 10px;">Admin Only</span></h1>
             <p>Cash transactions only - <span id="modeLabel">Daily</span></p>
         </div>
         <div class="action-bar">
@@ -370,14 +370,21 @@
         else clearSidebarTimer();
     }
 
+    // --- Strict Admin Authentication Check ---
     async function checkAuth() {
         const { data } = await db.auth.getSession();
-        if (!data.session) return window.location.href = 'login.html';
-        currentUserEmail = data.session.user.email;
-        let displayEmail = currentUserEmail.split('@')[0];
-        document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
-        if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
-            document.getElementById('adminUsersTab').style.display = 'flex';
+        if (!data.session) {
+            window.location.href = 'login.html';
+        } else if (data.session.user.email.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) {
+            alert("Security Alert: Only Administrators can access the Cashbook.");
+            window.location.href = 'index.html'; 
+        } else {
+            currentUserEmail = data.session.user.email;
+            let displayEmail = currentUserEmail.split('@')[0];
+            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+            
+            // Show all admin-only nav links
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
         }
     }
     window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
@@ -585,7 +592,7 @@
         const category = document.getElementById('outCategory').value;
         const amount = parseFloat(document.getElementById('outAmount').value) || 0;
         
-        // Grab current date for standard logging, just like index.html does
+        // Grab current date for standard logging
         const currentDate = new Date().toISOString().split('T')[0];
 
         if(!desc || amount <= 0) return alert("Please enter a valid description and amount.");
