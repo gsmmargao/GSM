@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Technical Report</title>
+    <link rel="icon" href="data:,">
+    <style>
+        :root { 
+            --bg-color: #f9fafb; 
+            --border-color: #e5e7eb; 
+            --sidebar-width: 250px;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
+        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
+        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; }
+        .sidebar-toggle-btn { position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.2);}
+        .sidebar-collapsed-btn { left: 0 !important; }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px;}
+        .header-controls { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .header-controls h1 { margin: 0; font-size: 1.5rem; }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; font-size: 0.85rem;}
+        .btn:hover { background: #f3f4f6; }
+        .btn-black { background: black; color: white; border: none; font-weight: bold;}
+
+        /* Form Card */
+        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none;}
+        .section-title { font-size: 0.85rem; font-weight: bold; color: #374151; border-bottom: 1px solid var(--border-color); padding-bottom: 8px; margin-bottom: 15px; margin-top: 20px; text-transform: uppercase;}
+        .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 15px; }
+        .form-group { display: flex; flex-direction: column; }
+        .form-group label { font-size: 0.8rem; color: #4b5563; margin-bottom: 5px; font-weight: 600;}
+        .form-group input, .form-group select, .form-group textarea { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; font-family: inherit;}
+        .form-group input:focus, .form-group textarea:focus { border-color: #9ca3af; }
+        .full-width { grid-column: 1 / -1; }
+        
+        /* Dynamic Parts */
+        .part-row { display: grid; grid-template-columns: 1fr 2fr auto; gap: 10px; margin-bottom: 10px; }
+        
+        /* Inspection Grid */
+        .inspection-grid { display: grid; grid-template-columns: 120px 100px 1fr; gap: 10px; align-items: center; margin-bottom: 10px; }
+        .inspection-grid div { font-size: 0.85rem; font-weight: 600; color: #374151;}
+
+        /* Table */
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+        th, td { padding: 12px 20px; text-align: left; border-bottom: 1px solid var(--border-color); }
+        th { color: #6b7280; font-weight: 600; background: #f9fafb; position: sticky; top: 0;}
+    </style>
+</head>
+<body>
+
+<!-- Sidebar -->
+<div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+    <a href="index.html" class="nav-item">📋 Order Details</a>
+    <a href="estimate.html" class="nav-item">🧾 Estimate Letter</a>
+    <a href="billing.html" class="nav-item">💳 Billing</a>
+    <a href="store-plus.html" class="nav-item">📦 Store Plus</a>
+    <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
+    <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
+    <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+    <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
+    <a href="technical-report.html" class="nav-item active">📄 Technical Report</a>
+    
+    <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
+    <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+
+    <div style="flex-grow: 1;"></div> 
+    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px;">
+        <span id="userNameDisplay">User</span> Logout ➔
+    </div>
+</div>
+<div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+
+<!-- Main Content -->
+<div class="main-content">
+    <div class="header-controls">
+        <div>
+            <h1>Technical Reports</h1>
+            <p>Generate formal technical inspection and repair reports</p>
+        </div>
+        <div>
+            <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
+            <button class="btn btn-black" onclick="toggleForm()">+ New Report</button>
+        </div>
+    </div>
+
+    <!-- Form Section -->
+    <div class="form-card" id="reportForm">
+        <div class="section-title" style="margin-top: 0;">General Details</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Service Order No</label><input type="text" id="soNo" placeholder="e.g. 4235889"></div>
+            <div class="form-group"><label>Repair Received Date</label><input type="date" id="receivedDate"></div>
+            <div class="form-group"><label>Service Type</label>
+                <select id="serviceType">
+                    <option value="Carry in">Carry in</option>
+                    <option value="Stock Repair">Stock Repair</option>
+                    <option value="Return Handling">Return Handling</option>
+                </select>
+            </div>
+            
+            <div class="form-group"><label>Date of Purchase (DOP)</label><input type="date" id="dop"></div>
+            <div class="form-group"><label>Model No.</label><input type="text" id="modelNo"></div>
+            <div class="form-group"><label>Serial No / IMEI No</label><input type="text" id="serialImei"></div>
+            
+            <div class="form-group"><label>Production Date</label><input type="date" id="prodDate"></div>
+            <div class="form-group"><label>Inspection Date</label><input type="date" id="inspDate"></div>
+        </div>
+
+        <div class="section-title">Customer Details</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Customer / Dealer Name</label><input type="text" id="custName"></div>
+            <div class="form-group"><label>Mobile No / Land Line</label><input type="text" id="mobileNo"></div>
+            <div class="form-group"><label>Address / Contact Details</label><input type="text" id="address"></div>
+        </div>
+
+        <div class="section-title">Repair Details</div>
+        <div class="form-grid">
+            <div class="form-group full-width"><label>Defect Observed</label><textarea id="defectObserved" rows="2"></textarea></div>
+            <div class="form-group full-width"><label>Repair Required</label><textarea id="repairRequired" rows="2"></textarea></div>
+        </div>
+
+        <div class="section-title" style="display: flex; justify-content: space-between;">
+            Parts Required
+            <button class="btn" style="padding: 2px 8px; font-size: 0.75rem;" onclick="addPartRow()">+ Add Part</button>
+        </div>
+        <div id="partsContainer"></div>
+
+        <div class="section-title">Previous Repair Details</div>
+        <div class="form-grid">
+            <div class="form-group"><label>Previous Repair SO No</label><input type="text" id="prevSoNo"></div>
+            <div class="form-group"><label>Part No</label><input type="text" id="prevPartNo"></div>
+            <div class="form-group"><label>RC/GD Date</label><input type="date" id="prevDate"></div>
+            <div class="form-group full-width"><label>Repair Description</label><textarea id="repairDesc" rows="2"></textarea></div>
+        </div>
+
+        <div class="section-title">Inspection</div>
+        <div class="inspection-grid" style="color: #6b7280; font-size: 0.75rem;">
+            <div>Category</div><div>Code</div><div>Description</div>
+        </div>
+        <div class="inspection-grid">
+            <div>Packing</div>
+            <input type="text" id="inspPackCode" placeholder="e.g. P002">
+            <input type="text" id="inspPackDesc" placeholder="Description">
+        </div>
+        <div class="inspection-grid">
+            <div>Appearance</div>
+            <input type="text" id="inspAppCode" placeholder="e.g. D009">
+            <input type="text" id="inspAppDesc" placeholder="Description">
+        </div>
+        <div class="inspection-grid">
+            <div>Accessories</div>
+            <input type="text" id="inspAccCode" placeholder="e.g. AC01">
+            <input type="text" id="inspAccDesc" placeholder="Description">
+        </div>
+        <div class="inspection-grid">
+            <div>Function</div>
+            <input type="text" id="inspFuncCode" placeholder="e.g. TH02">
+            <input type="text" id="inspFuncDesc" placeholder="Description">
+        </div>
+
+        <div class="section-title">Final Comments</div>
+        <div class="form-group full-width">
+            <label>Other Comments (Engineer/TL/Manager)</label>
+            <textarea id="otherComments" rows="3" placeholder="e.g. ELS done Main PBA needs to be replaced"></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; margin-top: 20px;">
+            <button class="btn btn-black" onclick="saveReport()">💾 Save Report</button>
+            <button class="btn" onclick="toggleForm()">Cancel</button>
+        </div>
+    </div>
+
+    <!-- Table Section -->
+    <div class="card-container table-card">
+        <table>
+            <thead>
+                <tr>
+                    <th>Date</th>
+                    <th>SO Number</th>
+                    <th>Customer</th>
+                    <th>Model / IMEI</th>
+                    <th>Service Type</th>
+                    <th>Created By</th>
+                    <th style="text-align: center;">Action</th>
+                </tr>
+            </thead>
+            <tbody id="reportsTableBody"></tbody>
+        </table>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+    const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+    const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
+    let currentUserEmail = '';
+    let currentUserName = '';
+    let allReports = [];
+
+    // --- Sidebar Logic ---
+    let sidebarTimer;
+    window.resetSidebarTimer = function() {
+        clearTimeout(sidebarTimer);
+        sidebarTimer = setTimeout(() => {
+            document.getElementById('sidebar').classList.add('collapsed');
+            document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
+        }, 5000);
+    }
+    window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+    window.toggleSidebar = function() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn');
+        if(!document.getElementById('sidebar').classList.contains('collapsed')) resetSidebarTimer();
+        else clearSidebarTimer();
+    }
+
+    // --- Auth Check ---
+    async function checkAuth() {
+        const { data } = await db.auth.getSession();
+        if (!data.session) return window.location.href = 'login.html';
+        
+        currentUserEmail = data.session.user.email;
+        currentUserName = currentUserEmail.split('@')[0].toUpperCase();
+        document.getElementById('userNameDisplay').innerText = currentUserName;
+        
+        if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+        }
+    }
+    window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
+
+    // --- Form UI Logic ---
+    window.toggleForm = () => {
+        const form = document.getElementById('reportForm');
+        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    };
+
+    window.addPartRow = () => {
+        const container = document.getElementById('partsContainer');
+        const row = document.createElement('div');
+        row.className = 'part-row';
+        row.innerHTML = `
+            <input type="text" class="p-no" placeholder="Part No.">
+            <input type="text" class="p-desc" placeholder="Part Description">
+            <button class="btn" style="padding: 6px 10px; color: red; border-color: red;" onclick="this.parentElement.remove()">X</button>
+        `;
+        container.appendChild(row);
+    };
+
+    // --- Database Logic ---
+    async function fetchReports() {
+        const { data, error } = await db.from('technical_reports').select('*').order('created_at', { ascending: false });
+        if (error) return console.error(error);
+        
+        allReports = data || [];
+        const tbody = document.getElementById('reportsTableBody');
+        tbody.innerHTML = '';
+
+        if(allReports.length === 0) {
+            tbody.innerHTML = `<tr><td colspan="7" style="text-align: center; color: gray;">No reports found.</td></tr>`;
+            return;
+        }
+
+        allReports.forEach(r => {
+            const dateStr = new Date(r.created_at).toLocaleDateString('en-GB');
+            tbody.innerHTML += `
+                <tr>
+                    <td>${dateStr}</td>
+                    <td><strong>${r.service_order_no}</strong></td>
+                    <td>${r.customer_name}</td>
+                    <td><span style="font-size:0.75rem; color:gray;">${r.model_no || '-'}</span><br>${r.serial_imei || '-'}</td>
+                    <td>${r.service_type}</td>
+                    <td style="text-transform:capitalize;">${r.created_by}</td>
+                    <td style="text-align: center;">
+                        <button class="btn" style="border-color: #2563eb; color: #2563eb;" onclick='printReport(${JSON.stringify(r).replace(/'/g, "&#39;")})'>🖨️ Print</button>
+                    </td>
+                </tr>
+            `;
+        });
+    }
+
+    window.saveReport = async function() {
+        const soNo = document.getElementById('soNo').value.trim();
+        if(!soNo) return alert("Service Order No is required.");
+
+        // Gather parts
+        const parts = [];
+        document.querySelectorAll('.part-row').forEach(row => {
+            const no = row.querySelector('.p-no').value.trim();
+            const desc = row.querySelector('.p-desc').value.trim();
+            if (no || desc) parts.push({ partNo: no, description: desc });
+        });
+
+        const reportData = {
+            service_order_no: soNo,
+            repair_received_date: document.getElementById('receivedDate').value || null,
+            service_type: document.getElementById('serviceType').value,
+            dop: document.getElementById('dop').value || null,
+            model_no: document.getElementById('modelNo').value,
+            serial_imei: document.getElementById('serialImei').value,
+            production_date: document.getElementById('prodDate').value || null,
+            inspection_date: document.getElementById('inspDate').value || null,
+            customer_name: document.getElementById('custName').value,
+            mobile_no: document.getElementById('mobileNo').value,
+            address: document.getElementById('address').value,
+            defect_observed: document.getElementById('defectObserved').value,
+            repair_required: document.getElementById('repairRequired').value,
+            parts: parts,
+            prev_so_no: document.getElementById('prevSoNo').value,
+            prev_part_no: document.getElementById('prevPartNo').value,
+            prev_rc_gd_date: document.getElementById('prevDate').value || null,
+            repair_description: document.getElementById('repairDesc').value,
+            inspection_packing: { code: document.getElementById('inspPackCode').value, desc: document.getElementById('inspPackDesc').value },
+            inspection_appearance: { code: document.getElementById('inspAppCode').value, desc: document.getElementById('inspAppDesc').value },
+            inspection_accessories: { code: document.getElementById('inspAccCode').value, desc: document.getElementById('inspAccDesc').value },
+            inspection_function: { code: document.getElementById('inspFuncCode').value, desc: document.getElementById('inspFuncDesc').value },
+            other_comments: document.getElementById('otherComments').value,
+            created_by: currentUserName
+        };
+
+        const { error } = await db.from('technical_reports').insert([reportData]);
+        if(error) return alert("Error saving report: " + error.message);
+        
+        alert("Report Saved Successfully!");
+        window.location.reload(); // Quick reset of all fields
+    };
+
+    // --- Print Logic ---
+    window.printReport = function(r) {
+        // Format dates safely
+        const fDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '';
+        
+        let partsHtml = '';
+        if(r.parts && r.parts.length > 0) {
+            r.parts.forEach(p => {
+                partsHtml += `<tr><td colspan="4" style="padding-left:20px;">- ${p.partNo} / ${p.description}</td></tr>`;
+            });
+        } else {
+            partsHtml = `<tr><td colspan="4" style="padding-left:20px;">- None specified</td></tr>`;
+        }
+
+        const printWindow = window.open('', '_blank');
+        printWindow.document.write(`
+        <html>
+        <head>
+            <title>Technical Report - ${r.service_order_no}</title>
+            <style>
+                body { font-family: Arial, sans-serif; font-size: 12px; margin: 20px; color: #000; }
+                table { width: 100%; border-collapse: collapse; margin-bottom: 0; }
+                td, th { border: 1px solid #000; padding: 6px 10px; vertical-align: top; }
+                .label { width: 25%; font-weight: bold; background: #f9fafb;}
+                .value { width: 25%; }
+                .section-header { background: #e5e7eb; font-weight: bold; text-align: left; font-size: 13px;}
+                .text-center { text-align: center; }
+                
+                .footer-box { border: 1px solid #000; padding: 10px; margin-top: 20px; min-height: 80px; display: flex; flex-direction: column; justify-content: space-between;}
+                .signature-area { margin-top: 40px; display: flex; justify-content: flex-end; text-align: center;}
+            </style>
+        </head>
+        <body>
+
+        <table>
+            <tr>
+                <td class="label">Branch</td>
+                <td class="value">GOA BRANCH</td>
+                <td colspan="2" class="text-center" style="font-size: 16px; font-weight: bold; background: #f3f4f6;">Technical Report</td>
+            </tr>
+            <tr>
+                <td class="label">Authorised Service Center Name</td>
+                <td class="value">GSM SOLUTION</td>
+                <td class="label">Asc Code</td>
+                <td class="value">4795387</td>
+            </tr>
+        </table>
+
+        <table style="border-top: none;">
+            <tr>
+                <td class="label">Service Order NO</td>
+                <td class="value">${r.service_order_no || ''}</td>
+                <td class="label">Repair Received Date</td>
+                <td class="value">${fDate(r.repair_received_date)}</td>
+            </tr>
+            <tr>
+                <td class="label">Service Type</td>
+                <td class="value">${r.service_type || ''}</td>
+                <td class="label">DOP</td>
+                <td class="value">${fDate(r.dop)}</td>
+            </tr>
+            <tr>
+                <td class="label">Model No</td>
+                <td class="value">${r.model_no || ''}</td>
+                <td class="label">Serial No/Imei No</td>
+                <td class="value">${r.serial_imei || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Production Date</td>
+                <td class="value">${fDate(r.production_date)}</td>
+                <td class="label">Inspection Date</td>
+                <td class="value">${fDate(r.inspection_date)}</td>
+            </tr>
+            <tr>
+                <td class="label">Customer/Dealer Name</td>
+                <td class="value">${r.customer_name || ''}</td>
+                <td class="label">Mobile No / Land line</td>
+                <td class="value">${r.mobile_no || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Address / Contact details</td>
+                <td colspan="3">${r.address || ''}</td>
+            </tr>
+            
+            <tr><td colspan="4" class="section-header">Repair Details</td></tr>
+            <tr>
+                <td class="label">Defect Observed :</td>
+                <td colspan="3">${r.defect_observed || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Repair Required:</td>
+                <td colspan="3">${r.repair_required || ''}</td>
+            </tr>
+            <tr><td colspan="4" class="label">Part Required (Part no) / Description</td></tr>
+            ${partsHtml}
+            
+            <tr><td colspan="4" class="section-header">Previous Repair Information</td></tr>
+            <tr>
+                <td class="label">Previous Repair SO No</td>
+                <td class="value">${r.prev_so_no || ''}</td>
+                <td class="label">Part No</td>
+                <td class="value">${r.prev_part_no || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">RC/GD date</td>
+                <td colspan="3">${fDate(r.prev_rc_gd_date)}</td>
+            </tr>
+            <tr>
+                <td class="label">Repair Description</td>
+                <td colspan="3">${r.repair_description || ''}</td>
+            </tr>
+            
+            <tr><td colspan="4" class="section-header">Inspection</td></tr>
+            <tr>
+                <td class="label text-center">Inspection</td>
+                <td class="label text-center">Code</td>
+                <td colspan="2" class="label text-center">Description</td>
+            </tr>
+            <tr>
+                <td class="label">Packing</td>
+                <td class="text-center">${r.inspection_packing.code || ''}</td>
+                <td colspan="2">${r.inspection_packing.desc || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Appearance</td>
+                <td class="text-center">${r.inspection_appearance.code || ''}</td>
+                <td colspan="2">${r.inspection_appearance.desc || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Accessories</td>
+                <td class="text-center">${r.inspection_accessories.code || ''}</td>
+                <td colspan="2">${r.inspection_accessories.desc || ''}</td>
+            </tr>
+            <tr>
+                <td class="label">Function</td>
+                <td class="text-center">${r.inspection_function.code || ''}</td>
+                <td colspan="2">${r.inspection_function.desc || ''}</td>
+            </tr>
+        </table>
+
+        <div class="footer-box">
+            <div><strong>Other Comments:</strong><br><br>${r.other_comments || ''}</div>
+            <div class="signature-area">
+                <div style="width: 250px; border-top: 1px solid #000; padding-top: 5px;">
+                    Engineer/TL/Manager<br>
+                    Name /Signature / Seal /Date
+                </div>
+            </div>
+        </div>
+
+        <script>
+            window.onload = function() { window.print(); }
+        <\/script>
+        </body>
+        </html>
+        `);
+        printWindow.document.close();
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+        checkAuth();
+        resetSidebarTimer();
+        
+        // Setup initial default part row
+        addPartRow();
+        
+        // Auto-set received and inspection dates to today
+        const today = new Date().toISOString().split('T')[0];
+        document.getElementById('receivedDate').value = today;
+        document.getElementById('inspDate').value = today;
+
+        fetchReports();
+    });
+</script>
+</body>
+</html>
