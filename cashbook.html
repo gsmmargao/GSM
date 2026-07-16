@@ -45,9 +45,8 @@
         .date-picker:focus { border-color: #9ca3af; }
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; font-size: 0.85rem;}
         .btn:hover { background: #f3f4f6; }
-        .btn-black { background: black; color: white; border: none; }
-        .btn-black:hover { background: #374151; }
-
+        .btn-black { background: black; color: white; border: none; font-weight: bold;}
+        
         /* Summary Cards */
         .stats-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
         .stat-card { padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); background: white; position: relative;}
@@ -142,8 +141,9 @@
     <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+    <a href="cashbook.html" class="nav-item active">💵 Cashbook</a>
     
-    <a href="cashbook.html" class="nav-item admin-only active" style="display: none;">💵 Cashbook</a>
+    <!-- Admin Only Links -->
     <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
     <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
     <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
@@ -157,7 +157,7 @@
             <line x1="21" y1="12" x2="9" y2="12"></line>
         </svg>
     </div>
-</div>    
+</div>
 <div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
 
 <!-- Main Content -->
@@ -166,7 +166,7 @@
     <!-- Header Controls -->
     <div class="header-controls">
         <div>
-            <h1>Cashbook <span style="font-size: 0.8rem; background: #fee2e2; color: #991b1b; padding: 4px 8px; border-radius: 4px; vertical-align: middle; margin-left: 10px;">Admin Only</span></h1>
+            <h1>Cashbook</h1>
             <p>Cash transactions only - <span id="modeLabel">Daily</span></p>
         </div>
         <div class="action-bar">
@@ -369,21 +369,20 @@
         else clearSidebarTimer();
     }
 
-    // --- Strict Admin Authentication Check ---
+    // --- Auth Check ---
     async function checkAuth() {
         const { data } = await db.auth.getSession();
         if (!data.session) {
             window.location.href = 'login.html';
-        } else if (data.session.user.email.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) {
-            alert("Security Alert: Only Administrators can access the Cashbook.");
-            window.location.href = 'index.html'; 
         } else {
             currentUserEmail = data.session.user.email;
             let displayEmail = currentUserEmail.split('@')[0];
             document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
             
-            // Show all admin-only nav links
-            document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+            // Show all admin-only nav links if admin
+            if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+            }
         }
     }
     window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
