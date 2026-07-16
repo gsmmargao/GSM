@@ -369,7 +369,7 @@
         else clearSidebarTimer();
     }
 
-    // --- Auth Check ---
+    // --- Auth Check (All Users allowed to view, Admin gets extra nav links) ---
     async function checkAuth() {
         const { data } = await db.auth.getSession();
         if (!data.session) {
