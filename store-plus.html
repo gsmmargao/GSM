@@ -7,24 +7,30 @@
     <link rel="icon" href="data:,">
     
     <style>
-        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        :root { 
+            --bg-color: #f4f5f7; 
+            --border-color: #e5e7eb; 
+            --sidebar-width: 250px;
+        }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* Sidebar Styling */
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
         .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
-        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; }
+        .sidebar-toggle-btn { position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; box-shadow: 2px 0 5px rgba(0,0,0,0.2); }
         .sidebar-collapsed-btn { left: 0 !important; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
-        .btn-primary { background: black; color: white; border: none; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; font-size: 0.85rem;}
+        .btn:hover { background: #f3f4f6; }
+        .btn-primary { background: black; color: white; border: none; font-weight: bold;}
+        .btn-primary:hover { opacity: 0.8; }
         .dashboard-padding { padding: 20px 30px; }
 
         /* Stats Grid for Store Plus Summaries */
@@ -37,13 +43,17 @@
         .form-grid { display: grid; grid-template-columns: repeat(5, 1fr); gap: 15px; margin-bottom: 15px; align-items: end; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
-        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: #fdfdfd;}
+        .form-group input:focus { border-color: #9ca3af; background: white; }
 
         .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); font-weight: 600;}
         td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
         tfoot td { background: #f9fafb; font-weight: bold; border-top: 2px solid #e5e7eb; }
+        
+        .action-btn { background: transparent; border: 1px solid #ef4444; color: #ef4444; padding: 4px 8px; border-radius: 4px; cursor: pointer; font-size: 0.8rem;}
+        .action-btn:hover { background: #fef2f2; }
     </style>
 </head>
 <body>
@@ -61,9 +71,9 @@
         <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
         
         <!-- Admin Only Tabs -->
-        <a href="expenses.html" class="nav-item" id="adminExpensesTab" style="display: none;">💸 Expenses</a>
-        <a href="profit.html" class="nav-item" id="adminProfitTab" style="display: none;">📈 Profit Book</a>
-        <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+        <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
+        <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
+        <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
         <div style="flex-grow: 1;"></div> 
         <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
@@ -83,7 +93,7 @@
             <div>
                 <h1 style="margin:0; font-size:1.5rem;">Store Plus</h1>
             </div>
-            <div>
+            <div style="display: flex; gap: 10px;">
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
                 <button class="btn btn-primary" onclick="toggleForm()">+ New Entry</button>
             </div>
@@ -109,7 +119,7 @@
 
             <!-- New Entry Form -->
             <div class="form-card" id="storeForm">
-                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 ADD STORE ENTRY</div>
+                <div style="font-size: 0.85rem; font-weight:bold; color: #4b5563; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 ADD STORE ENTRY</div>
                 <div class="form-grid">
                     <div class="form-group"><label>Date</label><input type="date" id="sp-date"></div>
                     <div class="form-group"><label>Amount (₹)</label><input type="number" id="sp-amount" placeholder="0"></div>
@@ -158,7 +168,7 @@
     <script>
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
-        let currentUserEmail = ''; // Added to track current user
+        let currentUserEmail = ''; 
         
         let sidebarTimer;
         window.resetSidebarTimer = function() {
@@ -186,9 +196,7 @@
             
             // Unhide Admin-only elements
             if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
-                document.getElementById('adminUsersTab').style.display = 'flex';
-                document.getElementById('adminExpensesTab').style.display = 'flex';
-                document.getElementById('adminProfitTab').style.display = 'flex';
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
             }
         }
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
@@ -232,8 +240,8 @@
 
                     // Generate Action button based on Admin Status
                     let actionBtnHtml = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase() 
-                        ? `<button onclick="deleteEntry('${entry.invoiceNo}')" style="background: transparent; border: 1px solid red; color: red; padding: 4px 8px; border-radius: 4px; cursor: pointer;">Delete</button>` 
-                        : `<span style="color: gray; font-size: 0.8rem;">No Access</span>`;
+                        ? `<button onclick="deleteEntry('${entry.invoiceNo}')" class="action-btn">Delete</button>` 
+                        : `<span style="color: gray; font-size: 0.8rem;">—</span>`;
 
                     tbody.innerHTML += `<tr>
                         <td><strong>${entry.invoiceNo || '-'}</strong></td>
