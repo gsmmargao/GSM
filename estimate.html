@@ -7,11 +7,11 @@
     <link rel="icon" href="data:,">
     
     <style>
-        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
-        body { margin: 0; font-family: sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; --sidebar-width: 250px;}
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* Auto-Collapsing Sidebar */
-        .sidebar { width: 250px; background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
         .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
@@ -19,35 +19,40 @@
         .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
         .nav-item:hover:not(.active) { background: #f3f4f6; }
 
-        .sidebar-toggle-btn { position: absolute; left: 250px; top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; transition: left 0.4s ease; font-weight: bold; }
+        .sidebar-toggle-btn { position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%); background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.4s ease; font-weight: bold; }
         .sidebar-collapsed-btn { left: 0 !important; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10;}
         .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; }
+        .header h1 { margin: 0; font-size: 1.5rem; color: #111827; }
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; color: #374151; font-size: 0.85rem;}
+        .btn:hover { background: #f9fafb; }
         .btn-primary { background: black; color: white; border: none; }
+        .btn-primary:hover { opacity: 0.8; }
         .dashboard-padding { padding: 20px 30px; }
 
         .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
         .form-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 15px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #374151; margin-bottom: 5px; font-weight: 600;}
-        .form-group input { padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; }
+        .form-group label { font-size: 0.85rem; color: #4b5563; margin-bottom: 5px; font-weight: 600;}
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: #f9fafb;}
+        .form-group input:focus { border-color: #9ca3af; }
         
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; }
+        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px;}
         table.list-table { width: 100%; border-collapse: collapse; text-align: left; }
-        table.list-table th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
+        table.list-table th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); font-weight: 600;}
         table.list-table td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
 
         /* Dynamic Parts Input Table Styling */
         .parts-table { width: 100%; border-collapse: collapse; margin-top: 10px; margin-bottom: 15px; }
-        .parts-table th { background: #f3f4f6; padding: 10px; font-size: 0.8rem; text-align: left; }
+        .parts-table th { background: #f3f4f6; padding: 10px; font-size: 0.8rem; text-align: left; color: #4b5563;}
         .parts-table td { padding: 5px; }
-        .parts-table input { padding: 8px; border: 1px solid #ccc; border-radius: 4px; width: 100%; box-sizing: border-box; }
+        .parts-table input { padding: 8px 10px; border: 1px solid var(--border-color); border-radius: 4px; width: 100%; box-sizing: border-box; outline: none;}
+        .parts-table input:focus { border-color: #9ca3af; }
         
-        .totals-box { background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 15px; text-align: right; font-size: 0.9rem; }
+        .totals-box { background: #f9fafb; padding: 15px; border-radius: 6px; border: 1px solid var(--border-color); margin-top: 15px; text-align: right; font-size: 0.9rem; color: #374151;}
         .totals-row { margin-bottom: 5px; }
-        .totals-final { font-size: 1.2rem; font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 2px solid #e5e7eb; }
+        .totals-final { font-size: 1.2rem; font-weight: bold; margin-top: 10px; padding-top: 10px; border-top: 2px solid #e5e7eb; color: #111827;}
     </style>
 </head>
 <body>
@@ -62,15 +67,15 @@
     <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
     <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
     <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
+    <a href="technical-report.html" class="nav-item">📄 Technical Report</a>
     
     <!-- Admin Only Links Hidden by Default -->
-    <a href="expenses.html" class="nav-item" id="navExpenses" style="display: none;">💸 Expenses</a>
-    <a href="profit.html" class="nav-item" id="navProfit" style="display: none;">📈 Profit Book</a>
-    <a href="users.html" class="nav-item" id="adminUsersTab" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+    <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
+    <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
     
-    <!-- Updated Logout Button -->
     <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
         <span id="userNameDisplay">User</span> 
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -87,7 +92,7 @@
     <div class="main-content">
         <div class="header">
             <div>
-                <h1 style="margin:0; font-size:1.5rem;">Estimate</h1>
+                <h1>Estimate</h1>
             </div>
             <div>
                 <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
@@ -99,7 +104,7 @@
             
             <!-- Estimate Builder Form -->
             <div class="form-card" id="estimateForm">
-                <div style="font-weight:bold; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW ESTIMATE</div>
+                <div style="font-size: 0.85rem; font-weight:bold; color: #6b7280; margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:10px;">📄 CREATE NEW ESTIMATE</div>
                 
                 <div class="form-grid">
                     <div class="form-group"><label>Estimate No.</label><input type="text" id="e-estNo" readonly style="background:#f3f4f6; font-weight:bold;"></div>
@@ -115,7 +120,7 @@
                     <div class="form-group"><label>Remarks (Optional)</label><input type="text" id="e-remarks" placeholder="Address or other notes"></div>
                 </div>
 
-                <div style="margin-top: 20px; font-weight: bold; font-size: 0.9rem;">🛠️ Parts Required</div>
+                <div style="margin-top: 20px; font-weight: bold; font-size: 0.9rem; color: #374151;">🛠️ Parts Required</div>
                 <table class="parts-table" id="partsTable">
                     <thead>
                         <tr>
@@ -145,8 +150,8 @@
                     <div class="totals-final">FINAL BILL AMOUNT: <span id="t-final" style="display:inline-block; width:120px;">₹0.00</span></div>
                 </div>
 
-                <div style="margin-top:20px;">
-                    <button class="btn btn-primary" style="background:#2563eb;" onclick="saveEstimate()">💾 Save & Generate</button>
+                <div style="margin-top:20px; display: flex; gap: 10px;">
+                    <button class="btn btn-primary" onclick="saveEstimate()">💾 Save & Generate</button>
                     <button class="btn" onclick="toggleForm()">Cancel</button>
                 </div>
             </div>
@@ -168,7 +173,7 @@
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         
         let allEstimatesData = [];
-        let isAdmin = false; // Track admin status
+        let isAdmin = false; 
 
         // --- Sidebar Logic ---
         let sidebarTimer;
@@ -199,16 +204,13 @@
             // Show hidden sections ONLY if user is admin
             if (email.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                 isAdmin = true;
-                document.getElementById('adminUsersTab').style.display = 'flex';
-                document.getElementById('navExpenses').style.display = 'flex';
-                document.getElementById('navProfit').style.display = 'flex';
+                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
             }
         }
-        
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
 
         document.addEventListener("DOMContentLoaded", async () => {
-            await checkAuth(); // Wait for auth check before loading estimates
+            await checkAuth(); 
             resetSidebarTimer();
             document.getElementById('e-date').value = new Date().toISOString().split('T')[0];
             fetchEstimates();
@@ -286,7 +288,7 @@
                 tbody.innerHTML = '';
                 data.forEach((est, index) => {
                     // Action Buttons (Print always, Delete only if admin)
-                    let actions = `<button class="btn" style="padding:4px 8px; font-size:0.8rem;" onclick="printEstimate(${index})">🖨️ Print</button>`;
+                    let actions = `<button class="btn" style="padding:4px 8px; font-size:0.8rem; border-color:#2563eb; color:#2563eb;" onclick="printEstimate(${index})">🖨️ Print</button>`;
                     if(isAdmin) {
                         actions += `<button class="btn" style="padding:4px 8px; font-size:0.8rem; color:white; background:#ef4444; margin-left:5px; border:none;" onclick="deleteEstimate('${est.estimateNo}')">🗑️</button>`;
                     }
@@ -296,7 +298,7 @@
                         <td>${est.date}</td>
                         <td style="color:#2563eb; font-weight:bold;">${est.jobNo || '-'}</td>
                         <td>${est.customerName || '-'}</td>
-                        <td>${est.modelNo || '-'}</td>
+                        <td><span style="font-size:0.75rem; color:gray;">${est.modelNo || '-'}</span></td>
                         <td style="color:#10b981; font-weight:bold;">₹${est.total_amount || est.cost || 0}</td>
                         <td style="text-transform: capitalize;">${est.createdBy || '-'}</td>
                         <td>${actions}</td>
@@ -354,7 +356,7 @@
             fetchEstimates();
         }
 
-        // --- PRINT FUNCTIONALITY ---
+        // --- PRINT FUNCTIONALITY (Scaled Down) ---
         window.printEstimate = function(index) {
             const est = allEstimatesData[index];
             if(!est) return;
@@ -390,24 +392,25 @@
             <head>
                 <title>Estimate - ${est.estimateNo}</title>
                 <style>
-                    body { font-family: Arial, sans-serif; font-size: 11px; margin: 20px; color: #000; }
-                    table { width: 100%; max-width: 900px; border-collapse: collapse; margin: 0 auto; }
-                    th, td { border: 1px solid #000; padding: 4px 6px; vertical-align: top; }
+                    /* Reducing sizes to compress the layout */
+                    body { font-family: Arial, sans-serif; font-size: 9px; margin: 15px; color: #000; }
+                    table { width: 100%; max-width: 650px; border-collapse: collapse; margin: 0; }
+                    th, td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
                     .text-center { text-align: center; } .text-right { text-align: right; } .text-left { text-align: left; }
                     .font-bold { font-weight: bold; }
                     .col-sr { width: 5%; } .col-code { width: 15%; } .col-desc { width: 45%; } .col-rate { width: 12%; } .col-qty { width: 8%; } .col-amount { width: 15%; }
-                    .header-title { font-size: 14px; font-weight: bold; text-align: center; padding: 6px; }
+                    .header-title { font-size: 11px; font-weight: bold; text-align: center; padding: 5px; }
                     .no-bottom-border { border-bottom: none !important; } .no-top-border { border-top: none !important; }
-                    .totals-label { font-size: 10px; padding-right: 10px; }
-                    .bill-amount { font-size: 14px; font-weight: bold; }
+                    .totals-label { font-size: 8px; padding-right: 8px; }
+                    .bill-amount { font-size: 11px; font-weight: bold; }
                 </style>
             </head>
             <body>
             <table>
                 <tr><td colspan="6" class="header-title">ESTIMATE COPY</td></tr>
                 <tr>
-                    <td colspan="3" class="font-bold no-bottom-border">GSM SOLUTION.<br><br><br>RELIANCE ATRIA SHOP NO.6,7 FIRST FLOOR MARGAO GOA</td>
-                    <td colspan="3" class="no-bottom-border"><br><br><br></td>
+                    <td colspan="3" class="font-bold no-bottom-border">GSM SOLUTION.<br><br>RELIANCE ATRIA SHOP NO.6,7 FIRST FLOOR MARGAO GOA</td>
+                    <td colspan="3" class="no-bottom-border"><br><br></td>
                 </tr>
                 <tr>
                     <td colspan="3" class="font-bold">GSTIN: 30CLPPM8573A1Z2</td>
@@ -472,22 +475,22 @@
                     <td class="text-right font-bold">${laborTotal.toFixed(2)}</td>
                 </tr>
                 <tr>
-                    <td colspan="5" class="text-right font-bold" style="font-size: 12px; padding-top: 8px; padding-bottom: 8px;">BILL AMOUNT (E+K):</td>
-                    <td class="text-right bill-amount" style="border: 2px solid #000; border-left: 1px solid #000;">${billAmount.toFixed(2)}</td>
+                    <td colspan="5" class="text-right font-bold" style="font-size: 10px; padding-top: 6px; padding-bottom: 6px;">BILL AMOUNT (E+K):</td>
+                    <td class="text-right bill-amount" style="border: 1px solid #000;">${billAmount.toFixed(2)}</td>
                 </tr>
                 
                 <!-- SIGNATURE AND DISCLAIMER SECTION -->
                 <tr>
-                    <td colspan="6" class="no-bottom-border" style="padding-top: 20px;">
-                        <div style="float: right; text-align: center; font-weight: bold; margin-right: 20px;">
-                            For GSM SOLUTION<br><br><br><br>
+                    <td colspan="6" class="no-bottom-border" style="padding-top: 15px;">
+                        <div style="float: right; text-align: center; font-weight: bold; margin-right: 15px;">
+                            For GSM SOLUTION<br><br><br>
                             Authorised Signatory
                         </div>
                         <div style="clear: both;"></div>
                     </td>
                 </tr>
                 <tr>
-                    <td colspan="6" class="no-top-border" style="font-size: 10px; padding: 15px 10px 10px 10px; text-align: justify;">
+                    <td colspan="6" class="no-top-border" style="font-size: 8px; padding: 10px; text-align: justify;">
                         <b>Note:</b> This quotation is valid for 7 days from the date of issue. The final repair cost may vary after detailed diagnosis and inspection of the device. Any additional charges will be communicated to the customer for approval before proceeding with the repair.
                     </td>
                 </tr>
