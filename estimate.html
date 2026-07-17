@@ -356,7 +356,7 @@
             fetchEstimates();
         }
 
-        // --- PRINT FUNCTIONALITY (Scaled Down) ---
+        // --- PRINT FUNCTIONALITY (Scaled Down with nowrap) ---
         window.printEstimate = function(index) {
             const est = allEstimatesData[index];
             if(!est) return;
@@ -370,7 +370,7 @@
                     partsRowsHtml += `
                     <tr class="font-bold">
                         <td class="text-center">${i + 1}</td>
-                        <td>${part.code}</td>
+                        <td class="nowrap">${part.code}</td>
                         <td>${part.desc}</td>
                         <td class="text-center">${part.rate.toFixed(2)}</td>
                         <td class="text-center">${part.qty}</td>
@@ -392,17 +392,18 @@
             <head>
                 <title>Estimate - ${est.estimateNo}</title>
                 <style>
-                    /* Reducing sizes to compress the layout */
-                    body { font-family: Arial, sans-serif; font-size: 9px; margin: 15px; color: #000; }
+                    /* Reducing sizes to compress the layout and ensure single line wrapping */
+                    body { font-family: Arial, sans-serif; font-size: 8.5px; margin: 15px; color: #000; }
                     table { width: 100%; max-width: 650px; border-collapse: collapse; margin: 0; }
-                    th, td { border: 1px solid #000; padding: 3px 5px; vertical-align: top; }
+                    th, td { border: 1px solid #000; padding: 3px 5px; vertical-align: middle; }
                     .text-center { text-align: center; } .text-right { text-align: right; } .text-left { text-align: left; }
                     .font-bold { font-weight: bold; }
-                    .col-sr { width: 5%; } .col-code { width: 15%; } .col-desc { width: 45%; } .col-rate { width: 12%; } .col-qty { width: 8%; } .col-amount { width: 15%; }
+                    .col-sr { width: 5%; } .col-code { width: 20%; } .col-desc { width: 40%; } .col-rate { width: 12%; } .col-qty { width: 8%; } .col-amount { width: 15%; }
                     .header-title { font-size: 11px; font-weight: bold; text-align: center; padding: 5px; }
                     .no-bottom-border { border-bottom: none !important; } .no-top-border { border-top: none !important; }
                     .totals-label { font-size: 8px; padding-right: 8px; }
                     .bill-amount { font-size: 11px; font-weight: bold; }
+                    .nowrap { white-space: nowrap; }
                 </style>
             </head>
             <body>
@@ -426,7 +427,7 @@
                 </tr>
                 <tr>
                     <td colspan="3" class="no-bottom-border font-bold"><br>Name: &nbsp; ${est.customerName || '-'}<br><br></td>
-                    <td colspan="3" class="no-bottom-border"><br><span class="font-bold">Model No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold">${est.modelNo || '-'}</span><br><br></td>
+                    <td colspan="3" class="no-bottom-border"><br><span class="font-bold">Model No:</span> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <span class="font-bold nowrap">${est.modelNo || '-'}</span><br><br></td>
                 </tr>
                 <tr>
                     <td colspan="3" class="font-bold">Address: &nbsp; ${est.remarks || '-'}</td>
