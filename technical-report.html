@@ -104,7 +104,7 @@
             <div class="form-group"><label>Repair Received Date</label><input type="date" id="receivedDate"></div>
             <div class="form-group"><label>Service Type</label>
                 <select id="serviceType">
-                    <option value="Carry in">Carry in</option>
+                    <option value="carry in">Carry in</option>
                     <option value="Stock Repair">Stock Repair</option>
                     <option value="Return Handling">Return Handling</option>
                 </select>
@@ -172,7 +172,7 @@
 
         <div class="section-title">Final Comments</div>
         <div class="form-group full-width">
-            <label>Other Comments (Engineer/TL/Manager)</label>
+            <label>Other Comments</label>
             <textarea id="otherComments" rows="3" placeholder="e.g. ELS done Main PBA needs to be replaced"></textarea>
         </div>
 
@@ -322,10 +322,10 @@
             prev_part_no: document.getElementById('prevPartNo').value,
             prev_rc_gd_date: document.getElementById('prevDate').value || null,
             repair_description: document.getElementById('repairDesc').value,
-            inspection_packing: { code: document.getElementById('inspPackCode').value, desc: document.getElementById('inspPackDesc').value },
-            inspection_appearance: { code: document.getElementById('inspAppCode').value, desc: document.getElementById('inspAppDesc').value },
-            inspection_accessories: { code: document.getElementById('inspAccCode').value, desc: document.getElementById('inspAccDesc').value },
-            inspection_function: { code: document.getElementById('inspFuncCode').value, desc: document.getElementById('inspFuncDesc').value },
+            inspection_packing: { code: document.getElementById('inspPackCode').value || 'P002', desc: document.getElementById('inspPackDesc').value },
+            inspection_appearance: { code: document.getElementById('inspAppCode').value || 'D009', desc: document.getElementById('inspAppDesc').value },
+            inspection_accessories: { code: document.getElementById('inspAccCode').value || 'AC01', desc: document.getElementById('inspAccDesc').value },
+            inspection_function: { code: document.getElementById('inspFuncCode').value || 'TH02', desc: document.getElementById('inspFuncDesc').value },
             other_comments: document.getElementById('otherComments').value,
             created_by: currentUserName
         };
@@ -341,14 +341,10 @@
     window.printReport = function(r) {
         const fDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '';
         
-        let partsHtml = '';
-        if(r.parts && r.parts.length > 0) {
-            r.parts.forEach(p => {
-                partsHtml += `<tr><td colspan="4">${p.partNo || '-'} / ${p.description || '-'}</td></tr>`;
-            });
-        } else {
-            partsHtml = `<tr><td colspan="4" style="color:gray;">No parts required</td></tr>`;
-        }
+        // Extract up to 3 parts to ensure structural consistency based on requirements[cite: 1]
+        const p1 = r.parts && r.parts[0] ? r.parts[0] : {partNo: '', description: ''};
+        const p2 = r.parts && r.parts[1] ? r.parts[1] : {partNo: '', description: ''};
+        const p3 = r.parts && r.parts[2] ? r.parts[2] : {partNo: '', description: ''};
 
         const printWindow = window.open('', '_blank');
         printWindow.document.write(`
@@ -356,134 +352,153 @@
         <head>
             <title>Technical Report - ${r.service_order_no}</title>
             <style>
-                @page { margin: 10mm; }
-                body { font-family: Arial, sans-serif; font-size: 13px; margin: 0; color: #000; }
-                table { width: 100%; border-collapse: collapse; margin-bottom: 0; table-layout: fixed; }
-                td, th { border: 1px solid #000; padding: 6px 10px; vertical-align: top; word-wrap: break-word; }
-                .label { font-weight: bold; background: #f9fafb; width: 25%; }
-                .value { width: 25%; }
-                .title { font-size: 18px; font-weight: bold; text-align: center; vertical-align: middle; }
+                @page { size: A4; margin: 10mm; }
+                body { font-family: Arial, sans-serif; font-size: 11px; margin: 0; color: #000; }
+                table { width: 100%; border-collapse: collapse; table-layout: fixed; margin: 0; padding: 0;}
+                td, th { border: 2px solid #000; padding: 4px 6px; vertical-align: middle; word-wrap: break-word; }
                 .text-center { text-align: center; }
+                .text-right { text-align: right; }
+                .font-bold { font-weight: bold; }
+                .bg-grey { background-color: #e5e7eb; }
+                .title { font-size: 20px; font-weight: bold; text-align: center; vertical-align: middle; }
+                .empty-row { height: 18px; }
             </style>
         </head>
         <body>
+            <table>
+                <tr>
+                    <td class="text-center">Branch</td>
+                    <td colspan="3" rowspan="2" class="title">Technical Report</td>
+                </tr>
+                <tr>
+                    <td class="text-center font-bold">GOA BRANCH</td>
+                </tr>
+                <tr>
+                    <td>Authorised Service Center Name</td>
+                    <td class="text-center">GSM SOLUTION</td>
+                    <td>Asc Code</td>
+                    <td class="text-right">4795387</td>
+                </tr>
+                <tr>
+                    <td>Service Order NO</td>
+                    <td class="text-center">${r.service_order_no || ''}</td>
+                    <td>Repair Received Date</td>
+                    <td class="text-center">${fDate(r.repair_received_date)}</td>
+                </tr>
+                <tr>
+                    <td>Service Type</td>
+                    <td class="text-center">${r.service_type || ''}</td>
+                    <td>DOP</td>
+                    <td class="text-center">${fDate(r.dop)}</td>
+                </tr>
+                <tr>
+                    <td>Model No</td>
+                    <td class="text-center">${r.model_no || ''}</td>
+                    <td>Serial No /Imei No</td>
+                    <td class="text-center">${r.serial_imei || ''}</td>
+                </tr>
+                <tr>
+                    <td>Production Date</td>
+                    <td class="text-center">${fDate(r.production_date)}</td>
+                    <td>Inspection Date</td>
+                    <td class="text-center">${fDate(r.inspection_date)}</td>
+                </tr>
+                <tr>
+                    <td>Customer / Dealer Name</td>
+                    <td class="text-center">${r.customer_name || ''}</td>
+                    <td>Mobile No / Land line</td>
+                    <td class="text-center">${r.mobile_no || ''}</td>
+                </tr>
+                <tr>
+                    <td>Address / Contact details</td>
+                    <td colspan="3">${r.address || ''}</td>
+                </tr>
+                
+                <tr>
+                    <td colspan="4" class="bg-grey font-bold">Defect Observed :</td>
+                </tr>
+                <tr>
+                    <td colspan="4">${r.defect_observed || ''}</td>
+                </tr>
+                <tr><td colspan="4" class="empty-row"></td></tr>
+                <tr><td colspan="4" class="empty-row"></td></tr>
 
-        <table>
-            <tr>
-                <td class="label">Branch</td>
-                <td class="value">GOA BRANCH</td>
-                <td colspan="2" rowspan="2" class="title">Technical Report</td>
-            </tr>
-            <tr>
-                <td class="label">Authorised Service Center Name</td>
-                <td class="value">GSM SOLUTION<br>Asc Code: 4795387</td>
-            </tr>
-        </table>
+                <tr>
+                    <td colspan="4" class="bg-grey font-bold">Repair Required :</td>
+                </tr>
+                <tr>
+                    <td colspan="4">${r.repair_required || ''}</td>
+                </tr>
+                <tr><td colspan="4" class="empty-row"></td></tr>
+                <tr><td colspan="4" class="empty-row"></td></tr>
 
-        <table style="border-top: none;">
-            <tr>
-                <td class="label">Service Order NO</td>
-                <td class="value">${r.service_order_no || ''}</td>
-                <td class="label">Repair Received Date</td>
-                <td class="value">${fDate(r.repair_received_date)}</td>
-            </tr>
-            <tr>
-                <td class="label">Service Type</td>
-                <td class="value">${r.service_type || ''}</td>
-                <td class="label">DOP</td>
-                <td class="value">${fDate(r.dop)}</td>
-            </tr>
-            <tr>
-                <td class="label">Model No</td>
-                <td class="value">${r.model_no || ''}</td>
-                <td class="label">Serial No/Imei No</td>
-                <td class="value">${r.serial_imei || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Production Date</td>
-                <td class="value">${fDate(r.production_date)}</td>
-                <td class="label">Inspection Date</td>
-                <td class="value">${fDate(r.inspection_date)}</td>
-            </tr>
-            <tr>
-                <td class="label">Customer/Dealer Name</td>
-                <td class="value">${r.customer_name || ''}</td>
-                <td class="label">Mobile No / Land line</td>
-                <td class="value">${r.mobile_no || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Address / Contact details</td>
-                <td colspan="3">${r.address || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Defect Observed :</td>
-                <td colspan="3">${r.defect_observed || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Repair Required:</td>
-                <td colspan="3">${r.repair_required || ''}</td>
-            </tr>
-            <tr>
-                <td colspan="4" class="label">Part Required (Part no) / Description</td>
-            </tr>
-            ${partsHtml}
-            <tr>
-                <td class="label">Previous Repair SO No</td>
-                <td class="value">${r.prev_so_no || ''}</td>
-                <td class="label">Part No</td>
-                <td class="value">${r.prev_part_no || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">RC/GD date</td>
-                <td colspan="3">${fDate(r.prev_rc_gd_date)}</td>
-            </tr>
-            <tr>
-                <td class="label">Repair Description</td>
-                <td colspan="3">${r.repair_description || ''}</td>
-            </tr>
-            <tr>
-                <td class="label text-center">Inspection</td>
-                <td class="label text-center">Code</td>
-                <td colspan="2" class="label text-center">Description</td>
-            </tr>
-            <tr>
-                <td class="label">Packing</td>
-                <td class="text-center">${r.inspection_packing.code || ''}</td>
-                <td colspan="2">${r.inspection_packing.desc || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Appearance</td>
-                <td class="text-center">${r.inspection_appearance.code || ''}</td>
-                <td colspan="2">${r.inspection_appearance.desc || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Accessories</td>
-                <td class="text-center">${r.inspection_accessories.code || ''}</td>
-                <td colspan="2">${r.inspection_accessories.desc || ''}</td>
-            </tr>
-            <tr>
-                <td class="label">Function</td>
-                <td class="text-center">${r.inspection_function.code || ''}</td>
-                <td colspan="2">${r.inspection_function.desc || ''}</td>
-            </tr>
-        </table>
-        
-        <table style="border-top: none;">
-            <tr>
-                <td style="width: 50%; height: 80px; vertical-align: top; border-right: none;">
-                    <strong>Other Comments:</strong><br>
-                    ${r.other_comments || ''}
-                </td>
-                <td style="width: 50%; height: 80px; text-align: right; vertical-align: bottom; border-left: none;">
-                    Engineer/TL/Manager<br>
-                    Name /Signature / Seal /Date
-                </td>
-            </tr>
-        </table>
+                <tr>
+                    <td colspan="2" class="text-center">Part Required ( Part no ) / Description</td>
+                    <td>${p1.partNo}</td>
+                    <td>${p1.description}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center">Part Required ( Part no ) / Description</td>
+                    <td>${p2.partNo}</td>
+                    <td>${p2.description}</td>
+                </tr>
+                <tr>
+                    <td colspan="2" class="text-center">Part Required ( Part no ) / Description</td>
+                    <td>${p3.partNo}</td>
+                    <td>${p3.description}</td>
+                </tr>
 
-        <script>
-            window.onload = function() { window.print(); }
-        <\/script>
+                <tr>
+                    <td class="text-center">Previous Repair SO No</td>
+                    <td class="text-center">Part No</td>
+                    <td class="text-center">RC / GD date</td>
+                    <td class="text-center">Repair Description</td>
+                </tr>
+                <tr>
+                    <td class="text-center">${r.prev_so_no || ''}</td>
+                    <td class="text-center">${r.prev_part_no || ''}</td>
+                    <td class="text-center">${fDate(r.prev_rc_gd_date)}</td>
+                    <td class="text-center">${r.repair_description || ''}</td>
+                </tr>
+                <tr><td class="empty-row"></td><td></td><td></td><td></td></tr>
+                <tr><td class="empty-row"></td><td></td><td></td><td></td></tr>
+
+                <tr>
+                    <td class="text-center">Inspection</td>
+                    <td class="text-center">Code</td>
+                    <td class="text-center">Description</td>
+                    <td class="text-center font-bold">Engineer /TL /Manager</td>
+                </tr>
+                <tr>
+                    <td class="text-center">Packing</td>
+                    <td class="text-center">${r.inspection_packing.code || 'P002'}</td>
+                    <td>${r.inspection_packing.desc || ''}</td>
+                    <td rowspan="4" class="text-center font-bold" style="vertical-align: middle;">Name /Signature / Seal /Date</td>
+                </tr>
+                <tr>
+                    <td class="text-center">Appearance</td>
+                    <td class="text-center">${r.inspection_appearance.code || 'D009'}</td>
+                    <td>${r.inspection_appearance.desc || ''}</td>
+                </tr>
+                <tr>
+                    <td class="text-center">Accessories</td>
+                    <td class="text-center">${r.inspection_accessories.code || 'AC01'}</td>
+                    <td>${r.inspection_accessories.desc || ''}</td>
+                </tr>
+                <tr>
+                    <td class="text-center">Function</td>
+                    <td class="text-center">${r.inspection_function.code || 'TH02'}</td>
+                    <td>${r.inspection_function.desc || ''}</td>
+                </tr>
+
+                <tr>
+                    <td colspan="4" class="font-bold">Other Comments : ${r.other_comments || ''}</td>
+                </tr>
+            </table>
+
+            <script>
+                window.onload = function() { window.print(); }
+            <\/script>
         </body>
         </html>
         `);
