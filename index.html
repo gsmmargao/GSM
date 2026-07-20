@@ -492,15 +492,31 @@
 
                 let dateStr = order.date || '';
                 let timeStr = '';
+                let orderCreatedAt = null;
+                
                 if (order.created_at) {
-                    let d = new Date(order.created_at);
-                    timeStr = d.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
+                    orderCreatedAt = new Date(order.created_at);
+                    timeStr = orderCreatedAt.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true }).toLowerCase();
                 }
 
                 let advanceHtml = '';
                 let currentMethod = order.payment_method || 'Cash';
                 
-                if (currentUserEmail === ADMIN_EMAIL) {
+                // Logic for checking editing permissions
+                let canEditAdvance = false;
+                let isAdmin = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase();
+                
+                if (isAdmin) {
+                    canEditAdvance = true;
+                } else if (orderCreatedAt) {
+                    let now = new Date();
+                    let hoursDiff = Math.abs(now - orderCreatedAt) / (1000 * 60 * 60);
+                    if (hoursDiff <= 12) {
+                        canEditAdvance = true;
+                    }
+                }
+                
+                if (canEditAdvance) {
                     if (order.advancePaid && parseFloat(order.advancePaid) > 0) {
                         let methodText = currentMethod !== 'Cash' ? `<br><small style="color:#2563eb;">${currentMethod}</small>` : '';
                         advanceHtml = `
@@ -528,7 +544,7 @@
                     ? `<span onclick="viewText('Notes', '${safeNotes}')">${eyeSvg}</span> ${shortNotes} <span onclick="openNotesModal('${order.id}', '${safeNotes}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>` 
                     : `— <span onclick="openNotesModal('${order.id}', '', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
 
-                let deleteButtonHtml = currentUserEmail === ADMIN_EMAIL 
+                let deleteButtonHtml = isAdmin 
                     ? `<button onclick="deleteOrder('${order.id}', '${escapeHtml(order.jobNo)}')" style="background: transparent; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
                     : `<span style="color: gray; font-size: 0.8rem;">—</span>`;
 
