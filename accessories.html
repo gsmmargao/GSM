@@ -65,20 +65,22 @@
         .pill-card { background: #f3f4f6; color: #374151; }
         .btn-icon { background: transparent; border: 1px solid var(--border-color); padding: 6px 10px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.8rem;}
 
-        /* Modal Overlay */
-        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; }
-        .modal-box { background: white; border-radius: 8px; width: 800px; max-height: 90vh; display: flex; flex-direction: column; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .modal-header { padding: 20px; border-bottom: 1px solid var(--border-color); font-size: 1.1rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
-        .close-btn { cursor: pointer; font-size: 1.5rem; border: none; background: transparent; }
-        .modal-content { padding: 20px; overflow-y: auto; flex: 1; }
+        /* Full Screen Dropdown Modal Overlay */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); display: none; align-items: flex-start; justify-content: center; z-index: 100; overflow: hidden;}
+        .modal-box { background: white; width: 100%; height: 100vh; display: flex; flex-direction: column; transform: translateY(-100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-header { padding: 25px 40px; background: #f9fafb; border-bottom: 1px solid var(--border-color); font-size: 1.4rem; font-weight: bold; display: flex; justify-content: space-between; align-items: center;}
+        .close-btn { cursor: pointer; font-size: 2rem; border: none; background: transparent; color: #6b7280; line-height: 1; }
+        .close-btn:hover { color: #111827; }
+        .modal-content { padding: 30px 40px; overflow-y: auto; flex: 1; max-width: 1400px; margin: 0 auto; width: 100%; box-sizing: border-box;}
         
-        .catalog-add-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;}
-        .dropdown-form { display: none; background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-top: 10px; margin-bottom: 20px; }
+        .catalog-add-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 15px; margin-bottom: 20px;}
+        .dropdown-form { display: none; background: #fdfdfd; border: 1px solid var(--border-color); border-radius: 8px; padding: 25px; margin-top: 15px; margin-bottom: 30px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
         
-        .catalog-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
-        .catalog-table th { background: transparent; padding: 10px; border-bottom: 1px solid var(--border-color); font-weight: bold; }
-        .catalog-table td { padding: 15px 10px; border-bottom: 1px solid #f3f4f6; }
-        .cat-badge { font-size: 0.7rem; color: #f59e0b; background: #fffbeb; padding: 2px 6px; border-radius: 12px; border: 1px solid #fcd34d; font-weight: bold;}
+        .catalog-table { width: 100%; font-size: 0.95rem; border-collapse: collapse; }
+        .catalog-table th { background: #f3f4f6; padding: 15px; border-bottom: 1px solid var(--border-color); font-weight: bold; text-align: left;}
+        .catalog-table td { padding: 15px; border-bottom: 1px solid #e5e7eb; }
+        .cat-badge { font-size: 0.8rem; color: #f59e0b; background: #fffbeb; padding: 4px 8px; border-radius: 12px; border: 1px solid #fcd34d; font-weight: bold;}
     </style>
 </head>
 <body>
@@ -116,7 +118,7 @@
     <div class="main-content">
         <div class="header">
             <h1>Accessories</h1>
-            <button class="btn" onclick="openCatalogModal()">📦 Item Catalog ➔</button>
+            <button class="btn btn-primary" onclick="openCatalogModal()" style="font-size: 1rem; padding: 10px 20px;">📦 Manage Item Catalog ➔</button>
         </div>
 
         <!-- Entry Form -->
@@ -203,26 +205,29 @@
         </div>
     </div>
 
-    <!-- Catalog Modal -->
+    <!-- Full Screen Catalog Modal -->
     <div class="modal-overlay" id="catalogModal">
         <div class="modal-box">
             <div class="modal-header">
-                ITEM CATALOG
-                <button class="close-btn" onclick="closeCatalogModal()">×</button>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span>📦</span> FULL ITEM CATALOG
+                </div>
+                <button class="close-btn" onclick="closeCatalogModal()" title="Close Catalog">&times;</button>
             </div>
             <div class="modal-content">
                 
                 <!-- Toggle Dropdown Button -->
                 <div>
-                    <button class="btn" onclick="toggleCatalogForm()">+ Add / Edit Item ▼</button>
+                    <button class="btn btn-primary" onclick="toggleCatalogForm()" style="font-size: 1rem; padding: 10px 20px;">+ Add / Edit Item ▼</button>
                 </div>
                 
                 <!-- Dropdown Form -->
                 <div class="dropdown-form" id="catalogFormDropdown">
+                    <h3 style="margin-top: 0; color: #111827;" id="catalogFormTitle">Add New Item</h3>
                     <input type="hidden" id="cat-id">
                     <div class="catalog-add-row">
                         <div class="form-group">
-                            <label>Item Description</label>
+                            <label>Item Description <span>*</span></label>
                             <input type="text" id="cat-desc" placeholder="e.g. iPhone 15 Cover">
                         </div>
                         <div class="form-group">
@@ -230,7 +235,7 @@
                             <input type="text" id="cat-hsn" placeholder="e.g. 8517">
                         </div>
                         <div class="form-group">
-                            <label>Amount incl. GST (₹)</label>
+                            <label>Amount incl. GST (₹) <span>*</span></label>
                             <input type="number" id="cat-amount" placeholder="0.00">
                         </div>
                         <div class="form-group">
@@ -238,16 +243,18 @@
                             <input type="number" id="cat-tax" value="18">
                         </div>
                     </div>
-                    <button class="btn btn-primary" onclick="saveCatalogItem()">Save Item</button>
-                    <button class="btn" onclick="toggleCatalogForm()" style="margin-left: 5px;">Cancel</button>
+                    <div style="display: flex; gap: 10px; margin-top: 10px;">
+                        <button class="btn btn-primary" onclick="saveCatalogItem()" style="padding: 10px 25px;">Save Item</button>
+                        <button class="btn" onclick="toggleCatalogForm()" style="padding: 10px 25px;">Cancel</button>
+                    </div>
                 </div>
 
-                <table class="catalog-table" style="margin-top: 15px;">
+                <table class="catalog-table" style="margin-top: 25px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <thead>
                         <tr>
-                            <th style="text-align: left;">Description</th>
-                            <th style="text-align: left;">HSN Code</th>
-                            <th style="text-align: left;">Amount (₹)</th>
+                            <th>Description</th>
+                            <th>HSN Code</th>
+                            <th>Amount (₹)</th>
                             <th style="text-align: center;">Tax %</th>
                             <th style="text-align: center;">Action</th>
                         </tr>
@@ -341,29 +348,44 @@
             container.appendChild(row);
         }
 
-        // --- Catalog Modal & Dropdown Logic ---
-        window.openCatalogModal = () => document.getElementById('catalogModal').style.display = 'flex';
+        // --- Catalog Modal & Dropdown Logic (Full Screen Animated) ---
+        window.openCatalogModal = () => {
+            const overlay = document.getElementById('catalogModal');
+            overlay.style.display = 'flex';
+            // slight delay to allow display:flex to register before animating
+            setTimeout(() => {
+                overlay.classList.add('active');
+            }, 10);
+        };
         
         window.closeCatalogModal = () => {
-            document.getElementById('catalogModal').style.display = 'none';
-            // Re-render item dropdowns to include new catalog items
-            document.querySelectorAll('.item-select').forEach(select => {
-                let currentVal = select.value;
-                let options = '<option value="">Select item...</option>';
-                catalogItems.forEach(item => {
-                    options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+            const overlay = document.getElementById('catalogModal');
+            overlay.classList.remove('active');
+            
+            // Wait for transition to finish before hiding
+            setTimeout(() => {
+                overlay.style.display = 'none';
+                
+                // Re-render item dropdowns to include new catalog items on main form
+                document.querySelectorAll('.item-select').forEach(select => {
+                    let currentVal = select.value;
+                    let options = '<option value="">Select item...</option>';
+                    catalogItems.forEach(item => {
+                        options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+                    });
+                    select.innerHTML = options;
+                    select.value = currentVal;
                 });
-                select.innerHTML = options;
-                select.value = currentVal;
-            });
+            }, 400); // matches the 0.4s CSS transition
         };
 
         window.toggleCatalogForm = function() {
             const form = document.getElementById('catalogFormDropdown');
             if (form.style.display === 'none' || form.style.display === '') {
                 form.style.display = 'block';
-                // Reset fields for new entry if opening
+                // Reset fields for new entry if opening without clicking edit
                 if(!document.getElementById('cat-id').value) {
+                    document.getElementById('catalogFormTitle').innerText = 'Add New Item';
                     document.getElementById('cat-desc').value = '';
                     document.getElementById('cat-hsn').value = '';
                     document.getElementById('cat-amount').value = '';
@@ -379,6 +401,7 @@
             const item = catalogItems.find(c => c.id === id);
             if(!item) return;
             
+            document.getElementById('catalogFormTitle').innerText = 'Edit Item: ' + item.description;
             document.getElementById('cat-id').value = item.id;
             document.getElementById('cat-desc').value = item.description;
             document.getElementById('cat-hsn').value = item.hsn || '';
@@ -401,17 +424,17 @@
                 const taxAmt = item.amount_incl_gst - base;
                 
                 let adminActions = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()
-                    ? `<button onclick="editCatalogItem(${item.id})" style="color:#2563eb; background:none; border:none; cursor:pointer; margin-right: 5px;" title="Edit">✏️</button>
-                       <button onclick="deleteCatalogItem(${item.id})" style="color:red; background:none; border:none; cursor:pointer;" title="Delete">🗑️</button>`
+                    ? `<button onclick="editCatalogItem(${item.id})" style="color:#2563eb; background:none; border:none; cursor:pointer; margin-right: 15px; font-size: 1.1rem;" title="Edit">✏️</button>
+                       <button onclick="deleteCatalogItem(${item.id})" style="color:red; background:none; border:none; cursor:pointer; font-size: 1.1rem;" title="Delete">🗑️</button>`
                     : `-`;
 
                 tbody.innerHTML += `
                     <tr>
                         <td style="font-weight:bold; color:#374151;">${item.description}</td>
-                        <td>${item.hsn || '-'}</td>
+                        <td style="color: #6b7280;">${item.hsn || '-'}</td>
                         <td>
-                            <strong>₹${item.amount_incl_gst.toFixed(2)}</strong><br>
-                            <span style="font-size:0.7rem; color:gray;">Base: ₹${base.toFixed(2)} Tax: ₹${taxAmt.toFixed(2)}</span>
+                            <strong style="font-size: 1.05rem;">₹${item.amount_incl_gst.toFixed(2)}</strong><br>
+                            <span style="font-size:0.75rem; color:gray;">Base: ₹${base.toFixed(2)} | Tax: ₹${taxAmt.toFixed(2)}</span>
                         </td>
                         <td style="text-align: center;"><span class="cat-badge">${item.tax_percent}%</span></td>
                         <td style="text-align: center;">${adminActions}</td>
@@ -654,7 +677,7 @@
             fetchInvoices();
         }
 
-        // --- Export to Excel functionality ---
+        // --- Export to Excel functionality (Including HSN) ---
         window.exportToExcel = function() {
             const selectedMonth = document.getElementById('exportMonth').value; // Format: "YYYY-MM"
             if (!selectedMonth) return alert("Please select a month to export data.");
@@ -664,19 +687,27 @@
             if (filtered.length === 0) return alert("No invoices found for the selected month.");
 
             // Prepare Data for SheetJS
-            const exportData = filtered.map(inv => ({
-                "Invoice Number": inv.invoice_no,
-                "Invoice Date": inv.date,
-                "Customer Name": inv.customer_name,
-                "Customer Mobile": inv.mobile,
-                "Customer GSTIN": inv.gstin || 'Unregistered',
-                "Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
-                "CGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
-                "SGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
-                "Total GST": parseFloat(inv.gst_amt.toFixed(2)),
-                "Total Invoice Value": parseFloat(inv.total_amt.toFixed(2)),
-                "Payment Mode": inv.payment_mode
-            }));
+            const exportData = filtered.map(inv => {
+                // Extract unique HSNs for multi-item invoices, fallback to single legacy HSN or '-'
+                const hsnCodes = inv.items 
+                    ? Array.from(new Set(inv.items.map(i => i.hsn).filter(Boolean))).join(', ') 
+                    : (inv.hsn || '-');
+
+                return {
+                    "Invoice Number": inv.invoice_no,
+                    "Invoice Date": inv.date,
+                    "Customer Name": inv.customer_name,
+                    "Customer Mobile": inv.mobile,
+                    "Customer GSTIN": inv.gstin || 'Unregistered',
+                    "HSN Code": hsnCodes,
+                    "Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
+                    "CGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                    "SGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                    "Total GST": parseFloat(inv.gst_amt.toFixed(2)),
+                    "Total Invoice Value": parseFloat(inv.total_amt.toFixed(2)),
+                    "Payment Mode": inv.payment_mode
+                };
+            });
 
             // Create a new Workbook and Worksheet
             const worksheet = XLSX.utils.json_to_sheet(exportData);
