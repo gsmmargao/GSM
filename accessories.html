@@ -46,6 +46,17 @@
         .items-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #fdfdfd;}
         .item-row { display: grid; grid-template-columns: 2fr 1fr auto; gap: 10px; margin-bottom: 10px; align-items: end;}
         
+        /* Custom Searchable Select */
+        .search-select-container { position: relative; width: 100%; }
+        .search-select-input { width: 100%; padding: 10px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; box-sizing: border-box; background: white url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat right 10px center; padding-right: 35px; }
+        .search-select-input:focus { border-color: #9ca3af; }
+        .search-select-list { display: none; position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color); max-height: 200px; overflow-y: auto; z-index: 50; list-style: none; padding: 0; margin: 0; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); border-radius: 6px; margin-top: 5px; }
+        .search-select-list li { padding: 10px 15px; cursor: pointer; border-bottom: 1px solid #f3f4f6; font-size: 0.85rem; color: #374151; }
+        .search-select-list li:last-child { border-bottom: none; }
+        .search-select-list li:hover { background: #f3f4f6; color: #111827; }
+        .search-select-list li.no-results { color: #9ca3af; cursor: default; text-align: center; font-style: italic; }
+        .search-select-list li.no-results:hover { background: white; }
+
         /* Payment Toggle Segmented Input */
         .segmented-input { display: flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #fdfdfd; width: fit-content; }
         .segmented-input .pay-btn { border: none; background: transparent; color: #4b5563; padding: 10px 20px; cursor: pointer; font-weight: bold; font-size: 0.85rem; transition: background 0.2s, color 0.2s; border-right: 1px solid var(--border-color);}
@@ -329,20 +340,93 @@
             document.getElementById('payCard').className = mode === 'Card' ? 'pay-btn active' : 'pay-btn';
         }
 
+        // --- Searchable Dropdown Logic ---
+        
+        // Close dropdown when clicking outside
+        document.addEventListener('click', function(e) {
+            if (!e.target.closest('.search-select-container')) {
+                document.querySelectorAll('.search-select-list').forEach(list => list.style.display = 'none');
+            }
+        });
+
+        window.openSearchDropdown = function(input) {
+            // Close other open dropdowns
+            document.querySelectorAll('.search-select-list').forEach(list => list.style.display = 'none');
+            const list = input.nextElementSibling.nextElementSibling;
+            list.style.display = 'block';
+            filterSearchItems(input); // Filter immediately based on current text
+        }
+
+        window.onSearchInputChange = function(input) {
+            const hiddenInput = input.nextElementSibling;
+            hiddenInput.value = ''; // Clear selected ID if user starts typing manually
+            filterSearchItems(input);
+        }
+
+        window.filterSearchItems = function(input) {
+            const filter = input.value.toLowerCase();
+            const list = input.nextElementSibling.nextElementSibling;
+            const items = list.getElementsByTagName('li');
+            let hasVisible = false;
+            
+            for (let i = 0; i < items.length; i++) {
+                if (items[i].classList.contains('no-results')) continue;
+                const text = items[i].innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    items[i].style.display = 'block';
+                    hasVisible = true;
+                } else {
+                    items[i].style.display = 'none';
+                }
+            }
+            
+            let noRes = list.querySelector('.no-results');
+            if (!hasVisible) {
+                if (!noRes) {
+                    list.insertAdjacentHTML('beforeend', '<li class="no-results">No items found in catalog</li>');
+                } else {
+                    noRes.style.display = 'block';
+                }
+            } else if (noRes) {
+                noRes.style.display = 'none';
+            }
+        }
+
+        window.selectSearchItem = function(li) {
+            const container = li.closest('.search-select-container');
+            const input = container.querySelector('.search-select-input');
+            const hidden = container.querySelector('.item-select');
+            
+            input.value = li.innerText; // Display description and price
+            hidden.value = li.getAttribute('data-id'); // Store Catalog ID
+            li.parentElement.style.display = 'none'; // Hide dropdown
+        }
+
+
         // --- Dynamic Items Logic ---
         window.addInvoiceItem = function() {
             const container = document.getElementById('invoiceItemsContainer');
             const row = document.createElement('div');
             row.className = 'item-row';
             
-            let options = '<option value="">Select item...</option>';
+            let listItems = '';
             catalogItems.forEach(item => {
-                options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+                listItems += `<li data-id="${item.id}" onclick="selectSearchItem(this)">${item.description} (₹${item.amount_incl_gst})</li>`;
             });
 
             row.innerHTML = `
-                <div class="form-group"><label>Select Item from Catalog</label><select class="item-select">${options}</select></div>
-                <div class="form-group"><label>Serial (Optional)</label><input type="text" class="item-serial" placeholder="Serial no."></div>
+                <div class="form-group">
+                    <label>Search & Select Item <span>*</span></label>
+                    <div class="search-select-container">
+                        <input type="text" class="search-select-input" placeholder="Search item..." oninput="onSearchInputChange(this)" onfocus="openSearchDropdown(this)">
+                        <input type="hidden" class="item-select">
+                        <ul class="search-select-list">${listItems}</ul>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Serial (Optional)</label>
+                    <input type="text" class="item-serial" placeholder="Serial no.">
+                </div>
                 <button class="btn-icon" style="color:red; height: 38px; margin-bottom:2px;" onclick="this.parentElement.remove()" title="Remove Item">🗑️</button>
             `;
             container.appendChild(row);
@@ -352,7 +436,6 @@
         window.openCatalogModal = () => {
             const overlay = document.getElementById('catalogModal');
             overlay.style.display = 'flex';
-            // slight delay to allow display:flex to register before animating
             setTimeout(() => {
                 overlay.classList.add('active');
             }, 10);
@@ -366,15 +449,28 @@
             setTimeout(() => {
                 overlay.style.display = 'none';
                 
-                // Re-render item dropdowns to include new catalog items on main form
-                document.querySelectorAll('.item-select').forEach(select => {
-                    let currentVal = select.value;
-                    let options = '<option value="">Select item...</option>';
+                // Re-render all custom search dropdowns to include new catalog items
+                document.querySelectorAll('.search-select-container').forEach(container => {
+                    const hidden = container.querySelector('.item-select');
+                    const input = container.querySelector('.search-select-input');
+                    const list = container.querySelector('.search-select-list');
+                    const currentVal = hidden.value;
+                    
+                    let listItems = '';
+                    let foundText = '';
                     catalogItems.forEach(item => {
-                        options += `<option value="${item.id}">${item.description} (₹${item.amount_incl_gst})</option>`;
+                        listItems += `<li data-id="${item.id}" onclick="selectSearchItem(this)">${item.description} (₹${item.amount_incl_gst})</li>`;
+                        if (item.id == currentVal) foundText = `${item.description} (₹${item.amount_incl_gst})`;
                     });
-                    select.innerHTML = options;
-                    select.value = currentVal;
+                    
+                    list.innerHTML = listItems;
+                    
+                    if (currentVal && foundText) {
+                        input.value = foundText; // Keep existing selected text valid
+                    } else {
+                        input.value = ''; // Reset invalid/deleted items
+                        hidden.value = '';
+                    }
                 });
             }, 400); // matches the 0.4s CSS transition
         };
@@ -409,6 +505,7 @@
             document.getElementById('cat-tax').value = item.tax_percent;
             
             document.getElementById('catalogFormDropdown').style.display = 'block';
+            document.getElementById('catalogFormDropdown').scrollIntoView({ behavior: 'smooth' });
         }
 
         window.fetchCatalog = async function() {
@@ -558,7 +655,7 @@
             let grandGst = 0;
 
             itemRows.forEach(row => {
-                const selectVal = row.querySelector('.item-select').value;
+                const selectVal = row.querySelector('.item-select').value; // from hidden input
                 const serialVal = row.querySelector('.item-serial').value.trim();
                 
                 if (selectVal) {
@@ -585,7 +682,7 @@
                 }
             });
 
-            if (itemsArray.length === 0) return alert("Please select at least one item.");
+            if (itemsArray.length === 0) return alert("Please search and select at least one valid item from the catalog.");
 
             // Generate Invoice No (always AC)
             const prefix = 'AC';
@@ -611,8 +708,8 @@
                 customer_name: name,
                 mobile: mobile,
                 gstin: gstin,
-                item_desc: summaryDesc, // Legacy/Summary
-                items: itemsArray,      // New JSON Array
+                item_desc: summaryDesc, 
+                items: itemsArray,      
                 hsn: itemsArray[0].hsn, 
                 serial_no: itemsArray[0].serial,
                 base_amt: grandBase,
