@@ -92,7 +92,7 @@
         </div>
         <div>
             <button class="btn" onclick="window.location.reload()">↻ Refresh</button>
-            <button class="btn btn-black" onclick="toggleForm()">+ New Report</button>
+            <button class="btn btn-black" onclick="openNewReport()">+ New Report</button>
         </div>
     </div>
 
@@ -178,7 +178,7 @@
 
         <div style="display: flex; gap: 10px; margin-top: 20px;">
             <button class="btn btn-black" onclick="saveReport()">💾 Save Report</button>
-            <button class="btn" onclick="toggleForm()">Cancel</button>
+            <button class="btn" onclick="cancelForm()">Cancel</button>
         </div>
     </div>
 
@@ -208,6 +208,7 @@
     let currentUserEmail = '';
     let currentUserName = '';
     let allReports = [];
+    let editingReportId = null; // Tracks if we are editing an existing report
 
     // --- Sidebar Logic ---
     let sidebarTimer;
@@ -242,12 +243,41 @@
     window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
 
     // --- Form UI Logic ---
-    window.toggleForm = () => {
-        const form = document.getElementById('reportForm');
-        form.style.display = form.style.display === 'block' ? 'none' : 'block';
+    window.openNewReport = () => {
+        editingReportId = null;
+        resetForm();
+        document.getElementById('reportForm').style.display = 'block';
     };
 
-    window.addPartRow = () => {
+    window.cancelForm = () => {
+        editingReportId = null;
+        resetForm();
+        document.getElementById('reportForm').style.display = 'none';
+    };
+
+    window.resetForm = () => {
+        // Clear all standard inputs and textareas
+        document.querySelectorAll('#reportForm input:not([type="date"]), #reportForm textarea').forEach(el => el.value = '');
+        document.getElementById('serviceType').value = 'carry in';
+        
+        // Reset dates to today
+        const today = new Date().toISOString().split('T')[0];
+        document.querySelectorAll('#reportForm input[type="date"]').forEach(el => el.value = '');
+        document.getElementById('receivedDate').value = today;
+        document.getElementById('inspDate').value = today;
+
+        // Reset inspection defaults
+        document.getElementById('inspPackCode').value = 'P002';
+        document.getElementById('inspAppCode').value = 'D009';
+        document.getElementById('inspAccCode').value = 'AC01';
+        document.getElementById('inspFuncCode').value = 'TH02';
+
+        // Reset parts
+        document.getElementById('partsContainer').innerHTML = '';
+        addPartRow();
+    };
+
+    window.addPartRow = (partNo = '', desc = '') => {
         const container = document.getElementById('partsContainer');
         const row = document.createElement('div');
         row.className = 'part-row';
@@ -256,6 +286,9 @@
             <input type="text" class="p-desc" placeholder="Part Description">
             <button class="btn" style="padding: 6px 10px; color: red; border-color: red;" onclick="this.parentElement.remove()">X</button>
         `;
+        // Safely assign values to avoid quote-breaking issues in HTML strings
+        row.querySelector('.p-no').value = partNo;
+        row.querySelector('.p-desc').value = desc;
         container.appendChild(row);
     };
 
@@ -275,6 +308,7 @@
 
         allReports.forEach(r => {
             const dateStr = new Date(r.created_at).toLocaleDateString('en-GB');
+            // Added Edit button alongside the Print button
             tbody.innerHTML += `
                 <tr>
                     <td>${dateStr}</td>
@@ -283,13 +317,63 @@
                     <td><span style="font-size:0.75rem; color:gray;">${r.model_no || '-'}</span><br>${r.serial_imei || '-'}</td>
                     <td>${r.service_type}</td>
                     <td style="text-transform:capitalize;">${r.created_by}</td>
-                    <td style="text-align: center;">
+                    <td style="text-align: center; white-space: nowrap;">
+                        <button class="btn" style="border-color: #f59e0b; color: #f59e0b; margin-right: 5px;" onclick='editReport(${JSON.stringify(r).replace(/'/g, "&#39;")})'>✏️ Edit</button>
                         <button class="btn" style="border-color: #2563eb; color: #2563eb;" onclick='printReport(${JSON.stringify(r).replace(/'/g, "&#39;")})'>🖨️ Print</button>
                     </td>
                 </tr>
             `;
         });
     }
+
+    window.editReport = function(r) {
+        editingReportId = r.id; // Store the ID of the report being edited
+        
+        // Populate form fields
+        document.getElementById('soNo').value = r.service_order_no || '';
+        document.getElementById('receivedDate').value = r.repair_received_date ? r.repair_received_date.split('T')[0] : '';
+        document.getElementById('serviceType').value = r.service_type || 'carry in';
+        document.getElementById('dop').value = r.dop ? r.dop.split('T')[0] : '';
+        document.getElementById('modelNo').value = r.model_no || '';
+        document.getElementById('serialImei').value = r.serial_imei || '';
+        document.getElementById('prodDate').value = r.production_date ? r.production_date.split('T')[0] : '';
+        document.getElementById('inspDate').value = r.inspection_date ? r.inspection_date.split('T')[0] : '';
+        
+        document.getElementById('custName').value = r.customer_name || '';
+        document.getElementById('mobileNo').value = r.mobile_no || '';
+        document.getElementById('address').value = r.address || '';
+        
+        document.getElementById('defectObserved').value = r.defect_observed || '';
+        document.getElementById('repairRequired').value = r.repair_required || '';
+        
+        // Populate parts
+        document.getElementById('partsContainer').innerHTML = '';
+        if (r.parts && r.parts.length > 0) {
+            r.parts.forEach(p => addPartRow(p.partNo, p.description));
+        } else {
+            addPartRow();
+        }
+        
+        document.getElementById('prevSoNo').value = r.prev_so_no || '';
+        document.getElementById('prevPartNo').value = r.prev_part_no || '';
+        document.getElementById('prevDate').value = r.prev_rc_gd_date ? r.prev_rc_gd_date.split('T')[0] : '';
+        document.getElementById('repairDesc').value = r.repair_description || '';
+        
+        document.getElementById('inspPackCode').value = r.inspection_packing?.code || 'P002';
+        document.getElementById('inspPackDesc').value = r.inspection_packing?.desc || '';
+        document.getElementById('inspAppCode').value = r.inspection_appearance?.code || 'D009';
+        document.getElementById('inspAppDesc').value = r.inspection_appearance?.desc || '';
+        document.getElementById('inspAccCode').value = r.inspection_accessories?.code || 'AC01';
+        document.getElementById('inspAccDesc').value = r.inspection_accessories?.desc || '';
+        document.getElementById('inspFuncCode').value = r.inspection_function?.code || 'TH02';
+        document.getElementById('inspFuncDesc').value = r.inspection_function?.desc || '';
+        
+        document.getElementById('otherComments').value = r.other_comments || '';
+        
+        // Show form and scroll to top
+        document.getElementById('reportForm').style.display = 'block';
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    };
 
     window.saveReport = async function() {
         const soNo = document.getElementById('soNo').value.trim();
@@ -330,18 +414,32 @@
             created_by: currentUserName
         };
 
-        const { error } = await db.from('technical_reports').insert([reportData]);
-        if(error) return alert("Error saving report: " + error.message);
+        let apiError;
+
+        // Check if we are updating or creating
+        if (editingReportId) {
+            const { error } = await db.from('technical_reports').update(reportData).eq('id', editingReportId);
+            apiError = error;
+        } else {
+            const { error } = await db.from('technical_reports').insert([reportData]);
+            apiError = error;
+        }
+
+        if(apiError) return alert("Error saving report: " + apiError.message);
         
-        alert("Report Saved Successfully!");
-        window.location.reload(); 
+        alert(editingReportId ? "Report Updated Successfully!" : "Report Saved Successfully!");
+        
+        // Clean up UI instead of full page reload for a smoother experience
+        editingReportId = null;
+        document.getElementById('reportForm').style.display = 'none';
+        resetForm();
+        fetchReports(); 
     };
 
     // --- Print Logic ---
     window.printReport = function(r) {
         const fDate = (d) => d ? new Date(d).toLocaleDateString('en-GB') : '';
         
-        // Extract up to 3 parts to ensure structural consistency based on requirements[cite: 1]
         const p1 = r.parts && r.parts[0] ? r.parts[0] : {partNo: '', description: ''};
         const p2 = r.parts && r.parts[1] ? r.parts[1] : {partNo: '', description: ''};
         const p3 = r.parts && r.parts[2] ? r.parts[2] : {partNo: '', description: ''};
@@ -365,6 +463,7 @@
             </style>
         </head>
         <body>
+            <!-- Keeping your existing print HTML structure intact -->
             <table>
                 <tr>
                     <td class="text-center">Branch</td>
@@ -471,24 +570,24 @@
                 </tr>
                 <tr>
                     <td class="text-center">Packing</td>
-                    <td class="text-center">${r.inspection_packing.code || 'P002'}</td>
-                    <td>${r.inspection_packing.desc || ''}</td>
+                    <td class="text-center">${r.inspection_packing?.code || 'P002'}</td>
+                    <td>${r.inspection_packing?.desc || ''}</td>
                     <td rowspan="4" class="text-center font-bold" style="vertical-align: middle;">Name /Signature / Seal /Date</td>
                 </tr>
                 <tr>
                     <td class="text-center">Appearance</td>
-                    <td class="text-center">${r.inspection_appearance.code || 'D009'}</td>
-                    <td>${r.inspection_appearance.desc || ''}</td>
+                    <td class="text-center">${r.inspection_appearance?.code || 'D009'}</td>
+                    <td>${r.inspection_appearance?.desc || ''}</td>
                 </tr>
                 <tr>
                     <td class="text-center">Accessories</td>
-                    <td class="text-center">${r.inspection_accessories.code || 'AC01'}</td>
-                    <td>${r.inspection_accessories.desc || ''}</td>
+                    <td class="text-center">${r.inspection_accessories?.code || 'AC01'}</td>
+                    <td>${r.inspection_accessories?.desc || ''}</td>
                 </tr>
                 <tr>
                     <td class="text-center">Function</td>
-                    <td class="text-center">${r.inspection_function.code || 'TH02'}</td>
-                    <td>${r.inspection_function.desc || ''}</td>
+                    <td class="text-center">${r.inspection_function?.code || 'TH02'}</td>
+                    <td>${r.inspection_function?.desc || ''}</td>
                 </tr>
 
                 <tr>
@@ -509,14 +608,9 @@
         checkAuth();
         resetSidebarTimer();
         
-        // Setup initial default part row
-        addPartRow();
+        // Let resetForm handle the initial date assignments and parts row setup
+        resetForm();
         
-        // Auto-set received and inspection dates to today
-        const today = new Date().toISOString().split('T')[0];
-        document.getElementById('receivedDate').value = today;
-        document.getElementById('inspDate').value = today;
-
         fetchReports();
     });
 </script>
