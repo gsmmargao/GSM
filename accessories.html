@@ -6,6 +6,9 @@
     <title>GSM Solution - Accessories</title>
     <link rel="icon" href="data:,">
     
+    <!-- SheetJS for Excel Export -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
     <style>
         :root { --bg-color: #f4f5f7; --border-color: #e5e7eb; }
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -27,15 +30,7 @@
         
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: bold; border: 1px solid var(--border-color); background: white; font-size: 0.85rem;}
         .btn-primary { background: black; color: white; border: none; }
-
-        /* Tabs */
-        .tabs-container { display: flex; gap: 10px; margin-bottom: 20px; }
-        .tab-btn { padding: 8px 16px; border: 1px solid var(--border-color); border-radius: 20px; background: white; cursor: pointer; font-size: 0.85rem; font-weight: 500; display: flex; align-items: center; gap: 6px; color: #4b5563;}
-        .tab-btn.active { background: #f9fafb; font-weight: bold; border-color: #d1d5db; color: black;}
-        .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .dot-orange { background-color: #f59e0b; }
-
-        .warning-banner { background: #fffbeb; border: 1px solid #fef3c7; color: #b45309; padding: 12px 15px; border-radius: 8px; font-size: 0.85rem; margin-bottom: 20px; display: none; align-items: center; gap: 10px;}
+        .btn-success { background: #10b981; color: white; border: none; }
 
         /* Form */
         .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; }
@@ -77,7 +72,8 @@
         .close-btn { cursor: pointer; font-size: 1.5rem; border: none; background: transparent; }
         .modal-content { padding: 20px; overflow-y: auto; flex: 1; }
         
-        .catalog-add-row { display: grid; grid-template-columns: 3fr 1fr 1.5fr 1fr auto; gap: 10px; margin-bottom: 20px; align-items: end;}
+        .catalog-add-row { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 15px;}
+        .dropdown-form { display: none; background: #f9fafb; border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-top: 10px; margin-bottom: 20px; }
         
         .catalog-table { width: 100%; font-size: 0.85rem; border-collapse: collapse; }
         .catalog-table th { background: transparent; padding: 10px; border-bottom: 1px solid var(--border-color); font-weight: bold; }
@@ -123,19 +119,9 @@
             <button class="btn" onclick="openCatalogModal()">📦 Item Catalog ➔</button>
         </div>
 
-        <div class="tabs-container">
-            <button class="tab-btn active" id="btnRegular" onclick="switchTab('Regular')">Regular Invoices</button>
-            <button class="tab-btn" id="btnGST" onclick="switchTab('GST')"><span class="dot dot-orange"></span> GST Invoices</button>
-        </div>
-
-        <div class="warning-banner" id="gstWarning">
-            <span class="dot dot-orange"></span>
-            This section generates <b>dedicated GST invoices</b> with series starting from #GSM01. A customer GSTIN is required for every entry.
-        </div>
-
         <!-- Entry Form -->
         <div class="form-card">
-            <div class="form-title" id="formTitle">NEW ENTRY</div>
+            <div class="form-title" id="formTitle">NEW INVOICE ENTRY</div>
             
             <div class="form-grid">
                 <div class="form-group col-span-2">
@@ -146,8 +132,8 @@
                     <label>Mobile Number <span>*</span></label>
                     <input type="text" id="inv-mobile" placeholder="10-digit number">
                 </div>
-                <div class="form-group" id="gstinGroup" style="display: none;">
-                    <label>Customer GSTIN <span id="gstinReq">*</span></label>
+                <div class="form-group" id="gstinGroup">
+                    <label>Customer GSTIN (Optional)</label>
                     <input type="text" id="inv-gstin" placeholder="e.g. 30XXXXX1234A1Z5">
                 </div>
             </div>
@@ -176,10 +162,18 @@
                 </div>
             </div>
 
-            <button class="btn btn-primary" id="btnSubmitInv" style="margin-top: 10px;" onclick="saveInvoice()">+ Add Entry</button>
+            <button class="btn btn-primary" id="btnSubmitInv" style="margin-top: 10px;" onclick="saveInvoice()">+ Create Invoice</button>
         </div>
 
-        <div class="form-title" style="border:none;" id="tableTitle">Regular Invoices</div>
+        <!-- Table Header with Export Controls -->
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+            <div class="form-title" style="border:none; margin:0;" id="tableTitle">INVOICES</div>
+            <div style="display: flex; gap: 10px; align-items: center;">
+                <input type="month" id="exportMonth" style="padding: 7px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
+                <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+            </div>
+        </div>
+
         <div class="table-card">
             <table>
                 <thead>
@@ -217,27 +211,38 @@
                 <button class="close-btn" onclick="closeCatalogModal()">×</button>
             </div>
             <div class="modal-content">
-                <div class="catalog-add-row">
-                    <div class="form-group">
-                        <label>Item Description</label>
-                        <input type="text" id="cat-desc" placeholder="e.g. iPhone 15 Cover">
+                
+                <!-- Toggle Dropdown Button -->
+                <div>
+                    <button class="btn" onclick="toggleCatalogForm()">+ Add / Edit Item ▼</button>
+                </div>
+                
+                <!-- Dropdown Form -->
+                <div class="dropdown-form" id="catalogFormDropdown">
+                    <input type="hidden" id="cat-id">
+                    <div class="catalog-add-row">
+                        <div class="form-group">
+                            <label>Item Description</label>
+                            <input type="text" id="cat-desc" placeholder="e.g. iPhone 15 Cover">
+                        </div>
+                        <div class="form-group">
+                            <label>HSN Code</label>
+                            <input type="text" id="cat-hsn" placeholder="e.g. 8517">
+                        </div>
+                        <div class="form-group">
+                            <label>Amount incl. GST (₹)</label>
+                            <input type="number" id="cat-amount" placeholder="0.00">
+                        </div>
+                        <div class="form-group">
+                            <label>Tax %</label>
+                            <input type="number" id="cat-tax" value="18">
+                        </div>
                     </div>
-                    <div class="form-group">
-                        <label>HSN Code</label>
-                        <input type="text" id="cat-hsn" placeholder="e.g. 8517">
-                    </div>
-                    <div class="form-group">
-                        <label>Amount incl. GST (₹)</label>
-                        <input type="number" id="cat-amount" placeholder="0.00">
-                    </div>
-                    <div class="form-group">
-                        <label>Tax %</label>
-                        <input type="number" id="cat-tax" value="18">
-                    </div>
-                    <button class="btn" style="height: 40px; background: #6b7280; color: white; border: none;" onclick="saveCatalogItem()">+</button>
+                    <button class="btn btn-primary" onclick="saveCatalogItem()">Save Item</button>
+                    <button class="btn" onclick="toggleCatalogForm()" style="margin-left: 5px;">Cancel</button>
                 </div>
 
-                <table class="catalog-table">
+                <table class="catalog-table" style="margin-top: 15px;">
                     <thead>
                         <tr>
                             <th style="text-align: left;">Description</th>
@@ -258,7 +263,6 @@
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         let currentUserEmail = '';
-        let currentTab = 'Regular'; 
         let catalogItems = [];
         let allInvoices = [];
         let selectedPaymentMode = 'Cash';
@@ -310,31 +314,6 @@
             addInvoiceItem(); // Initialize with one empty row
         });
 
-        // --- Tab Management ---
-        window.switchTab = function(type) {
-            currentTab = type;
-            currentPage = 1; // reset pagination
-            document.getElementById('btnRegular').classList.toggle('active', type === 'Regular');
-            document.getElementById('btnGST').classList.toggle('active', type === 'GST');
-            
-            if(type === 'GST') {
-                document.getElementById('gstWarning').style.display = 'flex';
-                document.getElementById('gstinGroup').style.display = 'flex';
-                document.getElementById('formTitle').innerText = 'NEW GST INVOICE ENTRY';
-                document.getElementById('tableTitle').innerText = 'GST Invoices';
-                document.getElementById('btnSubmitInv').innerText = '+ Create GST Invoice';
-                document.getElementById('btnSubmitInv').style.background = '#f59e0b';
-            } else {
-                document.getElementById('gstWarning').style.display = 'none';
-                document.getElementById('gstinGroup').style.display = 'none';
-                document.getElementById('formTitle').innerText = 'NEW ENTRY';
-                document.getElementById('tableTitle').innerText = 'Regular Invoices';
-                document.getElementById('btnSubmitInv').innerText = '+ Add Entry';
-                document.getElementById('btnSubmitInv').style.background = 'black';
-            }
-            renderInvoiceTable();
-        }
-
         // --- Payment Toggle ---
         window.setPaymentMode = function(mode) {
             selectedPaymentMode = mode;
@@ -362,8 +341,9 @@
             container.appendChild(row);
         }
 
-        // --- Catalog Modal Logic ---
+        // --- Catalog Modal & Dropdown Logic ---
         window.openCatalogModal = () => document.getElementById('catalogModal').style.display = 'flex';
+        
         window.closeCatalogModal = () => {
             document.getElementById('catalogModal').style.display = 'none';
             // Re-render item dropdowns to include new catalog items
@@ -378,6 +358,36 @@
             });
         };
 
+        window.toggleCatalogForm = function() {
+            const form = document.getElementById('catalogFormDropdown');
+            if (form.style.display === 'none' || form.style.display === '') {
+                form.style.display = 'block';
+                // Reset fields for new entry if opening
+                if(!document.getElementById('cat-id').value) {
+                    document.getElementById('cat-desc').value = '';
+                    document.getElementById('cat-hsn').value = '';
+                    document.getElementById('cat-amount').value = '';
+                    document.getElementById('cat-tax').value = '18';
+                }
+            } else {
+                form.style.display = 'none';
+                document.getElementById('cat-id').value = ''; // clear hidden id
+            }
+        }
+
+        window.editCatalogItem = function(id) {
+            const item = catalogItems.find(c => c.id === id);
+            if(!item) return;
+            
+            document.getElementById('cat-id').value = item.id;
+            document.getElementById('cat-desc').value = item.description;
+            document.getElementById('cat-hsn').value = item.hsn || '';
+            document.getElementById('cat-amount').value = item.amount_incl_gst;
+            document.getElementById('cat-tax').value = item.tax_percent;
+            
+            document.getElementById('catalogFormDropdown').style.display = 'block';
+        }
+
         window.fetchCatalog = async function() {
             const { data, error } = await db.from('accessories_catalog').select('*').order('created_at', { ascending: false });
             if (error) return console.error(error);
@@ -390,8 +400,9 @@
                 const base = item.amount_incl_gst / (1 + (item.tax_percent / 100));
                 const taxAmt = item.amount_incl_gst - base;
                 
-                let deleteBtn = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()
-                    ? `<button onclick="deleteCatalogItem(${item.id})" style="color:red; background:none; border:none; cursor:pointer;">🗑️</button>`
+                let adminActions = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()
+                    ? `<button onclick="editCatalogItem(${item.id})" style="color:#2563eb; background:none; border:none; cursor:pointer; margin-right: 5px;" title="Edit">✏️</button>
+                       <button onclick="deleteCatalogItem(${item.id})" style="color:red; background:none; border:none; cursor:pointer;" title="Delete">🗑️</button>`
                     : `-`;
 
                 tbody.innerHTML += `
@@ -403,26 +414,38 @@
                             <span style="font-size:0.7rem; color:gray;">Base: ₹${base.toFixed(2)} Tax: ₹${taxAmt.toFixed(2)}</span>
                         </td>
                         <td style="text-align: center;"><span class="cat-badge">${item.tax_percent}%</span></td>
-                        <td style="text-align: center;">${deleteBtn}</td>
+                        <td style="text-align: center;">${adminActions}</td>
                     </tr>
                 `;
             });
         }
 
         window.saveCatalogItem = async function() {
+            const id = document.getElementById('cat-id').value;
             const desc = document.getElementById('cat-desc').value.trim();
             const hsn = document.getElementById('cat-hsn').value.trim();
             const amt = parseFloat(document.getElementById('cat-amount').value);
             const tax = parseFloat(document.getElementById('cat-tax').value) || 18;
 
-            if(!desc || !amt) return alert("Description and Amount required.");
+            if(!desc || !amt) return alert("Description and Amount are required.");
 
-            const { error } = await db.from('accessories_catalog').insert([{ description: desc, hsn: hsn, amount_incl_gst: amt, tax_percent: tax }]);
-            if(error) return alert("Error saving: " + error.message);
+            const payload = { description: desc, hsn: hsn, amount_incl_gst: amt, tax_percent: tax };
+
+            if (id) {
+                // Update
+                const { error } = await db.from('accessories_catalog').update(payload).eq('id', id);
+                if(error) return alert("Error updating: " + error.message);
+            } else {
+                // Insert
+                const { error } = await db.from('accessories_catalog').insert([payload]);
+                if(error) return alert("Error saving: " + error.message);
+            }
             
+            document.getElementById('cat-id').value = '';
             document.getElementById('cat-desc').value = '';
             document.getElementById('cat-hsn').value = '';
             document.getElementById('cat-amount').value = '';
+            document.getElementById('catalogFormDropdown').style.display = 'none';
             fetchCatalog();
         }
 
@@ -445,17 +468,15 @@
             const tbody = document.getElementById('invoicesTableBody');
             tbody.innerHTML = '';
             
-            const filteredInvoices = allInvoices.filter(inv => inv.invoice_type === currentTab);
-            
-            if(filteredInvoices.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: gray;">No ${currentTab} invoices yet. Add an entry above.</td></tr>`;
+            if(allInvoices.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: gray;">No invoices yet. Add an entry above.</td></tr>`;
                 document.getElementById('pageInfo').innerText = `Page 1 of 1`;
                 return;
             }
 
             // Pagination logic
             const start = (currentPage - 1) * rowsPerPage;
-            const paginatedItems = filteredInvoices.slice(start, start + rowsPerPage);
+            const paginatedItems = allInvoices.slice(start, start + rowsPerPage);
 
             paginatedItems.forEach(inv => {
                 let pillClass = inv.payment_mode === 'Cash' ? 'pill-cash' : (inv.payment_mode === 'UPI' ? 'pill-upi' : 'pill-card');
@@ -490,13 +511,12 @@
                 `;
             });
 
-            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(filteredInvoices.length / rowsPerPage) || 1}`;
+            document.getElementById('pageInfo').innerText = `Page ${currentPage} of ${Math.ceil(allInvoices.length / rowsPerPage) || 1}`;
         }
 
         window.prevPage = function() { if (currentPage > 1) { currentPage--; renderInvoiceTable(); } }
         window.nextPage = function() { 
-            const filteredInvoices = allInvoices.filter(inv => inv.invoice_type === currentTab);
-            if (currentPage < Math.ceil(filteredInvoices.length / rowsPerPage)) { currentPage++; renderInvoiceTable(); } 
+            if (currentPage < Math.ceil(allInvoices.length / rowsPerPage)) { currentPage++; renderInvoiceTable(); } 
         }
 
         window.saveInvoice = async function() {
@@ -506,7 +526,6 @@
             const date = document.getElementById('inv-date').value;
 
             if(!name || !mobile) return alert("Please fill required Customer details.");
-            if(currentTab === 'GST' && !gstin) return alert("Customer GSTIN is required for GST Invoices.");
 
             // Aggregate items
             const itemRows = document.querySelectorAll('.item-row');
@@ -545,11 +564,11 @@
 
             if (itemsArray.length === 0) return alert("Please select at least one item.");
 
-            // Generate Invoice No
-            const prefix = currentTab === 'Regular' ? 'AC' : 'GSM';
+            // Generate Invoice No (always AC)
+            const prefix = 'AC';
             const { data: latest } = await db.from('accessories_invoices')
                                            .select('invoice_no')
-                                           .eq('invoice_type', currentTab)
+                                           .like('invoice_no', 'AC%')
                                            .order('created_at', { ascending: false })
                                            .limit(1);
             
@@ -560,18 +579,18 @@
             }
             const invoiceNoStr = `${prefix}${String(nextNum).padStart(2, '0')}`;
 
-            // Create a summary description for backward compatibility / single string view
+            // Create a summary description for single string view
             const summaryDesc = itemsArray.map(i => i.desc).join(', ');
 
             const invData = {
                 invoice_no: invoiceNoStr,
-                invoice_type: currentTab,
+                invoice_type: 'Regular', // Always default to standard type now
                 customer_name: name,
                 mobile: mobile,
                 gstin: gstin,
                 item_desc: summaryDesc, // Legacy/Summary
                 items: itemsArray,      // New JSON Array
-                hsn: itemsArray[0].hsn, // Store first HSN for backward compatibility
+                hsn: itemsArray[0].hsn, 
                 serial_no: itemsArray[0].serial,
                 base_amt: grandBase,
                 gst_amt: grandGst,
@@ -635,6 +654,40 @@
             fetchInvoices();
         }
 
+        // --- Export to Excel functionality ---
+        window.exportToExcel = function() {
+            const selectedMonth = document.getElementById('exportMonth').value; // Format: "YYYY-MM"
+            if (!selectedMonth) return alert("Please select a month to export data.");
+
+            // Filter invoices strictly matching the selected Year-Month
+            const filtered = allInvoices.filter(inv => inv.date && inv.date.startsWith(selectedMonth));
+            if (filtered.length === 0) return alert("No invoices found for the selected month.");
+
+            // Prepare Data for SheetJS
+            const exportData = filtered.map(inv => ({
+                "Invoice Number": inv.invoice_no,
+                "Invoice Date": inv.date,
+                "Customer Name": inv.customer_name,
+                "Customer Mobile": inv.mobile,
+                "Customer GSTIN": inv.gstin || 'Unregistered',
+                "Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
+                "CGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                "SGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                "Total GST": parseFloat(inv.gst_amt.toFixed(2)),
+                "Total Invoice Value": parseFloat(inv.total_amt.toFixed(2)),
+                "Payment Mode": inv.payment_mode
+            }));
+
+            // Create a new Workbook and Worksheet
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "GST_Invoices");
+
+            // Trigger the download
+            XLSX.writeFile(workbook, `GSM_GST_Report_${selectedMonth}.xlsx`);
+        };
+
+
         // --- Number to Words utility for printing ---
         function numberToWords(num) {
             const a = ['','One ','Two ','Three ','Four ', 'Five ','Six ','Seven ','Eight ','Nine ','Ten ','Eleven ','Twelve ','Thirteen ','Fourteen ','Fifteen ','Sixteen ','Seventeen ','Eighteen ','Nineteen '];
@@ -654,7 +707,6 @@
         window.printInvoice = function(inv) {
             const amountInWords = numberToWords(Math.round(inv.total_amt));
             
-            // Build Items HTML dynamically
             let itemsHtml = '';
             let itemsList = inv.items || [{
                 desc: inv.item_desc, hsn: inv.hsn, serial: inv.serial_no,
