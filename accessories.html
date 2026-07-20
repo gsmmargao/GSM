@@ -183,7 +183,7 @@
             <div class="form-title" style="border:none; margin:0;" id="tableTitle">INVOICES</div>
             <div style="display: flex; gap: 10px; align-items: center;">
                 <input type="month" id="exportMonth" style="padding: 7px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem;">
-                <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel</button>
+                <button class="btn btn-success" onclick="exportToExcel()">📊 Export to Excel (HSN Wise)</button>
             </div>
         </div>
 
@@ -227,9 +227,14 @@
             </div>
             <div class="modal-content">
                 
-                <!-- Toggle Dropdown Button -->
-                <div>
+                <!-- Catalog Controls: Add Button & Search -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 15px;">
                     <button class="btn btn-primary" onclick="toggleCatalogForm()" style="font-size: 1rem; padding: 10px 20px;">+ Add / Edit Item ▼</button>
+                    
+                    <div style="position: relative;">
+                        <input type="text" id="catalogSearchInput" placeholder="🔍 Search catalog..." oninput="filterCatalogTable()" style="padding: 10px 15px 10px 35px; border: 1px solid var(--border-color); border-radius: 6px; width: 300px; font-size: 0.95rem; outline: none;">
+                        <svg style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #9ca3af;" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+                    </div>
                 </div>
                 
                 <!-- Dropdown Form -->
@@ -260,7 +265,7 @@
                     </div>
                 </div>
 
-                <table class="catalog-table" style="margin-top: 25px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
+                <table class="catalog-table" style="margin-top: 15px; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.05);">
                     <thead>
                         <tr>
                             <th>Description</th>
@@ -435,6 +440,8 @@
         // --- Catalog Modal & Dropdown Logic (Full Screen Animated) ---
         window.openCatalogModal = () => {
             const overlay = document.getElementById('catalogModal');
+            document.getElementById('catalogSearchInput').value = ''; // Reset modal search bar
+            window.filterCatalogTable(); // Reset table filter view
             overlay.style.display = 'flex';
             setTimeout(() => {
                 overlay.classList.add('active');
@@ -474,6 +481,21 @@
                 });
             }, 400); // matches the 0.4s CSS transition
         };
+
+        // Modal Catalog Table Search Logic
+        window.filterCatalogTable = function() {
+            const filter = document.getElementById('catalogSearchInput').value.toLowerCase();
+            const rows = document.getElementById('catalogTableBody').getElementsByTagName('tr');
+            
+            for (let i = 0; i < rows.length; i++) {
+                const text = rows[i].innerText.toLowerCase();
+                if (text.includes(filter)) {
+                    rows[i].style.display = '';
+                } else {
+                    rows[i].style.display = 'none';
+                }
+            }
+        }
 
         window.toggleCatalogForm = function() {
             const form = document.getElementById('catalogFormDropdown');
@@ -538,6 +560,8 @@
                     </tr>
                 `;
             });
+            // Re-apply any existing filter
+            window.filterCatalogTable();
         }
 
         window.saveCatalogItem = async function() {
@@ -774,7 +798,7 @@
             fetchInvoices();
         }
 
-        // --- Export to Excel functionality (Including HSN) ---
+        // --- Export to Excel functionality (Line-by-Line Item Level) ---
         window.exportToExcel = function() {
             const selectedMonth = document.getElementById('exportMonth').value; // Format: "YYYY-MM"
             if (!selectedMonth) return alert("Please select a month to export data.");
@@ -783,27 +807,49 @@
             const filtered = allInvoices.filter(inv => inv.date && inv.date.startsWith(selectedMonth));
             if (filtered.length === 0) return alert("No invoices found for the selected month.");
 
-            // Prepare Data for SheetJS
-            const exportData = filtered.map(inv => {
-                // Extract unique HSNs for multi-item invoices, fallback to single legacy HSN or '-'
-                const hsnCodes = inv.items 
-                    ? Array.from(new Set(inv.items.map(i => i.hsn).filter(Boolean))).join(', ') 
-                    : (inv.hsn || '-');
+            // Prepare Data for SheetJS mapping line items to individual rows
+            const exportData = [];
 
-                return {
-                    "Invoice Number": inv.invoice_no,
-                    "Invoice Date": inv.date,
-                    "Customer Name": inv.customer_name,
-                    "Customer Mobile": inv.mobile,
-                    "Customer GSTIN": inv.gstin || 'Unregistered',
-                    "HSN Code": hsnCodes,
-                    "Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
-                    "CGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
-                    "SGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
-                    "Total GST": parseFloat(inv.gst_amt.toFixed(2)),
-                    "Total Invoice Value": parseFloat(inv.total_amt.toFixed(2)),
-                    "Payment Mode": inv.payment_mode
-                };
+            filtered.forEach(inv => {
+                if (inv.items && inv.items.length > 0) {
+                    // Loop through each item in the invoice and create a separate row
+                    inv.items.forEach(item => {
+                        exportData.push({
+                            "Invoice Number": inv.invoice_no,
+                            "Invoice Date": inv.date,
+                            "Customer Name": inv.customer_name,
+                            "Customer Mobile": inv.mobile,
+                            "Customer GSTIN": inv.gstin || 'Unregistered',
+                            "Item Description": item.desc,
+                            "HSN Code": item.hsn || '-',
+                            "Line Taxable Value (Base)": parseFloat(item.base_amt.toFixed(2)),
+                            "Line CGST Amount": parseFloat((item.gst_amt / 2).toFixed(2)),
+                            "Line SGST Amount": parseFloat((item.gst_amt / 2).toFixed(2)),
+                            "Line Total GST": parseFloat(item.gst_amt.toFixed(2)),
+                            "Line Item Value (Total)": parseFloat(item.total_amt.toFixed(2)),
+                            "Invoice Grand Total": parseFloat(inv.total_amt.toFixed(2)), // Keeps reference of full bill size
+                            "Payment Mode": inv.payment_mode
+                        });
+                    });
+                } else {
+                    // Fallback for legacy invoices that only have a summary instead of an items array
+                    exportData.push({
+                        "Invoice Number": inv.invoice_no,
+                        "Invoice Date": inv.date,
+                        "Customer Name": inv.customer_name,
+                        "Customer Mobile": inv.mobile,
+                        "Customer GSTIN": inv.gstin || 'Unregistered',
+                        "Item Description": inv.item_desc,
+                        "HSN Code": inv.hsn || '-',
+                        "Line Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
+                        "Line CGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                        "Line SGST Amount": parseFloat((inv.gst_amt / 2).toFixed(2)),
+                        "Line Total GST": parseFloat(inv.gst_amt.toFixed(2)),
+                        "Line Item Value (Total)": parseFloat(inv.total_amt.toFixed(2)),
+                        "Invoice Grand Total": parseFloat(inv.total_amt.toFixed(2)),
+                        "Payment Mode": inv.payment_mode
+                    });
+                }
             });
 
             // Create a new Workbook and Worksheet
