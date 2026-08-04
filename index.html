@@ -8,134 +8,150 @@
     
     <style>
         :root {
-            --bg-color: #f4f5f7;
+            /* High-Contrast Pro Dark Theme Variables */
+            --bg-color: #121212;
+            --sidebar-bg: #0a0a0a;
+            --card-bg: #1e1e1e;
+            --input-bg: #2d2d2d;
+            --border-color: #333333;
+            --text-main: #f9fafb;
+            --text-muted: #9ca3af;
+            --primary-accent: #3b82f6;
             --sidebar-width: 250px;
-            --primary-blue: #2563eb;
-            --border-color: #e5e7eb;
         }
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; }
+
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; }
         .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
         
-        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; }
-        .logo-icon { background: black; color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
-        .nav-item { padding: 12px 20px; color: #4b5563 !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; }
-        .nav-item.active { background: black !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; }
-        .nav-item:hover:not(.active) { background: #f3f4f6; }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; color: var(--text-main); }
+        .logo-icon { background: var(--primary-accent); color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: var(--text-muted) !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease;}
+        .nav-item.active { background: var(--primary-accent) !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .nav-item:hover:not(.active) { background: #1f1f1f; color: var(--text-main) !important;}
 
         .sidebar-toggle-btn {
             position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%);
-            background: black; color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 5px rgba(0,0,0,0.2); transition: left 0.4s ease; font-weight: bold;
+            background: var(--primary-accent); color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 10px rgba(0,0,0,0.5); transition: left 0.4s ease; font-weight: bold;
         }
         .sidebar-collapsed-btn { left: 0 !important; }
 
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
         
-        .header { background: white; padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
-        .header-left h1 { margin: 0; font-size: 1.5rem; }
-        .header-left p { margin: 5px 0 0 0; color: #6b7280; font-size: 0.9rem; }
+        .header { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .header-left h1 { margin: 0; font-size: 1.5rem; color: var(--text-main); }
+        .header-left p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.9rem; }
         .header-right { display: flex; gap: 10px; align-items: center; }
-        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 6px; width: 250px; outline: none;}
-        .search-bar:focus { border-color: #9ca3af; }
-        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: white; }
-        .btn-primary { background: black; color: white; border: none; }
+        
+        .search-bar { padding: 8px 12px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); border-radius: 6px; width: 250px; outline: none; transition: border-color 0.2s;}
+        .search-bar::placeholder { color: #6b7280; }
+        .search-bar:focus { border-color: var(--primary-accent); }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); transition: all 0.2s; }
+        .btn:hover { background: #3f3f46; }
+        .btn-primary { background: var(--primary-accent); color: white; border: none; }
+        .btn-primary:hover { background: #2563eb; }
 
         .dashboard-padding { padding: 20px 30px; }
         
         .stats-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; margin-bottom: 20px; }
-        .stat-card { background: white; padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
+        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border-color); }
         .stat-card h3 { margin: 0 0 10px 0; font-size: 0.85rem; font-weight: 600; }
-        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: #111827; }
-        .c-blue { color: #2563eb; background: #eff6ff; border-color: #bfdbfe; }
-        .c-orange { color: #d97706; background: #fffbeb; border-color: #fde68a; }
-        .c-purple { color: #7c3aed; background: #f5f3ff; border-color: #ddd6fe; }
-        .c-green { color: #059669; background: #ecfdf5; border-color: #a7f3d0; }
-        .c-red { color: #ef4444; background: #fef2f2; border-color: #fecaca; }
-        .c-brown { color: #92400e; background: #fffbeb; border-color: #fcd34d; }
+        .stat-card .number { margin: 0; font-size: 1.8rem; font-weight: bold; color: var(--text-main); }
+        
+        /* High Contrast Status Colors for Dark Theme */
+        .c-blue { color: #60a5fa; background: rgba(59, 130, 246, 0.1); border-color: #3b82f6; }
+        .c-orange { color: #fbbf24; background: rgba(245, 158, 11, 0.1); border-color: #f59e0b; }
+        .c-purple { color: #a78bfa; background: rgba(139, 92, 246, 0.1); border-color: #8b5cf6; }
+        .c-green { color: #34d399; background: rgba(16, 185, 129, 0.1); border-color: #10b981; }
+        .c-red { color: #f87171; background: rgba(239, 68, 68, 0.1); border-color: #ef4444; }
+        .c-brown { color: #fb923c; background: rgba(249, 115, 22, 0.1); border-color: #ea580c; }
 
         /* --- Tabs Styling --- */
         .tabs-container { display: flex; gap: 25px; border-bottom: 2px solid var(--border-color); margin-bottom: 25px; padding-bottom: 0; }
-        .tab-btn { background: transparent; border: none; padding: 10px 5px; font-size: 0.95rem; font-weight: 500; color: #6b7280; cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative; }
+        .tab-btn { background: transparent; border: none; padding: 10px 5px; font-size: 0.95rem; font-weight: 500; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 8px; position: relative; transition: color 0.3s; }
         .tab-btn::after { content: ''; position: absolute; bottom: -2px; left: 0; width: 100%; height: 3px; background: transparent; transition: background 0.3s; border-radius: 3px 3px 0 0; }
-        .tab-btn:hover { color: #374151; }
-        .tab-btn.active { color: #111827; font-weight: bold; }
+        .tab-btn:hover { color: var(--text-main); }
+        .tab-btn.active { color: var(--text-main); font-weight: bold; }
         
         /* Tab Specific Colors */
-        .tab-btn.active#tab-Pending::after { background: #eab308; }
-        .tab-btn.active#tab-Repair-Completed::after { background: #3b82f6; }
-        .tab-btn.active#tab-Goods-Delivered::after { background: #22c55e; }
-        .tab-btn.active#tab-Repair-Refusal::after { background: #ef4444; }
+        .tab-btn.active#tab-Pending::after { background: #fbbf24; }
+        .tab-btn.active#tab-Repair-Completed::after { background: #60a5fa; }
+        .tab-btn.active#tab-Goods-Delivered::after { background: #34d399; }
+        .tab-btn.active#tab-Repair-Refusal::after { background: #f87171; }
 
         .dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; }
-        .dot-pending { background: #eab308; }
-        .dot-completed { background: #3b82f6; }
-        .dot-delivered { background: #22c55e; }
-        .dot-refusal { background: #ef4444; }
+        .dot-pending { background: #fbbf24; }
+        .dot-completed { background: #60a5fa; }
+        .dot-delivered { background: #34d399; }
+        .dot-refusal { background: #f87171; }
 
-        .tab-badge { background: #f3f4f6; padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: #4b5563; }
+        .tab-badge { background: var(--input-bg); padding: 2px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; color: var(--text-main); border: 1px solid var(--border-color); }
 
         /* Status Dropdown Styling */
         .status-select { 
             padding: 6px 12px; border-radius: 20px; font-weight: bold; cursor: pointer; 
-            border: none; outline: none; font-size: 0.85rem; appearance: none; text-align: center;
+            border: 1px solid transparent; outline: none; font-size: 0.85rem; appearance: none; text-align: center;
         }
 
-        .form-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; }
-        .form-header { font-size: 0.85rem; font-weight: bold; color: #4b5563; margin-bottom: 20px; display: flex; align-items: center; padding-bottom: 10px;}
+        .form-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.2); }
+        .form-header { font-size: 0.9rem; font-weight: bold; color: var(--primary-accent); margin-bottom: 20px; display: flex; align-items: center; padding-bottom: 10px; border-bottom: 1px solid var(--border-color);}
         
         .form-grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
-        .form-group label { font-size: 0.85rem; color: #4b5563; margin-bottom: 8px; font-weight: 500;}
-        .form-group label span { color: red; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: #fdfdfd; }
-        .form-group input:focus, .form-group select:focus { border-color: #9ca3af; background: white; }
+        .form-group label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 500;}
+        .form-group label span { color: #f87171; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: var(--input-bg); color: var(--text-main); transition: border-color 0.2s;}
+        .form-group input:focus, .form-group select:focus { border-color: var(--primary-accent); background: #333333; }
         .full-width { grid-column: 1 / -1; }
         
-        /* Segmented Input for Advance Paid */
-        .segmented-input { display: flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: #fdfdfd; }
-        .segmented-input input { flex: 1; border: none; border-radius: 0; padding: 10px 12px; outline: none; background: transparent;}
-        .segmented-input .toggle-btn { border: none; background: transparent; color: #4b5563; padding: 0 15px; cursor: pointer; border-left: 1px solid var(--border-color); font-weight: bold; font-size: 0.85rem; transition: background 0.2s, color 0.2s; }
-        .segmented-input .toggle-btn.active { background: #111827; color: white; }
+        /* Segmented Input */
+        .segmented-input { display: flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--input-bg); }
+        .segmented-input input { flex: 1; border: none; border-radius: 0; padding: 10px 12px; outline: none; background: transparent; color: var(--text-main);}
+        .segmented-input .toggle-btn { border: none; background: transparent; color: var(--text-muted); padding: 0 15px; cursor: pointer; border-left: 1px solid var(--border-color); font-weight: bold; font-size: 0.85rem; transition: background 0.2s, color 0.2s; }
+        .segmented-input .toggle-btn.active { background: var(--primary-accent); color: white; border-color: var(--primary-accent);}
 
         .form-actions { display: flex; gap: 10px; margin-top: 10px; }
-        .btn-save { background: black; color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-save { background: var(--primary-accent); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: bold; transition: background 0.2s;}
+        .btn-save:hover { background: #2563eb; }
 
-        .table-card { background: white; border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px;}
+        .table-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); padding: 0; overflow-x: auto; margin-bottom: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.2);}
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px; background: #f9fafb; font-size: 0.85rem; color: #4b5563; border-bottom: 1px solid var(--border-color); }
-        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: #111827; }
-        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: white; border-top: 1px solid var(--border-color); }
+        th { padding: 15px; background: #18181b; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); text-transform: uppercase; letter-spacing: 0.5px;}
+        td { padding: 15px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); }
+        tr:hover { background-color: rgba(255, 255, 255, 0.02); }
+        .pagination { display: flex; justify-content: space-between; align-items: center; padding: 15px; background: var(--card-bg); border-top: 1px solid var(--border-color); }
         
         /* Inline Icon Styles */
-        .edit-icon { cursor: pointer; color: #9ca3af; margin-left: 8px; vertical-align: middle; transition: color 0.2s;}
-        .edit-icon:hover { color: #374151; }
-        .eye-icon { cursor: pointer; color: #6b7280; vertical-align: middle; margin-right: 5px; transition: color 0.2s; }
-        .eye-icon:hover { color: #111827; }
+        .edit-icon { cursor: pointer; color: var(--text-muted); margin-left: 8px; vertical-align: middle; transition: color 0.2s;}
+        .edit-icon:hover { color: var(--primary-accent); }
+        .eye-icon { cursor: pointer; color: var(--text-muted); vertical-align: middle; margin-right: 5px; transition: color 0.2s; }
+        .eye-icon:hover { color: var(--text-main); }
         
-        .hwc-badge { background-color: #ef4444; color: white; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;}
+        .hwc-badge { background-color: rgba(239, 68, 68, 0.2); border: 1px solid #ef4444; color: #f87171; font-size: 0.7rem; font-weight: bold; padding: 3px 6px; border-radius: 4px; margin-right: 8px; vertical-align: middle;}
 
         /* Modal Styles */
-        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px); }
-        .modal-container { background: white; padding: 25px; border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
-        .modal-title { font-size: 1.1rem; font-weight: bold; color: #111827; margin: 0 0 5px 0; }
-        .modal-subtitle { font-size: 0.8rem; color: #6b7280; margin: 0 0 20px 0; }
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(4px); }
+        .modal-container { background: var(--card-bg); padding: 25px; border-radius: 12px; width: 400px; max-width: 90%; box-shadow: 0 10px 40px rgba(0,0,0,0.5); border: 1px solid var(--border-color); }
+        .modal-title { font-size: 1.1rem; font-weight: bold; color: var(--text-main); margin: 0 0 5px 0; }
+        .modal-subtitle { font-size: 0.8rem; color: var(--text-muted); margin: 0 0 20px 0; }
         .modal-body { margin-bottom: 20px; }
-        .modal-body input, .modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid #d1d5db; border-radius: 6px; font-size: 0.9rem; outline: none; }
-        .modal-body input:focus, .modal-body textarea:focus { border-color: #9ca3af; }
+        .modal-body input, .modal-body textarea { width: 100%; box-sizing: border-box; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: var(--input-bg); color: var(--text-main); }
+        .modal-body input:focus, .modal-body textarea:focus { border-color: var(--primary-accent); }
         .modal-footer { display: flex; justify-content: flex-end; gap: 10px; }
         
         /* Modal Buttons */
-        .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; font-weight: 500; font-size: 0.85rem;}
-        .btn-cancel:hover { background: #f3f4f6; }
-        .btn-confirm { padding: 8px 16px; border-radius: 6px; border: none; background: #374151; color: white; cursor: pointer; font-weight: bold; font-size: 0.85rem;}
-        .btn-confirm:hover { background: #111827; }
+        .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: transparent; color: var(--text-main); cursor: pointer; font-weight: 500; font-size: 0.85rem;}
+        .btn-cancel:hover { background: #333333; }
+        .btn-confirm { padding: 8px 16px; border-radius: 6px; border: none; background: var(--primary-accent); color: white; cursor: pointer; font-weight: bold; font-size: 0.85rem;}
+        .btn-confirm:hover { background: #2563eb; }
 
         /* Payment Mode Toggle UI (Modals) */
         .payment-toggle { display: flex; gap: 10px; margin-top: 15px; }
-        .pay-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid #d1d5db; background: white; color: #374151; cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
-        .pay-btn.active { background: #111827; color: white; border-color: #111827; }
+        .pay-btn { padding: 6px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-muted); cursor: pointer; font-size: 0.85rem; font-weight: 500; transition: all 0.2s; }
+        .pay-btn.active { background: var(--primary-accent); color: white; border-color: var(--primary-accent); }
     </style>
 </head>
 <body>
@@ -155,11 +171,11 @@
     <!-- Hidden from non-admins -->
     <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
     <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
-    <a href="users.html" class="nav-item admin-only" style="display: none; color: #2563eb; font-weight:bold;">👥 Manage Users</a>
+    <a href="users.html" class="nav-item admin-only" style="display: none; color: var(--primary-accent); font-weight:bold;">👥 Manage Users</a>
 
     <div style="flex-grow: 1;"></div> 
     
-    <div class="nav-item" onclick="logOut()" style="color: black !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+    <div class="nav-item" onclick="logOut()" style="color: var(--text-main) !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
         <span id="userNameDisplay">User</span> 
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
@@ -186,22 +202,22 @@
 
         <div class="dashboard-padding">
             
-            <!-- Statistics Grid matching the screenshot -->
+            <!-- Statistics Grid -->
             <div class="stats-grid">
                 <div class="stat-card c-blue">
-                    <h3 style="color: #2563eb;">Total Orders</h3>
+                    <h3 style="color: #60a5fa;">Total Orders</h3>
                     <p class="number" id="totalOrdersCount">0</p>
                 </div>
                 <div class="stat-card c-orange">
-                    <h3 style="color: #d97706;">Pending</h3>
+                    <h3 style="color: #fbbf24;">Pending</h3>
                     <p class="number" id="pendingCount">0</p>
                 </div>
                 <div class="stat-card c-purple">
-                    <h3 style="color: #7c3aed;">Repair Completed</h3>
+                    <h3 style="color: #a78bfa;">Repair Completed</h3>
                     <p class="number" id="completedCount">0</p>
                 </div>
                 <div class="stat-card c-green">
-                    <h3 style="color: #059669;">Goods Delivered</h3>
+                    <h3 style="color: #34d399;">Goods Delivered</h3>
                     <p class="number" id="deliveredCount">0</p>
                 </div>
             </div>
@@ -209,11 +225,11 @@
             <!-- Second Row of Stats Grid -->
             <div class="stats-grid" style="grid-template-columns: repeat(2, 1fr); margin-top: -5px;">
                 <div class="stat-card c-red">
-                    <h3 style="color: #ef4444;">Repair Refusal / Cancelled</h3>
+                    <h3 style="color: #f87171;">Repair Refusal / Cancelled</h3>
                     <p class="number" id="refusalCount">0</p>
                 </div>
                 <div class="stat-card c-brown">
-                    <h3 style="color: #b45309;">Total Advance Collected (All Orders)</h3>
+                    <h3 style="color: #fb923c;">Total Advance Collected (All Orders)</h3>
                     <p class="number" id="totalAdvanceCount">₹0.00</p>
                 </div>
             </div>
@@ -234,7 +250,7 @@
                 </button>
             </div>
             
-            <p style="font-size: 0.85rem; color: #6b7280; margin-top: -10px; margin-bottom: 15px;" id="tabDescription">Showing all pending service orders awaiting repair.</p>
+            <p style="font-size: 0.85rem; color: var(--text-muted); margin-top: -10px; margin-bottom: 15px;" id="tabDescription">Showing all pending service orders awaiting repair.</p>
 
             <!-- Order Form -->
             <div class="form-card" id="orderFormCard">
@@ -283,10 +299,10 @@
                     
                     <div class="form-group full-width">
                         <label>Notes & Flags</label>
-                        <div style="display: flex; gap: 10px; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; padding: 0 10px; background: #fdfdfd;">
-                            <input type="checkbox" id="hwcCheck" style="width: auto;"> <label for="hwcCheck" style="margin:0; font-weight:bold;">HWC</label>
-                            <span style="color:#d1d5db;">|</span>
-                            <input type="text" id="orderNotes" placeholder="Add any additional notes about this order..." style="border: none; outline: none; flex: 1; padding: 10px 0; background: transparent;">
+                        <div style="display: flex; gap: 10px; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; padding: 0 10px; background: var(--input-bg);">
+                            <input type="checkbox" id="hwcCheck" style="width: auto; accent-color: var(--primary-accent);"> <label for="hwcCheck" style="margin:0; font-weight:bold; color: var(--text-main);">HWC</label>
+                            <span style="color:var(--border-color);">|</span>
+                            <input type="text" id="orderNotes" placeholder="Add any additional notes about this order..." style="border: none; outline: none; flex: 1; padding: 10px 0; background: transparent; color: var(--text-main);">
                         </div>
                     </div>
                 </div>
@@ -318,7 +334,7 @@
                 </table>
                 <div class="pagination">
                     <button class="btn" onclick="prevOrderPage()">Previous</button>
-                    <span id="orderPageInfo" style="font-size:0.9rem; font-weight:bold;">Page 1</span>
+                    <span id="orderPageInfo" style="font-size:0.9rem; font-weight:bold; color: var(--text-main);">Page 1</span>
                     <button class="btn" onclick="nextOrderPage()">Next</button>
                 </div>
             </div>
@@ -332,7 +348,7 @@
             <h2 class="modal-title">Change Job Number</h2>
             <p class="modal-subtitle" id="modalJobSubtitle"></p>
             <div class="modal-body">
-                <label style="font-size: 0.75rem; color: #6b7280; display: block; margin-bottom: 5px;">New Job Number</label>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 5px;">New Job Number</label>
                 <input type="text" id="modalJobInput">
             </div>
             <div class="modal-footer">
@@ -363,10 +379,10 @@
             <h2 class="modal-title">Edit Advance Paid</h2>
             <p class="modal-subtitle" id="modalAdvanceSubtitle"></p>
             <div class="modal-body">
-                <label style="font-size: 0.75rem; color: #6b7280; display: block; margin-bottom: 5px;">Advance Amount (₹)</label>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-bottom: 5px;">Advance Amount (₹)</label>
                 <input type="number" id="modalAdvanceInput">
                 
-                <label style="font-size: 0.75rem; color: #6b7280; display: block; margin-top: 15px;">Payment Mode</label>
+                <label style="font-size: 0.75rem; color: var(--text-muted); display: block; margin-top: 15px;">Payment Mode</label>
                 <div class="payment-toggle">
                     <button class="pay-btn active" id="btnPayCash" onclick="setModalPaymentMode('Cash')">Cash</button>
                     <button class="pay-btn" id="btnPayUPI" onclick="setModalPaymentMode('UPI')">UPI</button>
@@ -385,7 +401,7 @@
         <div class="modal-container">
             <h2 class="modal-title" id="modalViewTitle">View</h2>
             <div class="modal-body" style="margin-top: 15px;">
-                <p id="modalViewContent" style="font-size: 0.95rem; color: #374151; line-height: 1.5; white-space: pre-wrap; margin: 0; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid #e5e7eb;"></p>
+                <p id="modalViewContent" style="font-size: 0.95rem; color: var(--text-main); line-height: 1.5; white-space: pre-wrap; margin: 0; background: var(--input-bg); padding: 15px; border-radius: 8px; border: 1px solid var(--border-color);"></p>
             </div>
             <div class="modal-footer">
                 <button class="btn-cancel" onclick="closeModal('modalView')">Close</button>
@@ -544,7 +560,7 @@
             document.getElementById('deliveredCount').innerText = delivered;
             document.getElementById('refusalCount').innerText = refusal;
             
-            // Format Total Advance with Indian Rupee formatting (e.g. ₹2,39,561.00)
+            // Format Total Advance
             let formattedAdvance = new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR' }).format(totalAdvance);
             document.getElementById('totalAdvanceCount').innerText = formattedAdvance;
             
@@ -562,7 +578,7 @@
             // Reset all active classes
             document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
             
-            // Construct the ID properly (replacing spaces with hyphens)
+            // Construct the ID properly
             const tabId = 'tab-' + tabName.replace(' ', '-');
             const element = document.getElementById(tabId);
             if(element) element.classList.add('active');
@@ -584,8 +600,7 @@
                 const combinedString = `${order.customerName} ${order.jobNo} ${order.contactNo} ${order.imeiNo} ${order.modelNo}`.toLowerCase();
                 const matchesSearch = combinedString.includes(input);
                 
-                // Match the active tab exactly
-                let statusVal = order.status || 'Pending'; // Fail-safe
+                let statusVal = order.status || 'Pending'; 
                 const matchesTab = (statusVal === currentTab);
                 
                 return matchesSearch && matchesTab;
@@ -595,7 +610,6 @@
             renderTable();
         }
         
-        // This links the search bar up to our new filter system
         window.searchTable = function() { applyFilters(); }
 
         function renderTable() {
@@ -607,11 +621,12 @@
 
             paginatedItems.forEach(order => {
                 
-                // Set dropdown background based on current active status
-                let statusColor = '#eab308'; // default yellow
-                if(order.status === 'Repair Completed') statusColor = '#3b82f6';
-                if(order.status === 'Goods Delivered') statusColor = '#22c55e';
-                if(order.status === 'Repair Refusal') statusColor = '#ef4444';
+                // Dropdown Colors adapted for Dark Mode Contrast
+                let statusBgColor = 'rgba(251, 191, 36, 0.2)'; // pending amber 
+                let statusColor = '#fbbf24';
+                if(order.status === 'Repair Completed') { statusBgColor = 'rgba(96, 165, 250, 0.2)'; statusColor = '#60a5fa'; }
+                if(order.status === 'Goods Delivered') { statusBgColor = 'rgba(52, 211, 153, 0.2)'; statusColor = '#34d399'; }
+                if(order.status === 'Repair Refusal') { statusBgColor = 'rgba(248, 113, 113, 0.2)'; statusColor = '#f87171'; }
 
                 let dateStr = order.date || '';
                 let timeStr = '';
@@ -640,7 +655,7 @@
                 
                 if (canEditAdvance) {
                     if (order.advancePaid && parseFloat(order.advancePaid) > 0) {
-                        let methodText = currentMethod !== 'Cash' ? `<br><small style="color:#2563eb;">${currentMethod}</small>` : '';
+                        let methodText = currentMethod !== 'Cash' ? `<br><small style="color:var(--primary-accent);">${currentMethod}</small>` : '';
                         advanceHtml = `
                             <span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span>${methodText}
                             <span onclick="openAdvanceModal('${order.id}', '${order.advancePaid}', '${currentMethod}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
@@ -650,7 +665,7 @@
                     }
                 } else {
                     advanceHtml = order.advancePaid > 0 
-                        ? `<span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span> <br><small>${currentMethod}</small>`
+                        ? `<span style="color:#10b981; font-weight:bold;">₹${order.advancePaid}</span> <br><small style="color:var(--text-muted);">${currentMethod}</small>`
                         : `—`;
                 }
 
@@ -667,18 +682,18 @@
                     : `— <span onclick="openNotesModal('${order.id}', '', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>`;
 
                 let deleteButtonHtml = isAdmin 
-                    ? `<button onclick="deleteOrder('${order.id}', '${escapeHtml(order.jobNo)}')" style="background: transparent; border: none; color: #ef4444; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
-                    : `<span style="color: gray; font-size: 0.8rem;">—</span>`;
+                    ? `<button onclick="deleteOrder('${order.id}', '${escapeHtml(order.jobNo)}')" style="background: transparent; border: none; color: #f87171; font-size: 1.1rem; cursor: pointer;">🗑️</button>` 
+                    : `<span style="color: #4b5563; font-size: 0.8rem;">—</span>`;
 
                 let hwcIndicator = order.hwc ? `<span class="hwc-badge">HWC</span>` : '';
                 
                 // Status Dropdown that triggers changing DB state on select
                 let statusDropdown = `
-                    <select class="status-select" style="background-color: ${statusColor}; color: white;" onchange="changeOrderStatus('${order.id}', this.value)">
-                        <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''} style="color: black; background: white;">Pending</option>
-                        <option value="Repair Completed" ${order.status === 'Repair Completed' ? 'selected' : ''} style="color: black; background: white;">Repair Completed</option>
-                        <option value="Goods Delivered" ${order.status === 'Goods Delivered' ? 'selected' : ''} style="color: black; background: white;">Goods Delivered</option>
-                        <option value="Repair Refusal" ${order.status === 'Repair Refusal' ? 'selected' : ''} style="color: black; background: white;">Repair Refusal</option>
+                    <select class="status-select" style="background-color: ${statusBgColor}; color: ${statusColor}; border: 1px solid ${statusColor};" onchange="changeOrderStatus('${order.id}', this.value)">
+                        <option value="Pending" ${order.status === 'Pending' ? 'selected' : ''} style="color: var(--text-main); background: #1f1f1f;">Pending</option>
+                        <option value="Repair Completed" ${order.status === 'Repair Completed' ? 'selected' : ''} style="color: var(--text-main); background: #1f1f1f;">Repair Completed</option>
+                        <option value="Goods Delivered" ${order.status === 'Goods Delivered' ? 'selected' : ''} style="color: var(--text-main); background: #1f1f1f;">Goods Delivered</option>
+                        <option value="Repair Refusal" ${order.status === 'Repair Refusal' ? 'selected' : ''} style="color: var(--text-main); background: #1f1f1f;">Repair Refusal</option>
                     </select>
                 `;
 
@@ -687,16 +702,16 @@
                     <td style="text-transform: capitalize; font-weight: bold;">${order.createdBy || 'Admin'}</td>
                     <td>
                         ${dateStr}<br>
-                        <span style="font-size:0.75rem; color:#9ca3af;">${timeStr}</span>
+                        <span style="font-size:0.75rem; color:var(--text-muted);">${timeStr}</span>
                     </td>
                     <td>
                         <strong>${order.jobNo || ''}</strong>
                         <span onclick="openJobModal('${order.id}', '${escapeHtml(order.jobNo)}', '${escapeHtml(order.customerName)}')">${pencilSvg}</span>
                     </td>
                     <td><strong>${order.customerName || ''}</strong></td>
-                    <td><strong style="color: #374151;">${order.contactNo || '—'}</strong></td>
+                    <td><strong style="color: #d1d5db;">${order.contactNo || '—'}</strong></td>
                     <td>
-                        <span style="color:#6b7280; font-size:0.8rem;">${order.imeiNo || ''}</span><br>
+                        <span style="color:var(--text-muted); font-size:0.8rem;">${order.imeiNo || ''}</span><br>
                         <strong>${order.modelNo || ''}</strong>
                     </td>
                     <td>${probHtml}</td>
@@ -704,6 +719,7 @@
                     <td>${advanceHtml}</td>
                     <td style="text-align: center;">
                         ${hwcIndicator}
+                        <br style="margin-bottom: 5px;">
                         ${statusDropdown}
                     </td>
                     <td style="text-align: center;">${deleteButtonHtml}</td>
@@ -754,7 +770,7 @@
                 hwc: isHwc,
                 notes: orderNotes,
                 date: currentDate,
-                status: "Pending", // Always default to pending for new entries
+                status: "Pending", 
                 createdBy: creatorName 
             };
 
@@ -791,7 +807,6 @@
                 clearForm();
                 toggleForm();
                 
-                // We ensure 'Pending' is focused on a new order submission
                 switchTab('Pending');
                 fetchOrders();
             } catch (error) { 
@@ -809,7 +824,7 @@
             document.getElementById('advancePaid').value = '';
             document.getElementById('hwcCheck').checked = false;
             document.getElementById('orderNotes').value = '';
-            setFormPaymentMode('Cash'); // Reset toggle
+            setFormPaymentMode('Cash'); 
         }
 
         // --- Modals Logic ---
@@ -826,7 +841,7 @@
 
         window.openJobModal = function(id, currentJob, customerName) {
             currentEditId = id;
-            document.getElementById('modalJobSubtitle').innerHTML = `Update the job number for <strong>${customerName}</strong>. Current job number: <strong>${currentJob}</strong>`;
+            document.getElementById('modalJobSubtitle').innerHTML = `Update the job number for <strong>${customerName}</strong>. Current job number: <strong style="color: var(--text-main);">${currentJob}</strong>`;
             document.getElementById('modalJobInput').value = currentJob;
             document.getElementById('modalJobNo').style.display = 'flex';
         }
@@ -843,7 +858,7 @@
 
         window.openNotesModal = function(id, currentNotes, jobNo, customerName) {
             currentEditId = id;
-            document.getElementById('modalNotesSubtitle').innerHTML = `Order <strong>${jobNo}</strong> — ${customerName}`;
+            document.getElementById('modalNotesSubtitle').innerHTML = `Order <strong style="color: var(--text-main);">${jobNo}</strong> — ${customerName}`;
             document.getElementById('modalNotesInput').value = currentNotes !== 'undefined' && currentNotes ? currentNotes : '';
             document.getElementById('modalNotes').style.display = 'flex';
         }
@@ -861,7 +876,7 @@
             currentEditId = id;
             currentEditJobNo = jobNo;
             currentEditCustomerName = customerName;
-            document.getElementById('modalAdvanceSubtitle').innerHTML = `Order <strong>${jobNo}</strong> — ${customerName}`;
+            document.getElementById('modalAdvanceSubtitle').innerHTML = `Order <strong style="color: var(--text-main);">${jobNo}</strong> — ${customerName}`;
             document.getElementById('modalAdvanceInput').value = currentAdv;
             setModalPaymentMode(currentMethod || 'Cash');
             document.getElementById('modalAdvance').style.display = 'flex';
@@ -917,7 +932,6 @@
         // --- New Status Update via Select Dropdown ---
         window.changeOrderStatus = async function(id, newStatus) {
             if (!confirm(`Are you sure you want to change the status to "${newStatus}"? \nIt will be moved to the appropriate tab.`)) {
-                // If they cancel the prompt, re-render to revert the select dropdown visually
                 renderTable(); 
                 return;
             }
@@ -926,12 +940,10 @@
                 const { error } = await supabaseClient.from('repairOrders').update({ status: newStatus }).eq('id', id);
                 if (error) throw error;
                 
-                // Once saved, fetch the data again. 
-                // The item will instantly filter out of the current view if it no longer matches the tab.
                 fetchOrders(); 
             } catch (error) { 
                 alert("Failed to update status: " + error.message); 
-                renderTable(); // Reset visually if it failed on DB side
+                renderTable(); 
             }
         };
 
