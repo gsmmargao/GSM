@@ -1,0 +1,460 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>GSM Solution - Store Billing</title>
+    <link rel="icon" href="data:,">
+    
+    <style>
+        :root {
+            /* Light Theme Variables */
+            --bg-color: #f3f4f6;
+            --sidebar-bg: #ffffff;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --primary-accent: #3b82f6;
+            --sidebar-width: 250px;
+        }
+
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* Sidebar Styling */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease, padding 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; box-shadow: 2px 0 5px rgba(0,0,0,0.05); }
+        .sidebar.collapsed { width: 0; padding-left: 0; padding-right: 0; border-right: none; }
+        
+        .logo-area { display: flex; align-items: center; padding: 0 20px 20px 20px; font-weight: bold; font-size: 1.2rem; color: var(--text-main); }
+        .logo-icon { background: var(--primary-accent); color: white; padding: 5px 10px; border-radius: 4px; margin-right: 10px; font-size: 0.9rem; }
+        .nav-item { padding: 12px 20px; color: var(--text-muted) !important; text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; cursor: pointer; transition: all 0.2s ease;}
+        .nav-item.active { background: var(--primary-accent) !important; color: white !important; border-radius: 0 20px 20px 0; margin-right: 20px; box-shadow: 0 4px 12px rgba(59, 130, 246, 0.3); }
+        .nav-item:hover:not(.active) { background: #f9fafb; color: var(--text-main) !important;}
+
+        .sidebar-toggle-btn {
+            position: absolute; left: var(--sidebar-width); top: 50%; transform: translateY(-50%);
+            background: var(--primary-accent); color: white; width: 20px; height: 60px; display: flex; align-items: center; justify-content: center; cursor: pointer; z-index: 50; border-radius: 0 8px 8px 0; box-shadow: 2px 0 10px rgba(0,0,0,0.1); transition: left 0.4s ease; font-weight: bold;
+        }
+        .sidebar-collapsed-btn { left: 0 !important; }
+
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; }
+        
+        .header { background: var(--card-bg); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border-color); }
+        .header-left h1 { margin: 0; font-size: 1.5rem; color: var(--text-main); }
+        .header-left p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.9rem; }
+        .header-right { display: flex; gap: 10px; align-items: center; }
+
+        .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 500; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); transition: all 0.2s; }
+        .btn:hover { background: #f3f4f6; }
+        .btn-primary { background: var(--primary-accent); color: white; border: none; }
+        .btn-primary:hover { background: #2563eb; }
+
+        .dashboard-padding { padding: 20px 30px; }
+
+        /* --- Invoice Specific Styling --- */
+        .invoice-card { background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); padding: 40px; margin-bottom: 50px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); color: #000; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        .invoice-header-block { text-align: center; border-bottom: 2px solid #000; padding-bottom: 15px; margin-bottom: 20px; }
+        .invoice-header-block h2 { margin: 0; font-size: 1.8rem; font-weight: bold; text-transform: uppercase; }
+        .invoice-header-block p { margin: 4px 0; font-size: 0.95rem; }
+        
+        .invoice-title { text-align: center; font-size: 1.4rem; font-weight: bold; margin-bottom: 20px; text-decoration: underline; }
+
+        .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 30px; margin-bottom: 20px; }
+        .info-box { border: 1px solid #000; padding: 15px; border-radius: 4px; }
+        .info-box h3 { margin: 0 0 10px 0; font-size: 1rem; border-bottom: 1px solid #ccc; padding-bottom: 5px; }
+        
+        .form-row { display: flex; margin-bottom: 8px; align-items: center; }
+        .form-row label { font-weight: bold; font-size: 0.9rem; width: 120px; }
+        .form-row input, .form-row textarea { flex: 1; padding: 5px; border: 1px solid #ccc; border-radius: 3px; font-family: inherit; }
+        .form-row input:focus, .form-row textarea:focus { border-color: var(--primary-accent); outline: none; }
+        
+        .invoice-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
+        .invoice-table th, .invoice-table td { border: 1px solid #000; padding: 8px; text-align: center; font-size: 0.9rem; }
+        .invoice-table th { background-color: #f9fafb; font-weight: bold; }
+        .invoice-table td input { width: 90%; padding: 4px; border: 1px solid transparent; text-align: center; }
+        .invoice-table td input.text-left { text-align: left; }
+        .invoice-table td input:focus { border-color: #ccc; outline: none; background: #fdfdfd; }
+        
+        .totals-section { display: flex; justify-content: flex-end; margin-bottom: 30px; }
+        .totals-box { width: 350px; border: 1px solid #000; padding: 15px; border-radius: 4px; }
+        .totals-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
+        .totals-row.bold { font-weight: bold; border-top: 1px solid #000; padding-top: 8px; margin-top: 8px; font-size: 1.1rem; }
+        .totals-row input { width: 100px; text-align: right; padding: 4px; border: 1px solid #ccc; }
+
+        .terms-box { font-size: 0.75rem; line-height: 1.4; border-top: 1px dashed #000; padding-top: 15px; }
+        .terms-box h4 { margin: 0 0 10px 0; font-size: 0.9rem; }
+        .terms-box ol { padding-left: 15px; margin: 0; }
+        .terms-box li { margin-bottom: 4px; }
+        
+        .signature-grid { display: grid; grid-template-columns: 1fr 1fr; margin-top: 40px; text-align: center; }
+        .sig-line { border-top: 1px solid #000; width: 200px; margin: 0 auto; padding-top: 5px; font-weight: bold; }
+
+        /* Print optimization */
+        @media print {
+            .sidebar, .header, .sidebar-toggle-btn { display: none !important; }
+            .main-content { overflow: visible; background: white; }
+            .invoice-card { box-shadow: none; border: none; margin: 0; padding: 0; }
+            .invoice-table td input { border: none !important; background: transparent !important; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
+    <a href="index.html" class="nav-item">📋 Order Details</a>
+    <a href="estimate.html" class="nav-item">🧾 Estimate Letter</a>
+    <a href="store-billing.html" class="nav-item active">📝 Store Billing</a>
+    <a href="billing.html" class="nav-item">💳 Service Billing</a>
+    <a href="store-plus.html" class="nav-item">📦 Store Plus</a>
+    <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
+    <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
+    <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
+    <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
+    <a href="technical-report.html" class="nav-item">📄 Technical Report</a>
+    
+    <!-- Hidden from non-admins -->
+    <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses</a>
+    <a href="profit.html" class="nav-item admin-only" style="display: none;">📈 Profit Book</a>
+    <a href="users.html" class="nav-item admin-only" style="display: none; color: var(--primary-accent); font-weight:bold;">👥 Manage Users</a>
+
+    <div style="flex-grow: 1;"></div> 
+    
+    <div class="nav-item" onclick="logOut()" style="color: var(--text-main) !important; font-weight: bold; cursor: pointer; border-top: 1px solid var(--border-color); padding-top: 15px; margin: 10px 20px; display: flex; justify-content: space-between; align-items: center;">
+        <span id="userNameDisplay">User</span> 
+        <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+        </svg>
+    </div>
+</div>    
+    
+<div class="sidebar-toggle-btn" id="sidebarToggle" onclick="toggleSidebar()">⋮</div>
+
+<div class="main-content">
+    <div class="header">
+        <div class="header-left">
+            <h1>Store Billing</h1>
+            <p>Generate Point of Sale Tax Invoices</p>
+        </div>
+        <div class="header-right">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Print Invoice</button>
+            <button class="btn" onclick="clearInvoice()">↻ Clear Form</button>
+        </div>
+    </div>
+
+    <div class="dashboard-padding">
+        <div class="invoice-card" id="printable-invoice">
+            
+            <!-- Invoice Header -->
+            <div class="invoice-header-block">
+                <h2>Sangeetha Mobiles Pvt Ltd[cite: 1]</h2>
+                <p>Shop No G1/2/3/4, oppo to RBL Bank Shantinagar, Ponda North Goa - 403401. Ph: 8951950609.[cite: 1]</p>
+                <p><strong>GSTIN/UIN: 30AAMCS5916J1Z7.</strong>[cite: 1]</p>
+            </div>
+            
+            <div class="invoice-title">TAX INVOICE[cite: 1]</div>
+
+            <!-- Meta Data Grid -->
+            <div class="info-grid">
+                <!-- Customer Details -->
+                <div class="info-box">
+                    <h3>Billed To:</h3>
+                    <div class="form-row">
+                        <label>Name:</label>
+                        <input type="text" id="custName" placeholder="Customer Name">
+                    </div>
+                    <div class="form-row">
+                        <label>Mobile:</label>
+                        <input type="text" id="custMobile" placeholder="Phone Number">
+                    </div>
+                    <div class="form-row">
+                        <label>Email:</label>
+                        <input type="email" id="custEmail" placeholder="Email Address">
+                    </div>
+                    <div class="form-row">
+                        <label>Address:</label>
+                        <input type="text" id="custAddress" placeholder="Customer Address">
+                    </div>
+                    <div class="form-row">
+                        <label>GSTIN:</label>
+                        <input type="text" id="custGSTIN" placeholder="GSTIN (if applicable)">
+                    </div>
+                </div>
+
+                <!-- Invoice Meta Details -->
+                <div class="info-box">
+                    <h3>Invoice Details:</h3>
+                    <div class="form-row">
+                        <label>Branch Name:</label>
+                        <input type="text" value="Ponda (SMPL)[cite: 1]" readonly style="background: #f3f4f6; border: none;">
+                    </div>
+                    <div class="form-row">
+                        <label>Serial No:</label>
+                        <input type="text" id="invoiceSerial" value="D1/PND/285" style="font-weight: bold;">
+                    </div>
+                    <div class="form-row">
+                        <label>Date Of Invoice:</label>
+                        <input type="date" id="invoiceDate">
+                    </div>
+                    <div class="form-row">
+                        <label>Salesperson:</label>
+                        <input type="text" id="salesPerson" placeholder="Name/ID">
+                    </div>
+                    <div class="form-row">
+                        <label>Payment Info:</label>
+                        <input type="text" id="paymentInfo" placeholder="Cash/Card/UPI Ref">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Items Table -->
+            <table class="invoice-table" id="invoiceTable">
+                <thead>
+                    <tr>
+                        <th style="width: 5%;">SNo</th>
+                        <th style="width: 35%;">Description</th>
+                        <th style="width: 10%;">HSN/SAC</th>
+                        <th style="width: 5%;">Qty</th>
+                        <th style="width: 10%;">Rate</th>
+                        <th style="width: 7%;">Dis%</th>
+                        <th style="width: 7%;">SGST%</th>
+                        <th style="width: 7%;">CGST%</th>
+                        <th style="width: 14%;">Amount</th>
+                    </tr>
+                </thead>
+                <tbody id="invoiceBody">
+                    <!-- Javascript will populate 5 empty rows by default -->
+                </tbody>
+            </table>
+
+            <div style="margin-bottom: 10px;">
+                <button class="btn" onclick="addRow()" style="font-size: 0.8rem; padding: 4px 8px;">+ Add Row</button>
+            </div>
+
+            <!-- Totals Area -->
+            <div class="totals-section">
+                <div class="totals-box">
+                    <div class="totals-row">
+                        <span>Taxable Value:</span>
+                        <input type="number" id="taxableValue" value="0.00" readonly>
+                    </div>
+                    <div class="totals-row">
+                        <span>Total CGST:</span>
+                        <input type="number" id="totalCGST" value="0.00" readonly>
+                    </div>
+                    <div class="totals-row">
+                        <span>Total SGST:</span>
+                        <input type="number" id="totalSGST" value="0.00" readonly>
+                    </div>
+                    <div class="totals-row">
+                        <span>Total Discount (-):</span>
+                        <input type="number" id="totalDiscount" value="0.00" oninput="calculateGrandTotal()">
+                    </div>
+                    <div class="totals-row bold">
+                        <span>Grand Total:</span>
+                        <input type="number" id="grandTotal" value="0.00" readonly style="font-weight: bold; border: none; background: transparent;">
+                    </div>
+                    <div style="font-size: 0.85rem; margin-top: 10px; font-style: italic;">
+                        Rupees: <span id="amountInWords">Zero only.</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Terms and Conditions -->
+            <div class="terms-box">
+                <h4>Terms & Conditions:</h4>
+                <ol>
+                    <li>Goods once sold will not be taken back/replaced/refunded. Handset is covered under manufacturers warranty. For after sale service, contact brands Authorized Service Centre[cite: 1]</li>
+                    <li>Customer should verify & initial with date on the Invoice below. Discounted Invoices are not eligible for any kind VAS Benefits. Registration on Sangeetha Care App is Mandatory to avail VAS & other benefits. To claim VAS valid ID Proof is mandatory & FIR is compulsory to claim theft protection. Invoice and IMEI Registration in Sangeetha Care within 48 hrs is mandatory for VAS claims[cite: 1]</li>
+                    <li>VAS not applicable on this Invoice unless specifically Purchased.[cite: 1]</li>
+                    <li>Primary IMEI [only one as mentioned is covered for VAS. Free Products N/A for VAS[cite: 1]</li>
+                    <li>In case of DOA, Customer to get the Add a phone done for replaced handset without fail.[cite: 1]</li>
+                    <li>For Repair Claim Processing fee mandatory before submission of Jobsheet to store team[cite: 1]</li>
+                    <li>Job Sheet & Service Invoice to be shared to store team within 48hrs from the received date.[cite: 1]</li>
+                    <li>Detailed T & C visit www.sangeethamobiles.com[cite: 1]</li>
+                </ol>
+            </div>
+
+            <!-- Signatures -->
+            <div class="signature-grid">
+                <div>
+                    <div style="height: 60px;"></div>
+                    <div class="sig-line">Receivers Signature[cite: 1]</div>
+                </div>
+                <div>
+                    <div style="height: 60px;"></div>
+                    <div class="sig-line">for Sangeetha Mobiles Pvt Ltd[cite: 1]<br><br>Authorised Signatory[cite: 1]</div>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- Sidebar Logic ---
+    let sidebarTimer;
+    window.resetSidebarTimer = function() {
+        clearTimeout(sidebarTimer);
+        sidebarTimer = setTimeout(() => {
+            const sb = document.getElementById('sidebar');
+            const btn = document.getElementById('sidebarToggle');
+            if(sb && btn) {
+                sb.classList.add('collapsed');
+                btn.classList.add('sidebar-collapsed-btn');
+            }
+        }, 5000);
+    }
+    window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+    
+    window.toggleSidebar = function() {
+        const sb = document.getElementById('sidebar');
+        const btn = document.getElementById('sidebarToggle');
+        if(sb && btn) {
+            sb.classList.toggle('collapsed');
+            btn.classList.toggle('sidebar-collapsed-btn');
+            if(!sb.classList.contains('collapsed')) resetSidebarTimer();
+            else clearSidebarTimer();
+        }
+    }
+
+    // Initialize Page
+    document.addEventListener("DOMContentLoaded", () => {
+        resetSidebarTimer(); 
+        
+        // Set today's date
+        document.getElementById('invoiceDate').valueAsDate = new Date();
+        
+        // Initialize 5 empty rows
+        for(let i=0; i<3; i++) {
+            addRow();
+        }
+    });
+
+    // --- Invoice Calculation Logic ---
+    function addRow() {
+        const tbody = document.getElementById('invoiceBody');
+        const rowCount = tbody.children.length + 1;
+        const tr = document.createElement('tr');
+        
+        tr.innerHTML = `
+            <td>${rowCount}</td>
+            <td><input type="text" class="desc text-left" placeholder="Item description & IMEI"></td>
+            <td><input type="text" class="hsn" placeholder="HSN/SAC"></td>
+            <td><input type="number" class="qty" value="1" min="1" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="rate" value="0.00" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="dis" value="0" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="sgst" value="9" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="cgst" value="9" oninput="calculateRow(this)"></td>
+            <td><input type="number" class="amount" value="0.00" readonly></td>
+        `;
+        tbody.appendChild(tr);
+    }
+
+    function calculateRow(element) {
+        const row = element.closest('tr');
+        const qty = parseFloat(row.querySelector('.qty').value) || 0;
+        const rate = parseFloat(row.querySelector('.rate').value) || 0;
+        const disPerc = parseFloat(row.querySelector('.dis').value) || 0;
+        const sgstPerc = parseFloat(row.querySelector('.sgst').value) || 0;
+        const cgstPerc = parseFloat(row.querySelector('.cgst').value) || 0;
+        
+        // Calculate Base Value
+        let baseAmount = qty * rate;
+        
+        // Apply Discount % to row
+        let discountAmt = baseAmount * (disPerc / 100);
+        let amountAfterDis = baseAmount - discountAmt;
+        
+        // Add GST
+        let sgstAmt = amountAfterDis * (sgstPerc / 100);
+        let cgstAmt = amountAfterDis * (cgstPerc / 100);
+        
+        let finalAmount = amountAfterDis + sgstAmt + cgstAmt;
+        
+        row.querySelector('.amount').value = finalAmount.toFixed(2);
+        
+        calculateTotals();
+    }
+
+    function calculateTotals() {
+        const rows = document.querySelectorAll('#invoiceBody tr');
+        let totalTaxable = 0;
+        let totalSGST = 0;
+        let totalCGST = 0;
+        
+        rows.forEach(row => {
+            const qty = parseFloat(row.querySelector('.qty').value) || 0;
+            const rate = parseFloat(row.querySelector('.rate').value) || 0;
+            const disPerc = parseFloat(row.querySelector('.dis').value) || 0;
+            const sgstPerc = parseFloat(row.querySelector('.sgst').value) || 0;
+            const cgstPerc = parseFloat(row.querySelector('.cgst').value) || 0;
+            
+            let baseAmount = qty * rate;
+            let discountAmt = baseAmount * (disPerc / 100);
+            let amountAfterDis = baseAmount - discountAmt;
+            
+            totalTaxable += amountAfterDis;
+            totalSGST += amountAfterDis * (sgstPerc / 100);
+            totalCGST += amountAfterDis * (cgstPerc / 100);
+        });
+
+        document.getElementById('taxableValue').value = totalTaxable.toFixed(2);
+        document.getElementById('totalSGST').value = totalSGST.toFixed(2);
+        document.getElementById('totalCGST').value = totalCGST.toFixed(2);
+        
+        calculateGrandTotal();
+    }
+
+    function calculateGrandTotal() {
+        const taxable = parseFloat(document.getElementById('taxableValue').value) || 0;
+        const sgst = parseFloat(document.getElementById('totalSGST').value) || 0;
+        const cgst = parseFloat(document.getElementById('totalCGST').value) || 0;
+        const overallDiscount = parseFloat(document.getElementById('totalDiscount').value) || 0;
+        
+        let subTotal = taxable + sgst + cgst;
+        let grandTotal = subTotal - overallDiscount;
+        
+        // Round off to nearest whole number as per standard invoice practice
+        let roundedTotal = Math.round(grandTotal);
+        
+        document.getElementById('grandTotal').value = roundedTotal.toFixed(2);
+        document.getElementById('amountInWords').innerText = numberToWords(roundedTotal) + " only.";
+    }
+
+    function clearInvoice() {
+        if(confirm("Are you sure you want to clear all fields?")) {
+            document.querySelectorAll('input[type="text"]:not(#invoiceSerial)').forEach(el => el.value = '');
+            document.querySelectorAll('input[type="number"]').forEach(el => el.value = '0');
+            document.querySelectorAll('input[type="email"]').forEach(el => el.value = '');
+            document.getElementById('invoiceBody').innerHTML = '';
+            
+            // Generate standard empty rows
+            for(let i=0; i<3; i++) { addRow(); }
+            calculateTotals();
+        }
+    }
+
+    // Simple Number to Words function for the footer
+    function numberToWords(num) {
+        if (num === 0) return "Zero";
+        const a = ['', 'One ', 'Two ', 'Three ', 'Four ', 'Five ', 'Six ', 'Seven ', 'Eight ', 'Nine ', 'Ten ', 'Eleven ', 'Twelve ', 'Thirteen ', 'Fourteen ', 'Fifteen ', 'Sixteen ', 'Seventeen ', 'Eighteen ', 'Nineteen '];
+        const b = ['', '', 'Twenty', 'Thirty', 'Forty', 'Fifty', 'Sixty', 'Seventy', 'Eighty', 'Ninety'];
+        
+        if ((num = num.toString()).length > 9) return 'overflow';
+        let n = ('000000000' + num).substr(-9).match(/^(\d{2})(\d{2})(\d{2})(\d{1})(\d{2})$/);
+        if (!n) return; let str = '';
+        str += (n[1] != 0) ? (a[Number(n[1])] || b[n[1][0]] + ' ' + a[n[1][1]]) + 'Crore ' : '';
+        str += (n[2] != 0) ? (a[Number(n[2])] || b[n[2][0]] + ' ' + a[n[2][1]]) + 'Lakh ' : '';
+        str += (n[3] != 0) ? (a[Number(n[3])] || b[n[3][0]] + ' ' + a[n[3][1]]) + 'Thousand ' : '';
+        str += (n[4] != 0) ? (a[Number(n[4])] || b[n[4][0]] + ' ' + a[n[4][1]]) + 'Hundred ' : '';
+        str += (n[5] != 0) ? ((str != '') ? 'and ' : '') + (a[Number(n[5])] || b[n[5][0]] + ' ' + a[n[5][1]]) : '';
+        return str.trim();
+    }
+</script>
+</body>
+</html>
