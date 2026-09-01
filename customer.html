@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Customer Database - GSM Solution</title>
+    
+    <style>
+        :root {
+            --bg-color: #f8fafc;
+            --sidebar-bg: #f9fafb;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --primary-accent: #3b82f6;
+            --sidebar-width: 240px;
+        }
+
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        
+        /* --- Sidebar Styling --- */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
+        .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
+        
+        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
+        
+        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
+        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
+        .nav-item.active { background: #1f2937; color: white; }
+        .nav-item.active svg { opacity: 1; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
+        .admin-only { display: none; color: #b91c1c; }
+
+        .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
+        .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
+        .logout-btn:hover { color: #ef4444; }
+        .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
+
+        /* --- Main Content --- */
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; transition: margin 0.3s ease;}
+        
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); flex-shrink: 0;}
+        .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
+        .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+        .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
+        
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0;}
+        .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
+        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+        
+        .search-bar { padding: 8px 12px 8px 35px; border: 1px solid var(--border-color); background: var(--input-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; color: var(--text-main); border-radius: 6px; width: 250px; font-size: 0.85rem; outline: none; }
+        
+        /* --- Table Styling --- */
+        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); overflow-y: auto; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; text-align: left; }
+        th { padding: 15px 20px; background: #f9fafb; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; position: sticky; top: 0; z-index: 5;}
+        td { padding: 15px 20px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
+        tr:hover { background-color: #f9fafb; }
+
+        .btn { padding: 6px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.8rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn:hover { background: #f3f4f6; }
+
+        /* Modal */
+        .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);}
+        .modal-container { background: var(--card-bg); padding: 30px; border-radius: 12px; width: 700px; max-width: 95%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
+        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 5px 0; }
+        .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 20px 0; }
+        .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: white; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+    </style>
+</head>
+<body>
+
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <div style="font-size: 10px; line-height:1;">GSM</div>
+            </div>
+            <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
+        </div>
+        
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+            Order Details
+        </a>
+        <a href="billing.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            Billing
+        </a>
+        <a href="store-plus.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Store Plus
+        </a>
+        <a href="accessories.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Accessories
+        </a>
+        <a href="sales-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Sales Report
+        </a>
+        <a href="upi-book.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+            UPI Book
+        </a>
+        <a href="cashbook.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Cashbook
+        </a>
+        <a href="customer.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Customers
+        </a>
+        <a href="estimate.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Estimate
+        </a>
+        <a href="technical-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Technical Report
+        </a>
+
+        <!-- Admin Only Tabs -->
+        <a href="expenses.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            Expenses
+        </a>
+        <a href="profit.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Profitbook
+        </a>
+        <a href="users.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Users
+        </a>
+
+        <div style="flex-grow: 1;"></div> 
+        
+        <div class="user-area">
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar">M</div>
+                <div class="user-name-text" id="userNameDisplay">Mohammed Saleem</div>
+            </div>
+            <button class="logout-btn" onclick="logOut()" title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="version-text">v2.2 - GSM Solution</div>
+    </div>
+
+    <!-- MAIN CONTENT -->
+    <div class="main-content">
+        
+        <div class="top-nav">
+            <div class="top-nav-left">
+                <!-- Open/Collapse Sidebar Button -->
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+                    Customers
+                </div>
+            </div>
+            <div style="font-weight: 500;" id="headerDateTime"></div>
+        </div>
+
+        <div class="header">
+            <div class="header-left">
+                <h1>Customer Database</h1>
+                <p>Manage customer profiles and view ledgers</p>
+            </div>
+            <div class="header-right">
+                <input type="text" id="searchCustomerInput" class="search-bar" placeholder="Search customers..." onkeyup="renderCustomersTable()">
+            </div>
+        </div>
+        
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Customer Name</th>
+                        <th>Contact Number</th>
+                        <th>Pending Credit (₹)</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="customersTableBody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Customer Ledger Modal -->
+    <div class="modal-overlay" id="modalCustomerLedger">
+        <div class="modal-container">
+            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 20px;">
+                <div>
+                    <h2 class="modal-title" id="ledgerCustName">Customer Ledger</h2>
+                    <p class="modal-subtitle" id="ledgerCustContact" style="margin-bottom:0;"></p>
+                </div>
+                <button class="btn-cancel" onclick="document.getElementById('modalCustomerLedger').style.display='none'">Close</button>
+            </div>
+            
+            <div class="table-card" style="max-height: 400px; box-shadow:none; border: 1px solid var(--border-color);">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Job No.</th>
+                            <th>Device</th>
+                            <th>Status</th>
+                            <th>Advance</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ledgerTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script>
+        const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
+        const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com';
+        let allCustomersData = [];
+        let allOrdersData = []; // Cached for ledger details
+
+        // Auto Logout & Sidebar Collapse (30 secs)
+        let inactivityTimer;
+        let sidebarTimer;
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000);
+        }
+        window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
+
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('collapsed');
+            
+            if (!sb.classList.contains('collapsed')) {
+                clearTimeout(sidebarTimer);
+                sidebarTimer = setTimeout(() => {
+                    sb.classList.add('collapsed');
+                }, 30000);
+            } else {
+                clearTimeout(sidebarTimer);
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", async () => {
+            const now = new Date();
+            document.getElementById('headerDateTime').innerHTML = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight:bold; color:var(--text-main);">GSM SOLUTION</span>`;
+
+            await checkAuth();
+            fetchCustomersAndOrders();
+
+            // Realtime subscriptions
+            supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomersAndOrders(); }).subscribe();
+            supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchCustomersAndOrders(); }).subscribe();
+        });
+
+        async function checkAuth() {
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session) {
+                const currentUserEmail = data.session.user.email;
+                if (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                }
+                
+                let name = currentUserEmail.split('@')[0];
+                name = name.charAt(0).toUpperCase() + name.slice(1);
+                document.getElementById('userNameDisplay').innerText = name;
+                document.getElementById('userAvatar').innerText = name.charAt(0);
+            }
+        }
+        async function logOut() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        async function fetchCustomersAndOrders() {
+            try {
+                // Fetch Customers
+                const { data: cData } = await supabaseClient.from('customers').select('*').order('name', { ascending: true });
+                allCustomersData = cData || [];
+                
+                // Fetch Orders for Ledger processing
+                const { data: oData } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
+                allOrdersData = oData || [];
+                
+                renderCustomersTable();
+            } catch (e) { console.error(e); }
+        }
+
+        window.renderCustomersTable = function() {
+            const tbody = document.getElementById('customersTableBody');
+            const q = document.getElementById('searchCustomerInput').value.toLowerCase();
+            tbody.innerHTML = '';
+            
+            let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)));
+            
+            if (filtered.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No customers found.</td></tr>`;
+                return;
+            }
+
+            filtered.forEach(cust => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td><strong>${cust.name}</strong></td>
+                    <td>${cust.contact || '—'}</td>
+                    <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'};">₹${cust.pending_credit || 0}</strong></td>
+                    <td><button class="btn" onclick="viewLedger('${cust.name}', '${cust.contact}')">View Ledger</button></td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        window.viewLedger = function(name, contact) {
+            document.getElementById('ledgerCustName').innerText = name;
+            document.getElementById('ledgerCustContact').innerText = contact;
+            
+            const tbody = document.getElementById('ledgerTableBody');
+            tbody.innerHTML = '';
+            
+            const custOrders = allOrdersData.filter(o => o.customerName === name && o.contactNo === contact);
+            if (custOrders.length === 0) {
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No order history found.</td></tr>`;
+            } else {
+                custOrders.forEach(o => {
+                    let d = '';
+                    if (o.created_at) d = new Date(o.created_at).toLocaleDateString('en-GB');
+                    
+                    let statusColor = o.status === 'Repair Completed' ? '#3730a3' : (o.status === 'Goods Delivered' ? '#065f46' : '#b45309');
+                    if (o.status === 'Repair Refusal' || o.status === 'Cancelled Service Order') statusColor = '#991b1b';
+
+                    tbody.innerHTML += `
+                        <tr>
+                            <td>${d}</td>
+                            <td><strong>${o.jobNo}</strong></td>
+                            <td>${o.modelNo || '—'}</td>
+                            <td><span style="font-size:0.75rem; font-weight:bold; color:${statusColor};">${o.status}</span></td>
+                            <td style="color:#10b981; font-weight:bold;">₹${o.advancePaid || 0}</td>
+                        </tr>
+                    `;
+                });
+            }
+            document.getElementById('modalCustomerLedger').style.display = 'flex';
+        }
+    </script>
+</body>
+</html>
