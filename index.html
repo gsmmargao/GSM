@@ -8,7 +8,6 @@
     
     <style>
         :root {
-            /* Light Theme Variables */
             --bg-color: #f8fafc;
             --sidebar-bg: #f9fafb;
             --card-bg: #ffffff;
@@ -24,16 +23,18 @@
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* --- Sidebar Styling --- */
-        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: width 0.4s ease; overflow: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
+        .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
         
         .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
         .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
         
         .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
-        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; }
+        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
         .nav-item.active { background: #1f2937; color: white; }
         .nav-item.active svg { opacity: 1; }
         .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
+        .admin-only { display: none; color: #b91c1c; } /* Highlight admin tabs slightly if desired, or keep standard */
 
         .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
         .user-profile { display: flex; align-items: center; gap: 10px; }
@@ -44,9 +45,12 @@
         .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
-        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
+        .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; transition: margin 0.3s ease;}
         
         .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); flex-shrink: 0;}
+        .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
+        .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+        .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
         
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0;}
         .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
@@ -165,10 +169,6 @@
         .hwc-label { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); cursor: pointer; }
         tr.hwc-row .hwc-label { color: var(--danger-color); }
 
-        /* --- View Management --- */
-        .view-section { display: none; flex-direction: column; flex: 1; overflow: hidden; }
-        .view-section.active { display: flex; }
-
         /* --- Modals Styling --- */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);}
         .modal-container { background: var(--card-bg); padding: 30px; border-radius: 12px; width: 450px; max-width: 90%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); max-height: 90vh; overflow-y: auto;}
@@ -189,7 +189,7 @@
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar">
         <div class="logo-area">
             <div class="logo-icon">
                 <div style="font-size: 10px; line-height:1;">GSM</div>
@@ -197,21 +197,59 @@
             <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
         </div>
         
-        <a onclick="switchView('orders')" class="nav-item active" id="nav-orders">
+        <a href="index.html" class="nav-item active">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
             Order Details
         </a>
-        <a href="#" class="nav-item">
+        <a href="billing.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
             Billing
         </a>
-        <a href="#" class="nav-item">
+        <a href="store-plus.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Store Plus
+        </a>
+        <a href="accessories.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Accessories
+        </a>
+        <a href="sales-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Sales Report
+        </a>
+        <a href="upi-book.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+            UPI Book
+        </a>
+        <a href="cashbook.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
             Cashbook
         </a>
-        <a onclick="switchView('customers')" class="nav-item" id="nav-customers">
+        <a href="customer.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
-            Customers
+            Customer
+        </a>
+        <a href="estimate.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Estimate
+        </a>
+        <a href="technical-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Technical Report
+        </a>
+
+        <!-- Admin Only Tabs -->
+        <a href="expenses.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            Expenses
+        </a>
+        <a href="profit.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Profitbook
+        </a>
+        <a href="users.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Users
         </a>
 
         <div style="flex-grow: 1;"></div> 
@@ -236,218 +274,193 @@
     <div class="main-content">
         
         <div class="top-nav">
-            <div style="display:flex; align-items:center; gap:8px; font-weight:600; color:var(--text-main);" id="topNavTitle">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
-                Order Details
+            <div class="top-nav-left">
+                <!-- Open/Collapse Sidebar Button -->
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+                    Order Details
+                </div>
             </div>
             <div style="font-weight: 500;" id="headerDateTime"></div>
         </div>
 
-        <!-- ================= ORDERS VIEW ================= -->
-        <div id="view-orders" class="view-section active">
-            <div class="header">
-                <div class="header-left">
-                    <h1>Order Details</h1>
-                    <p>Manage customer repair orders</p>
-                </div>
-                <div class="header-right">
-                    <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no, contact" onkeyup="searchTable()">
-                    <button class="btn" onclick="fetchOrders()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
-                        Refresh
-                    </button>
-                    <button class="btn btn-primary" onclick="toggleNewOrderForm()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        New Order
-                    </button>
-                </div>
+        <div class="header">
+            <div class="header-left">
+                <h1>Order Details</h1>
+                <p>Manage customer repair orders</p>
             </div>
-
-            <!-- Stats Grid -->
-            <div class="stats-grid">
-                <div class="stat-card c-total">
-                    <h3>Total Orders</h3>
-                    <p class="number" id="totalOrdersCount">0</p>
-                </div>
-                <div class="stat-card c-pending">
-                    <h3>Pending</h3>
-                    <p class="number" id="pendingCount">0</p>
-                </div>
-                <div class="stat-card c-completed">
-                    <h3>Repair Completed</h3>
-                    <p class="number" id="completedCount">0</p>
-                </div>
-                <div class="stat-card c-delivered">
-                    <h3>Goods Delivered</h3>
-                    <p class="number" id="deliveredCount">0</p>
-                </div>
-                <div class="stat-card c-refusal">
-                    <h3 style="color: #991b1b;">Repair Refusal</h3>
-                    <p class="number" id="refusalCount">0</p>
-                </div>
-            </div>
-
-            <!-- New Order Entry Form -->
-            <div class="form-card" id="newOrderForm">
-                <div class="form-header-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
-                    NEW ORDER ENTRY
-                </div>
-                
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Customer Name <span>*</span></label>
-                        <input type="text" id="formCustName" placeholder="Search customer name..." autocomplete="off" oninput="handleCustomerInput('name')">
-                        <div id="suggestName" class="autocomplete-list"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Contact No. <span>*</span></label>
-                        <input type="text" id="formContact" placeholder="Search contact number..." autocomplete="off" oninput="handleCustomerInput('contact')">
-                        <div id="suggestContact" class="autocomplete-list"></div>
-                    </div>
-                    <div class="form-group">
-                        <label>Job Number <span>*</span></label>
-                        <input type="text" id="formJobNo" placeholder="e.g. JOB-001">
-                    </div>
-                </div>
-
-                <div class="form-grid-3">
-                    <div class="form-group">
-                        <label>Advance Paid (₹)</label>
-                        <div class="advance-wrapper">
-                            <div class="advance-top">
-                                <input type="number" id="formAdvance" value="0.00" step="0.01">
-                                <div class="segmented-control">
-                                    <button type="button" class="segmented-btn active" id="btnPayCash" onclick="setPaymentMode('Cash')">Cash</button>
-                                    <button type="button" class="segmented-btn" id="btnPayUPI" onclick="setPaymentMode('UPI')">UPI</button>
-                                    <button type="button" class="segmented-btn" id="btnPaySplit" onclick="setPaymentMode('Split')">Split</button>
-                                </div>
-                            </div>
-                            <div class="split-inputs" id="splitInputsArea" style="display: none;">
-                                <input type="number" id="splitCashAmt" placeholder="Cash Amount ₹" step="0.01">
-                                <input type="number" id="splitUpiAmt" placeholder="UPI Amount ₹" step="0.01">
-                            </div>
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label>Date</label>
-                        <input type="date" id="formDate">
-                    </div>
-                    <div class="form-group">
-                        <label>Status</label>
-                        <div class="status-display">
-                            <span class="status-pill-static">Pending</span>
-                            <span class="status-hint">(default on save)</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="form-grid-2">
-                    <div class="form-group">
-                        <label>IMEI No.</label>
-                        <input type="text" id="formImei" placeholder="15-digit IMEI">
-                    </div>
-                    <div class="form-group">
-                        <label>Model No.</label>
-                        <input type="text" id="formModel" placeholder="e.g. iPhone 15 Pro">
-                    </div>
-                </div>
-
-                <div class="form-grid-1">
-                    <div class="form-group">
-                        <label>Problem Description</label>
-                        <input type="text" id="formProblem" placeholder="Describe the issue...">
-                    </div>
-                    <div class="form-group">
-                        <label>Notes</label>
-                        <textarea id="formNotes" rows="2" placeholder="Add any additional notes about this order..."></textarea>
-                    </div>
-                </div>
-
-                <label class="hwc-box" for="formHwc">
-                    <input type="checkbox" id="formHwc">
-                    <div class="hwc-box-text">
-                        <strong>HWC — Handset With Customer</strong>
-                        <span>Check this if the handset is still with the customer (not yet received).</span>
-                    </div>
-                </label>
-
-                <div class="form-actions">
-                    <button class="btn-save-form" onclick="saveNewOrder()">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                        Save Order
-                    </button>
-                    <button class="btn-cancel" onclick="toggleNewOrderForm()">Cancel</button>
-                </div>
-            </div>
-
-            <!-- Tabs Navigation -->
-            <div class="tabs-container">
-                <button class="tab-btn active" id="tab-Pending" onclick="switchOrderTab('Pending')">
-                    <span class="dot dot-pending"></span> Pending <span class="tab-badge" id="badge-Pending">0</span>
+            <div class="header-right">
+                <input type="text" id="searchInput" class="search-bar" placeholder="Search by name, job no, contact" onkeyup="searchTable()">
+                <button class="btn" onclick="fetchOrders()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"></polyline><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"></path></svg>
+                    Refresh
                 </button>
-                <button class="tab-btn" id="tab-Repair-Completed" onclick="switchOrderTab('Repair Completed')">
-                    <span class="dot dot-completed"></span> Repair Complete <span class="tab-badge" id="badge-Completed">0</span>
+                <button class="btn btn-primary" onclick="toggleNewOrderForm()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    New Order
                 </button>
-                <button class="tab-btn" id="tab-Goods-Delivered" onclick="switchOrderTab('Goods Delivered')">
-                    <span class="dot dot-delivered"></span> Goods Delivered <span class="tab-badge" id="badge-Delivered">0</span>
-                </button>
-                <button class="tab-btn" id="tab-Repair-Refusal" onclick="switchOrderTab('Repair Refusal')">
-                    <span class="dot dot-refusal"></span> Repair Refusal <span class="tab-badge" id="badge-Refusal">0</span>
-                </button>
-            </div>
-            
-            <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;" id="tabDescription">Showing all pending service orders awaiting repair.</p>
-
-            <!-- Main Table -->
-            <div class="table-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Job No.</th>
-                            <th>Customer Name</th>
-                            <th>Contact No.</th>
-                            <th>IMEI / Model</th>
-                            <th>Problem</th>
-                            <th>Notes</th>
-                            <th>Advance Paid (₹)</th>
-                            <th>Status</th>
-                            <th>HWC</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ordersTableBody"></tbody>
-                </table>
             </div>
         </div>
 
-        <!-- ================= CUSTOMERS VIEW ================= -->
-        <div id="view-customers" class="view-section">
-            <div class="header">
-                <div class="header-left">
-                    <h1>Customer Database</h1>
-                    <p>Manage customer profiles and view ledgers</p>
-                </div>
-                <div class="header-right">
-                    <input type="text" id="searchCustomerInput" class="search-bar" placeholder="Search customers..." onkeyup="renderCustomersTable()">
-                </div>
+        <!-- Stats Grid -->
+        <div class="stats-grid">
+            <div class="stat-card c-total">
+                <h3>Total Orders</h3>
+                <p class="number" id="totalOrdersCount">0</p>
             </div>
-            
-            <div class="table-card">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Customer Name</th>
-                            <th>Contact Number</th>
-                            <th>Pending Credit (₹)</th>
-                            <th>Actions</th>
-                        </tr>
-                    </thead>
-                    <tbody id="customersTableBody"></tbody>
-                </table>
+            <div class="stat-card c-pending">
+                <h3>Pending</h3>
+                <p class="number" id="pendingCount">0</p>
+            </div>
+            <div class="stat-card c-completed">
+                <h3>Repair Completed</h3>
+                <p class="number" id="completedCount">0</p>
+            </div>
+            <div class="stat-card c-delivered">
+                <h3>Goods Delivered</h3>
+                <p class="number" id="deliveredCount">0</p>
+            </div>
+            <div class="stat-card c-refusal">
+                <h3 style="color: #991b1b;">Repair Refusal</h3>
+                <p class="number" id="refusalCount">0</p>
             </div>
         </div>
 
+        <!-- New Order Entry Form -->
+        <div class="form-card" id="newOrderForm">
+            <div class="form-header-title">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                NEW ORDER ENTRY
+            </div>
+            
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>Customer Name <span>*</span></label>
+                    <input type="text" id="formCustName" placeholder="Search customer name..." autocomplete="off" oninput="handleCustomerInput('name')">
+                    <div id="suggestName" class="autocomplete-list"></div>
+                </div>
+                <div class="form-group">
+                    <label>Contact No. <span>*</span></label>
+                    <input type="text" id="formContact" placeholder="Search contact number..." autocomplete="off" oninput="handleCustomerInput('contact')">
+                    <div id="suggestContact" class="autocomplete-list"></div>
+                </div>
+                <div class="form-group">
+                    <label>Job Number <span>*</span></label>
+                    <input type="text" id="formJobNo" placeholder="e.g. JOB-001">
+                </div>
+            </div>
+
+            <div class="form-grid-3">
+                <div class="form-group">
+                    <label>Advance Paid (₹)</label>
+                    <div class="advance-wrapper">
+                        <div class="advance-top">
+                            <input type="number" id="formAdvance" value="0.00" step="0.01">
+                            <div class="segmented-control">
+                                <button type="button" class="segmented-btn active" id="btnPayCash" onclick="setPaymentMode('Cash')">Cash</button>
+                                <button type="button" class="segmented-btn" id="btnPayUPI" onclick="setPaymentMode('UPI')">UPI</button>
+                                <button type="button" class="segmented-btn" id="btnPaySplit" onclick="setPaymentMode('Split')">Split</button>
+                            </div>
+                        </div>
+                        <div class="split-inputs" id="splitInputsArea" style="display: none;">
+                            <input type="number" id="splitCashAmt" placeholder="Cash Amount ₹" step="0.01">
+                            <input type="number" id="splitUpiAmt" placeholder="UPI Amount ₹" step="0.01">
+                        </div>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Date</label>
+                    <input type="date" id="formDate">
+                </div>
+                <div class="form-group">
+                    <label>Status</label>
+                    <div class="status-display">
+                        <span class="status-pill-static">Pending</span>
+                        <span class="status-hint">(default on save)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-grid-2">
+                <div class="form-group">
+                    <label>IMEI No.</label>
+                    <input type="text" id="formImei" placeholder="15-digit IMEI">
+                </div>
+                <div class="form-group">
+                    <label>Model No.</label>
+                    <input type="text" id="formModel" placeholder="e.g. iPhone 15 Pro">
+                </div>
+            </div>
+
+            <div class="form-grid-1">
+                <div class="form-group">
+                    <label>Problem Description</label>
+                    <input type="text" id="formProblem" placeholder="Describe the issue...">
+                </div>
+                <div class="form-group">
+                    <label>Notes</label>
+                    <textarea id="formNotes" rows="2" placeholder="Add any additional notes about this order..."></textarea>
+                </div>
+            </div>
+
+            <label class="hwc-box" for="formHwc">
+                <input type="checkbox" id="formHwc">
+                <div class="hwc-box-text">
+                    <strong>HWC — Handset With Customer</strong>
+                    <span>Check this if the handset is still with the customer (not yet received).</span>
+                </div>
+            </label>
+
+            <div class="form-actions">
+                <button class="btn-save-form" onclick="saveNewOrder()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Save Order
+                </button>
+                <button class="btn-cancel" onclick="toggleNewOrderForm()">Cancel</button>
+            </div>
+        </div>
+
+        <!-- Tabs Navigation -->
+        <div class="tabs-container">
+            <button class="tab-btn active" id="tab-Pending" onclick="switchOrderTab('Pending')">
+                <span class="dot dot-pending"></span> Pending <span class="tab-badge" id="badge-Pending">0</span>
+            </button>
+            <button class="tab-btn" id="tab-Repair-Completed" onclick="switchOrderTab('Repair Completed')">
+                <span class="dot dot-completed"></span> Repair Complete <span class="tab-badge" id="badge-Completed">0</span>
+            </button>
+            <button class="tab-btn" id="tab-Goods-Delivered" onclick="switchOrderTab('Goods Delivered')">
+                <span class="dot dot-delivered"></span> Goods Delivered <span class="tab-badge" id="badge-Delivered">0</span>
+            </button>
+            <button class="tab-btn" id="tab-Repair-Refusal" onclick="switchOrderTab('Repair Refusal')">
+                <span class="dot dot-refusal"></span> Repair Refusal <span class="tab-badge" id="badge-Refusal">0</span>
+            </button>
+        </div>
+        
+        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;" id="tabDescription">Showing all pending service orders awaiting repair.</p>
+
+        <!-- Main Table -->
+        <div class="table-card">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Job No.</th>
+                        <th>Customer Name</th>
+                        <th>Contact No.</th>
+                        <th>IMEI / Model</th>
+                        <th>Problem</th>
+                        <th>Notes</th>
+                        <th>Advance Paid (₹)</th>
+                        <th>Status</th>
+                        <th>HWC</th>
+                    </tr>
+                </thead>
+                <tbody id="ordersTableBody"></tbody>
+            </table>
+        </div>
     </div>
 
     <!-- Modals -->
@@ -499,7 +512,7 @@
             </div>
             <div class="form-group">
                 <label>Payment Method</label>
-                <select id="editAdvMethod" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color);">
+                <select id="editAdvMethod" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg);">
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
                 </select>
@@ -512,35 +525,6 @@
         </div>
     </div>
 
-    <!-- Customer Ledger Modal -->
-    <div class="modal-overlay" id="modalCustomerLedger">
-        <div class="modal-container" style="width: 700px; max-width: 95%;">
-            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 20px;">
-                <div>
-                    <h2 class="modal-title" id="ledgerCustName">Customer Ledger</h2>
-                    <p class="modal-subtitle" id="ledgerCustContact" style="margin-bottom:0;"></p>
-                </div>
-                <button class="btn-cancel" onclick="document.getElementById('modalCustomerLedger').style.display='none'">Close</button>
-            </div>
-            
-            <div class="table-card" style="max-height: 400px;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Job No.</th>
-                            <th>Device</th>
-                            <th>Status</th>
-                            <th>Advance</th>
-                        </tr>
-                    </thead>
-                    <tbody id="ledgerTableBody"></tbody>
-                </table>
-            </div>
-        </div>
-    </div>
-
-    <!-- JS Logic -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
@@ -565,13 +549,30 @@
         const lockIcon = `<svg class="tbl-icon" style="width:10px; height:10px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
         const undoIcon = `<svg class="undo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`;
 
-        // Auto Logout (30 mins)
+        // Auto Logout & Sidebar Collapse (30 secs)
         let inactivityTimer;
+        let sidebarTimer;
+        
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000);
+            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); // 30 minutes
         }
         window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
+
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('collapsed');
+            
+            if (!sb.classList.contains('collapsed')) {
+                // If opened, auto-close after 30 secs
+                clearTimeout(sidebarTimer);
+                sidebarTimer = setTimeout(() => {
+                    sb.classList.add('collapsed');
+                }, 30000);
+            } else {
+                clearTimeout(sidebarTimer);
+            }
+        }
 
         // Init
         document.addEventListener("DOMContentLoaded", async () => {
@@ -584,7 +585,6 @@
             fetchCustomers();
 
             supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchOrders(); }).subscribe();
-            supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomers(); }).subscribe();
         });
 
         async function checkAuth() {
@@ -592,83 +592,29 @@
             if (data.session) {
                 currentUserEmail = data.session.user.email;
                 isAdmin = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+                
+                if (isAdmin) {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                }
+                
                 let name = currentUserEmail.split('@')[0];
                 name = name.charAt(0).toUpperCase() + name.slice(1);
                 document.getElementById('userNameDisplay').innerText = name;
                 document.getElementById('userAvatar').innerText = name.charAt(0);
             }
         }
+        
         async function logOut() {
             await supabaseClient.auth.signOut();
             window.location.href = 'login.html';
         }
 
-        // --- Navigation ---
-        window.switchView = function(viewId) {
-            document.querySelectorAll('.view-section').forEach(el => el.classList.remove('active'));
-            document.querySelectorAll('.nav-item').forEach(el => el.classList.remove('active'));
-            
-            document.getElementById(`view-${viewId}`).classList.add('active');
-            document.getElementById(`nav-${viewId}`).classList.add('active');
-            
-            const titleEl = document.getElementById('topNavTitle');
-            if (viewId === 'orders') titleEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg> Order Details`;
-            if (viewId === 'customers') titleEl.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg> Customers`;
-        }
-
-        // --- Customers Logic ---
+        // --- Customers Fetch (for auto-suggest only here) ---
         async function fetchCustomers() {
             try {
-                const { data, error } = await supabaseClient.from('customers').select('*').order('name', { ascending: true });
+                const { data, error } = await supabaseClient.from('customers').select('*');
                 if (!error) allCustomersData = data || [];
-                renderCustomersTable();
             } catch (e) { console.error("Error fetching customers", e); }
-        }
-
-        window.renderCustomersTable = function() {
-            const tbody = document.getElementById('customersTableBody');
-            const q = document.getElementById('searchCustomerInput').value.toLowerCase();
-            tbody.innerHTML = '';
-            
-            let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)));
-            
-            filtered.forEach(cust => {
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><strong>${cust.name}</strong></td>
-                    <td>${cust.contact || '—'}</td>
-                    <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'};">₹${cust.pending_credit || 0}</strong></td>
-                    <td><button class="btn" style="padding: 4px 10px; font-size: 0.75rem;" onclick="viewLedger('${cust.name}', '${cust.contact}')">View Ledger</button></td>
-                `;
-                tbody.appendChild(tr);
-            });
-        }
-
-        window.viewLedger = function(name, contact) {
-            document.getElementById('ledgerCustName').innerText = name;
-            document.getElementById('ledgerCustContact').innerText = contact;
-            
-            const tbody = document.getElementById('ledgerTableBody');
-            tbody.innerHTML = '';
-            
-            const custOrders = allOrdersData.filter(o => o.customerName === name && o.contactNo === contact);
-            if (custOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No orders found.</td></tr>`;
-            } else {
-                custOrders.forEach(o => {
-                    const d = new Date(o.created_at).toLocaleDateString();
-                    tbody.innerHTML += `
-                        <tr>
-                            <td>${d}</td>
-                            <td><strong>${o.jobNo}</strong></td>
-                            <td>${o.modelNo || '—'}</td>
-                            <td><span style="font-size:0.75rem; font-weight:bold; color:var(--text-muted);">${o.status}</span></td>
-                            <td style="color:#10b981; font-weight:bold;">₹${o.advancePaid || 0}</td>
-                        </tr>
-                    `;
-                });
-            }
-            document.getElementById('modalCustomerLedger').style.display = 'flex';
         }
 
         // Auto-suggest Logic for Form
@@ -688,6 +634,7 @@
                 suggestDiv.style.display = 'none';
             }
         }
+        
         window.selectCustomer = function(name, contact) {
             document.getElementById('formCustName').value = name;
             document.getElementById('formContact').value = contact;
@@ -695,14 +642,12 @@
             document.getElementById('suggestContact').style.display = 'none';
         }
         
-        // Hide autocomplete on outside click
         document.addEventListener('click', (e) => {
             if (!e.target.closest('.form-group')) {
                 document.getElementById('suggestName').style.display = 'none';
                 document.getElementById('suggestContact').style.display = 'none';
             }
         });
-
 
         // --- Orders Logic ---
         async function fetchOrders() {
@@ -894,7 +839,7 @@
             let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === contact);
             if (!custExists) {
                 await supabaseClient.from('customers').insert([{ name: name, contact: contact, pending_credit: 0 }]);
-                fetchCustomers(); // refresh background data
+                fetchCustomers();
             }
 
             // Advance / Split parsing
@@ -923,7 +868,7 @@
             };
 
             try {
-                const { data: insertedData, error } = await supabaseClient.from('repairOrders').insert([newOrder]).select();
+                const { error } = await supabaseClient.from('repairOrders').insert([newOrder]);
                 if (error) throw error;
                 
                 // Write to Cash/UPI Books
@@ -1013,7 +958,7 @@
             editAdvJobNo = jobNo;
             document.getElementById('modalEditAdvSubtitle').innerHTML = `Editing Job: <strong>${jobNo}</strong>`;
             document.getElementById('editAdvAmount').value = currentAdv;
-            document.getElementById('editAdvMethod').value = (currentMethod === 'Split' ? 'Cash' : currentMethod) || 'Cash'; // Simplify split to basic change for edit
+            document.getElementById('editAdvMethod').value = (currentMethod === 'Split' ? 'Cash' : currentMethod) || 'Cash'; 
             document.getElementById('modalEditAdvance').style.display = 'flex';
         }
 
@@ -1025,12 +970,11 @@
                 // Update Order
                 await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: newMethod }).eq('id', currentEditOrderId);
                 
-                // Book Sync - Delete old exact matches based on Job No description
+                // Book Sync
                 const searchDesc = `Advance - Job ${editAdvJobNo}%`;
                 await supabaseClient.from('cashbook_entries').delete().like('description', searchDesc);
                 await supabaseClient.from('upi_transactions').delete().like('description', searchDesc);
 
-                // Re-insert if > 0
                 if (newAmt > 0) {
                     const today = new Date().toISOString().split('T')[0];
                     const exactDesc = `Advance - Job ${editAdvJobNo} (Edited)`;
@@ -1050,7 +994,6 @@
                 fetchOrders();
             } catch (e) { alert("Update failed: " + e.message); }
         }
-
     </script>
 </body>
 </html>
