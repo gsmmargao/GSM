@@ -34,7 +34,7 @@
         .nav-item.active { background: #1f2937; color: white; }
         .nav-item.active svg { opacity: 1; }
         .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
-        .admin-only { display: none; color: #b91c1c; } /* Highlight admin tabs slightly if desired, or keep standard */
+        .admin-only { display: none; color: #b91c1c; }
 
         .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
         .user-profile { display: flex; align-items: center; gap: 10px; }
@@ -349,7 +349,7 @@
                 </div>
                 <div class="form-group">
                     <label>Job Number <span>*</span></label>
-                    <input type="text" id="formJobNo" placeholder="e.g. JOB-001">
+                    <input type="text" id="formJobNo" placeholder="e.g. 444100000">
                 </div>
             </div>
 
@@ -358,7 +358,8 @@
                     <label>Advance Paid (₹)</label>
                     <div class="advance-wrapper">
                         <div class="advance-top">
-                            <input type="number" id="formAdvance" value="0.00" step="0.01">
+                            <!-- Input is blank by default -->
+                            <input type="number" id="formAdvance" placeholder="0.00" step="0.01">
                             <div class="segmented-control">
                                 <button type="button" class="segmented-btn active" id="btnPayCash" onclick="setPaymentMode('Cash')">Cash</button>
                                 <button type="button" class="segmented-btn" id="btnPayUPI" onclick="setPaymentMode('UPI')">UPI</button>
@@ -391,7 +392,7 @@
                 </div>
                 <div class="form-group">
                     <label>Model No.</label>
-                    <input type="text" id="formModel" placeholder="e.g. iPhone 15 Pro">
+                    <input type="text" id="formModel" placeholder="e.g. SM-S918">
                 </div>
             </div>
 
@@ -564,7 +565,6 @@
             sb.classList.toggle('collapsed');
             
             if (!sb.classList.contains('collapsed')) {
-                // If opened, auto-close after 30 secs
                 clearTimeout(sidebarTimer);
                 sidebarTimer = setTimeout(() => {
                     sb.classList.add('collapsed');
@@ -581,10 +581,12 @@
             document.getElementById('formDate').valueAsDate = now;
 
             await checkAuth();
+            fetchCustomers(); // VERY IMPORTANT: Fetches customers so the auto-suggest and sync logic works
             fetchOrders();
-            fetchCustomers();
 
+            // Real-time subscriptions
             supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchOrders(); }).subscribe();
+            supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomers(); }).subscribe();
         });
 
         async function checkAuth() {
@@ -609,7 +611,7 @@
             window.location.href = 'login.html';
         }
 
-        // --- Customers Fetch (for auto-suggest only here) ---
+        // --- Customers Fetch (Required for Sync/Suggest) ---
         async function fetchCustomers() {
             try {
                 const { data, error } = await supabaseClient.from('customers').select('*');
@@ -751,14 +753,22 @@
                     statusUI = `<div class="status-toggle-wrapper" onclick="openStatusModal('${order.id}', '${order.jobNo}', '${order.customerName}')">
                                     <div class="status-pill"></div><span class="status-text">Pending</span>
                                 </div>`;
-                } else {
-                    let sColor = order.status === 'Repair Completed' ? '#3730a3' : (order.status === 'Goods Delivered' ? '#065f46' : '#991b1b');
-                    statusUI = `<span style="font-size: 0.75rem; font-weight: 700; color: ${sColor};">${order.status}</span>`;
+                } else if (order.status === 'Repair Completed') {
+                    statusUI = `<span style="font-size: 0.75rem; font-weight: 700; color: #3730a3;">${order.status}</span>`;
                     
-                    // Add Undo for Admin if Completed
-                    if (isAdmin && order.status === 'Repair Completed') {
-                        statusUI += `<span onclick="revertOrder('${order.id}')" title="Revert to Pending">${undoIcon}</span>`;
+                    // Mark Delivered Button
+                    statusUI += `<br><button onclick="markGoodsDelivered('${order.id}')" style="margin-top:5px; padding:4px 8px; font-size:0.7rem; border-radius:4px; background:#10b981; color:white; border:none; cursor:pointer; font-weight:bold; display:inline-flex; align-items:center; gap:4px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>
+                        Deliver
+                    </button>`;
+
+                    // Undo for Admin
+                    if (isAdmin) {
+                        statusUI += ` <span onclick="revertOrder('${order.id}')" title="Revert to Pending" style="cursor:pointer; vertical-align:bottom; margin-left:5px;">${undoIcon}</span>`;
                     }
+                } else {
+                    let sColor = order.status === 'Goods Delivered' ? '#065f46' : '#991b1b';
+                    statusUI = `<span style="font-size: 0.75rem; font-weight: 700; color: ${sColor};">${order.status}</span>`;
                 }
 
                 // HWC Interactive UI
@@ -781,10 +791,18 @@
             });
         }
 
+        window.markGoodsDelivered = async function(id) {
+            if(!confirm("Mark this order as Goods Delivered?")) return;
+            try {
+                await supabaseClient.from('repairOrders').update({ status: 'Goods Delivered' }).eq('id', id);
+                fetchOrders();
+            } catch (e) { alert("Error updating status: " + e.message); }
+        }
+
         window.toggleOrderHwc = async function(id, isChecked) {
             try {
                 await supabaseClient.from('repairOrders').update({ hwc: isChecked }).eq('id', id);
-                fetchOrders(); // Refresh to apply row styling
+                fetchOrders(); 
             } catch (e) { console.error("HWC update failed", e); }
         }
 
@@ -835,11 +853,15 @@
                 return;
             }
 
-            // Customer verification/creation
+            // Customer verification/creation Fix: It will now successfully push to DB
             let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === contact);
             if (!custExists) {
-                await supabaseClient.from('customers').insert([{ name: name, contact: contact, pending_credit: 0 }]);
-                fetchCustomers();
+                try {
+                    await supabaseClient.from('customers').insert([{ name: name, contact: contact, pending_credit: 0 }]);
+                    await fetchCustomers(); // Re-sync local database array so autocomplete works immediately
+                } catch (e) {
+                    console.error("Failed to add new customer to database", e);
+                }
             }
 
             // Advance / Split parsing
@@ -898,7 +920,7 @@
 
         function clearForm() {
             ['formCustName', 'formContact', 'formJobNo', 'formImei', 'formModel', 'formProblem', 'formNotes', 'splitCashAmt', 'splitUpiAmt'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('formAdvance').value = '0.00';
+            document.getElementById('formAdvance').value = ''; // Fully blank as requested
             document.getElementById('formHwc').checked = false;
             setPaymentMode('Cash');
             document.getElementById('formDate').valueAsDate = new Date();
