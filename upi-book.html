@@ -109,7 +109,7 @@
         .pill-accessories { background: var(--c-purple-bg); color: var(--c-purple-text); }
         .pill-general { background: #f3f4f6; color: #4b5563; }
 
-        /* Full Screen Dropdown Modal Overlay (Hidden by Default, Kept for functionality) */
+        /* Modal Overlay */
         .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);}
         .modal-box { background: white; padding: 25px; border-radius: 10px; width: 400px; box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
         .modal-header { font-size: 1.1rem; font-weight: bold; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;}
@@ -175,15 +175,15 @@
         </a>
 
         <!-- Admin Only Tabs -->
-        <a href="expenses.html" class="nav-item admin-only" id="navExpenses">
+        <a href="expenses.html" class="nav-item admin-only">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
             Expenses
         </a>
-        <a href="profit.html" class="nav-item admin-only" id="navProfit">
+        <a href="profit.html" class="nav-item admin-only">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
             Profitbook
         </a>
-        <a href="users.html" class="nav-item admin-only" id="adminUsersTab">
+        <a href="users.html" class="nav-item admin-only">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
             Users
         </a>
@@ -203,7 +203,7 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.7 - GSM Solution</div>
+        <div class="version-text">v2.8 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -230,7 +230,7 @@
             <div class="header-filters">
                 From: <input type="date" id="filterFromDate" class="date-picker">
                 To: <input type="date" id="filterToDate" class="date-picker">
-                <button class="btn btn-primary" onclick="fetchUPIBook(true)">
+                <button class="btn btn-primary" onclick="fetchUPIBook()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 2v6h-6"></path><path d="M3 12a9 9 0 0 1 15-6.7L21 8"></path><path d="M3 22v-6h6"></path><path d="M21 12a9 9 0 0 1-15 6.7L3 16"></path></svg>
                     Fetch
                 </button>
@@ -302,7 +302,7 @@
 
     </div>
 
-    <!-- Admin UPI Out Modal (Hidden normally, kept for functionality) -->
+    <!-- Admin UPI Out Modal -->
     <div class="modal-overlay" id="upiOutModal">
         <div class="modal-box">
             <div class="modal-header">
@@ -340,9 +340,6 @@
     const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
     let currentUserEmail = '';
 
-    // Cache to hold db data
-    let allUnifiedEntries = []; 
-
     // --- Sidebar Logic ---
     let sidebarTimer;
     window.resetSidebarTimer = function() {
@@ -364,7 +361,7 @@
     const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
     document.getElementById('headerDateTime').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
 
-    // Format utility for the Group Headers e.g., TUESDAY, 01 SEPTEMBER 2026
+    // Format utility for the Group Headers
     const formatGroupDate = (dateStr) => {
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { weekday: 'long', day: '2-digit', month: 'long', year: 'numeric' }).toUpperCase();
@@ -373,8 +370,16 @@
     const formatCurr = (num) => parseFloat(num || 0).toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2});
     
     const formatTime = (timeStr) => {
-        const d = new Date(timeStr);
+        const [hours, minutes] = timeStr.split(':');
+        const d = new Date();
+        d.setHours(hours);
+        d.setMinutes(minutes);
         return d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}).toLowerCase();
+    };
+
+    const formatDateObj = (dateStr) => {
+        const d = new Date(dateStr);
+        return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
     };
 
     // --- Auth Check ---
@@ -404,13 +409,13 @@
         document.getElementById('outCategory').value = 'General';
     };
 
-    // --- Main Fetch & Combine Logic ---
-    window.fetchUPIBook = async function(forceRefresh = false) {
+    // --- Main Fetch Logic directly from upi_transactions ---
+    window.fetchUPIBook = async function() {
         
         let fromDate = document.getElementById('filterFromDate').value;
         let toDate = document.getElementById('filterToDate').value;
 
-        // If no dates set, default to today
+        // Auto-fill today if fields are empty
         if(!fromDate || !toDate) {
             const today = new Date().toISOString().split('T')[0];
             document.getElementById('filterFromDate').value = today;
@@ -419,101 +424,27 @@
             toDate = today;
         }
 
-        document.getElementById('tableDateRange').innerText = `${fromDate} - ${toDate}`;
+        document.getElementById('tableDateRange').innerText = `${formatDateObj(fromDate)} - ${formatDateObj(toDate)}`;
 
         try {
-            if (forceRefresh || allUnifiedEntries.length === 0) {
-                let tempUnified = [];
+            const { data, error } = await db.from('upi_transactions')
+                .select('*')
+                .gte('date', fromDate)
+                .lte('date', toDate);
 
-                // 1. Fetch Advances (Repair Orders)
-                const { data: repairs } = await db.from('repairOrders').select('*');
-                repairs?.forEach(r => {
-                    let mode = r.payment_method || r.paymentMode || r.advancePaymentMode || '';
-                    let amt = parseFloat(r.advancePaid) || 0;
-                    if (mode.toLowerCase().includes('upi') && amt > 0) {
-                        tempUnified.push({
-                            dateObj: new Date(r.created_at || r.date),
-                            dateStr: r.date || new Date(r.created_at).toISOString().split('T')[0],
-                            timeStr: new Date(r.created_at).toISOString(),
-                            desc: `Advance - Job ${r.jobNo || 'N/A'} (${r.customerName || 'Unknown'})`,
-                            category: 'Advance Towards Repair',
-                            type: 'in',
-                            amount: amt
-                        });
-                    }
-                });
+            if (error) throw error;
 
-                // 2. Fetch Billing
-                const { data: bills } = await db.from('billing').select('*');
-                bills?.forEach(b => {
-                    let mode = b.paymentMode || b.payment_method || '';
-                    let amt = parseFloat(b.amountPaid) || 0;
-                    let upi = parseFloat(b.upiAmount) || 0;
-                    
-                    if (upi === 0 && mode === 'UPI') upi = amt;
-                    if (upi === 0 && mode.includes('UPI') && mode.includes('Card')) upi = amt; // Fallback
+            let allEntries = data || [];
+            
+            // Sort chronologically ascending to calculate running totals
+            allEntries.sort((a, b) => {
+                if (a.date !== b.date) return new Date(a.date) - new Date(b.date);
+                return a.time.localeCompare(b.time);
+            });
 
-                    if (upi > 0) {
-                        tempUnified.push({
-                            dateObj: new Date(b.created_at || b.date),
-                            dateStr: b.date || new Date(b.created_at).toISOString().split('T')[0],
-                            timeStr: new Date(b.created_at).toISOString(),
-                            desc: `Billing Invoice #${b.invoiceNo || 'N/A'} - Job ${b.jobNo || 'N/A'} (UPI)`,
-                            category: 'Billing',
-                            type: 'in',
-                            amount: upi
-                        });
-                    }
-                });
-
-                // 3. Fetch Accessories
-                const { data: accs } = await db.from('accessories_invoices').select('*');
-                accs?.forEach(a => {
-                    let mode = a.paymentMode || a.payment_mode || '';
-                    let amt = parseFloat(a.total_amt) || 0;
-                    let upi = 0;
-                    
-                    if (mode === 'UPI') upi = amt;
-
-                    if (upi > 0) {
-                        tempUnified.push({
-                            dateObj: new Date(a.created_at || a.date),
-                            dateStr: a.date || new Date(a.created_at).toISOString().split('T')[0],
-                            timeStr: new Date(a.created_at).toISOString(),
-                            desc: `Accessories Invoice #${a.invoice_no || 'N/A'} - ${a.customer_name || 'Unknown'}`,
-                            category: 'Accessories',
-                            type: 'in',
-                            amount: upi
-                        });
-                    }
-                });
-
-                // 4. Fetch Manual UPI Outs (from a dedicated upi_entries table)
-                const { data: outs, error: outErr } = await db.from('upi_entries').select('*');
-                if (!outErr && outs) {
-                    outs.forEach(u => {
-                        tempUnified.push({
-                            dateObj: new Date(u.created_at || u.date),
-                            dateStr: u.date || new Date(u.created_at).toISOString().split('T')[0],
-                            timeStr: new Date(u.created_at).toISOString(),
-                            desc: u.description,
-                            category: u.category,
-                            type: 'out',
-                            amount: parseFloat(u.amount) || 0
-                        });
-                    });
-                }
-
-                // Sort chronologically ascending
-                tempUnified.sort((a, b) => a.dateObj - b.dateObj);
-                allUnifiedEntries = tempUnified;
-            }
-
-            // Filter entries by Date Range
-            const filteredEntries = allUnifiedEntries.filter(row => row.dateStr >= fromDate && row.dateStr <= toDate);
-
-            // Group by Date for Rendering
-            const groupedByDate = {};
+            // Define our inbound sources
+            const inSources = ['Billing', 'Accessories', 'Advance Towards Repair'];
+            
             let periodTotalRec = 0;
             let periodTotalCount = 0;
             
@@ -521,25 +452,39 @@
             let accSum = 0, accCount = 0;
             let advSum = 0, advCount = 0;
 
-            filteredEntries.forEach(row => {
-                if (row.type === 'in') {
-                    periodTotalRec += row.amount;
+            const groupedByDate = {};
+            let runningTotal = 0;
+
+            allEntries.forEach(row => {
+                const isInc = inSources.includes(row.source);
+                const amt = parseFloat(row.amount) || 0;
+                
+                row.type = isInc ? 'in' : 'out';
+
+                if (isInc) {
+                    periodTotalRec += amt;
                     periodTotalCount++;
                     
-                    if (row.category === 'Billing') { billSum += row.amount; billCount++; }
-                    else if (row.category === 'Accessories') { accSum += row.amount; accCount++; }
-                    else if (row.category === 'Advance Towards Repair') { advSum += row.amount; advCount++; }
+                    if (row.source === 'Billing') { billSum += amt; billCount++; }
+                    else if (row.source === 'Accessories') { accSum += amt; accCount++; }
+                    else if (row.source === 'Advance Towards Repair') { advSum += amt; advCount++; }
+                    
+                    runningTotal += amt;
+                } else {
+                    runningTotal -= amt;
                 }
 
-                if (!groupedByDate[row.dateStr]) {
-                    groupedByDate[row.dateStr] = { transactions: [], dayTotal: 0 };
+                row.runningTotal = runningTotal;
+
+                if (!groupedByDate[row.date]) {
+                    groupedByDate[row.date] = { transactions: [], dayTotal: 0 };
                 }
                 
-                groupedByDate[row.dateStr].transactions.push(row);
+                groupedByDate[row.date].transactions.push(row);
                 
-                // Day total logic (assuming we only add receipts for the display like the screenshot)
-                if (row.type === 'in') groupedByDate[row.dateStr].dayTotal += row.amount;
-                else groupedByDate[row.dateStr].dayTotal -= row.amount; 
+                // Keep day total tracking purely positive receipts (matching UI intention)
+                if (isInc) groupedByDate[row.date].dayTotal += amt;
+                else groupedByDate[row.date].dayTotal -= amt; 
             });
 
             // Update DOM - Top 4 Cards
@@ -550,7 +495,7 @@
             document.getElementById('totBillCount').innerText = `${billCount} invoices`;
 
             document.getElementById('totAcc').innerText = '₹' + formatCurr(accSum);
-            document.getElementById('totAccCount').innerText = `${accCount} Invoices`;
+            document.getElementById('totAccCount').innerText = `${accCount} invoices`;
 
             document.getElementById('totAdv').innerText = '₹' + formatCurr(advSum);
             document.getElementById('totAdvCount').innerText = `${advCount} order${advCount !== 1 ? 's' : ''}`;
@@ -558,10 +503,8 @@
             // Render Ledger Table
             const tbody = document.getElementById('ledgerBody');
             tbody.innerHTML = '';
-            
-            let runningTotal = 0; // Starts at 0 for the filtered view as requested
 
-            // Sort dates descending so newest day is on top, but transactions inside day are chronological ascending
+            // Sort dates descending so the newest day is at the top of the table
             const sortedDates = Object.keys(groupedByDate).sort((a, b) => new Date(b) - new Date(a));
 
             if(sortedDates.length === 0) {
@@ -570,7 +513,6 @@
                 sortedDates.forEach(dateStr => {
                     const dayData = groupedByDate[dateStr];
                     
-                    // Day Group Header Row
                     tbody.innerHTML += `
                         <tr class="day-group-row">
                             <td colspan="6">
@@ -580,26 +522,26 @@
                         </tr>
                     `;
 
-                    // Transactions for that day
-                    dayData.transactions.forEach(row => {
-                        if (row.type === 'in') runningTotal += row.amount;
-                        else runningTotal -= row.amount;
+                    // Sort transactions within the day in descending order (latest time first)
+                    const sortedTransactions = dayData.transactions.sort((a, b) => b.time.localeCompare(a.time));
 
+                    sortedTransactions.forEach(row => {
                         let pillClass = 'pill-general';
-                        if(row.category === 'Billing') pillClass = 'pill-billing';
-                        else if(row.category === 'Accessories') pillClass = 'pill-accessories';
-                        else if(row.category === 'Advance Towards Repair') pillClass = 'pill-advance';
+                        if(row.source === 'Billing') pillClass = 'pill-billing';
+                        else if(row.source === 'Accessories') pillClass = 'pill-accessories';
+                        else if(row.source === 'Advance Towards Repair') pillClass = 'pill-advance';
+
+                        let displayAmt = row.type === 'out' ? `-₹${formatCurr(row.amount)}` : `₹${formatCurr(row.amount)}`;
+                        let amtColor = row.type === 'out' ? 'color: var(--danger-color);' : '';
 
                         tbody.innerHTML += `
                             <tr>
-                                <td style="color: var(--text-muted);">${row.dateStr}</td>
-                                <td style="color: var(--text-muted);">${formatTime(row.timeStr)}</td>
-                                <td>${row.desc}</td>
-                                <td><span class="pill ${pillClass}">${row.category}</span></td>
-                                <td style="text-align: right;" class="${row.type === 'in' ? '' : 'text-danger'}">
-                                    ${row.type === 'out' ? '-' : ''}₹${formatCurr(row.amount)}
-                                </td>
-                                <td style="text-align: right; font-weight: 600;">₹${formatCurr(runningTotal)}</td>
+                                <td style="color: var(--text-muted);">${row.date}</td>
+                                <td style="color: var(--text-muted);">${formatTime(row.time)}</td>
+                                <td>${row.description}</td>
+                                <td><span class="pill ${pillClass}">${row.source}</span></td>
+                                <td style="text-align: right; ${amtColor}">${displayAmt}</td>
+                                <td style="text-align: right; font-weight: 600;">₹${formatCurr(row.runningTotal)}</td>
                             </tr>
                         `;
                     });
@@ -614,27 +556,29 @@
         const desc = document.getElementById('outDesc').value.trim();
         const category = document.getElementById('outCategory').value;
         const amount = parseFloat(document.getElementById('outAmount').value) || 0;
-        const currentDate = new Date().toISOString().split('T')[0];
 
         if(!desc || amount <= 0) return alert("Please enter a valid description and amount.");
 
+        const now = new Date();
+        const currentDate = now.toISOString().split('T')[0];
+        const currentTime = now.toTimeString().split(' ')[0]; // Returns "HH:MM:SS"
+
         const entry = {
             date: currentDate,
+            time: currentTime,
             description: desc,
-            category: category,
+            source: category, 
             amount: amount,
-            type: 'out', 
-            payment_mode: 'UPI',
             created_by: currentUserEmail
         };
 
         try {
-            const { error } = await db.from('upi_entries').insert([entry]);
+            const { error } = await db.from('upi_transactions').insert([entry]);
             if(error) throw error;
             closeModal();
-            fetchUPIBook(true); // Force Refresh
+            fetchUPIBook(); 
         } catch(e) {
-            alert("Error saving: " + e.message + "\n(Note: Ensure 'upi_entries' table exists in Supabase)");
+            alert("Error saving: " + e.message);
         }
     }
 
@@ -647,7 +591,7 @@
         window.addEventListener('click', resetSidebarTimer);
         window.addEventListener('scroll', resetSidebarTimer);
         
-        fetchUPIBook(true);
+        fetchUPIBook();
     });
 </script>
 </body>
