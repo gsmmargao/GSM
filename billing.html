@@ -22,6 +22,9 @@
             --success-text: #166534;
             --upi-bg: #e0e7ff;
             --upi-text: #3730a3;
+            --split-bg: #faf5ff;
+            --split-border: #e9d5ff;
+            --split-text: #9333ea;
         }
 
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -46,7 +49,6 @@
         .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
-        .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
@@ -63,19 +65,29 @@
         .form-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .form-header-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
         
-        .inline-form { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
+        .form-row { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; margin-bottom: 20px;}
         .form-group { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
-        .form-group input:focus, .form-group select:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
-        .form-group input:read-only { background: #f9fafb; color: #9ca3af; }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
+        .form-group input:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        .form-group input:read-only { background: #f9fafb; color: #9ca3af; font-weight: 600;}
         
         .btn-add { height: 38px; padding: 0 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; border: none; background: #111827; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; white-space: nowrap; }
         .btn-add:hover { background: #374151; }
         .btn-add:disabled { background: #9ca3af; cursor: not-allowed; }
 
-        .split-row { display: none; gap: 15px; align-items: flex-end; margin-top: 15px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px dashed var(--border-color); width: 100%; flex-wrap: wrap;}
-        .split-row.active { display: flex; }
+        /* --- Payment Segmented Controls (Matching screenshot) --- */
+        .segmented-control { display: inline-flex; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: white; width: fit-content; height: 38px; box-sizing: border-box;}
+        .seg-btn { padding: 0 16px; border: none; background: transparent; font-size: 0.85rem; font-weight: 600; color: var(--text-muted); cursor: pointer; border-right: 1px solid var(--border-color); transition: all 0.2s; display: flex; align-items: center; justify-content: center;}
+        .seg-btn:last-child { border-right: none; }
+        .seg-btn.active { background: #111827; color: white; }
+
+        /* Split Box Styling (Matching screenshot) */
+        .split-box { display: none; background: var(--split-bg); border: 1px solid var(--split-border); border-radius: 8px; padding: 20px; margin-top: 5px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .split-box.active { display: block; }
+        .split-box-title { color: var(--split-text); font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; }
+        .split-grid { display: flex; gap: 15px; flex-wrap: wrap; }
+        .split-grid .form-group { flex: 1; min-width: 120px; }
 
         /* --- Table Styling --- */
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px; }
@@ -90,6 +102,7 @@
         .pill-cash { background: var(--success-bg); color: var(--success-text); }
         .pill-upi { background: var(--upi-bg); color: var(--upi-text); }
         .pill-card { background: #fef3c7; color: #b45309; }
+        .pill-credit { background: #fee2e2; color: #991b1b; }
         .pill-split { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
         
         .amount-bold { font-weight: 700; color: #111827; }
@@ -186,7 +199,6 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.5 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -194,7 +206,6 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
-                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -212,12 +223,12 @@
             </div>
         </div>
 
-        <!-- Form Card (Matched to Screenshot) -->
-        <div class="form-card" id="billingForm">
+        <!-- Form Card -->
+        <div class="form-card" id="billingForm" style="display: block;">
             <div class="form-header-title">NEW ENTRY</div>
             
-            <div class="inline-form">
-                <div class="form-group" style="max-width: 160px;">
+            <div class="form-row">
+                <div class="form-group" style="max-width: 140px;">
                     <label>Date</label>
                     <input type="date" id="b-date">
                 </div>
@@ -227,47 +238,54 @@
                     <input type="text" id="b-jobNo" placeholder="Job No." onblur="fetchAdvancePaid()">
                 </div>
                 
-                <div class="form-group" id="mainAmountGroup">
-                    <label>Amount (₹)</label>
-                    <input type="number" id="b-amount" placeholder="0.00" min="0" step="0.01">
-                </div>
-                
-                <div class="form-group">
-                    <label>Payment Mode</label>
-                    <select id="b-paymentMode" onchange="toggleSplitRow()">
-                        <option value="Cash">Cash</option>
-                        <option value="UPI">UPI</option>
-                        <option value="Card">Card</option>
-                        <option value="Split">Split</option>
-                    </select>
-                </div>
-                
                 <div class="form-group">
                     <label>Advance Paid (₹)</label>
                     <input type="number" id="b-advance" placeholder="0.00" readonly>
                 </div>
-                
-                <button class="btn-add" id="btnSaveBill" onclick="saveBill()">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
-                    Add
-                </button>
             </div>
 
-            <!-- Dynamic Split Row -->
-            <div class="split-row" id="splitInputsRow">
-                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); width: 100%;">SPLIT PAYMENT AMOUNTS:</span>
-                <div class="form-group">
-                    <label>Cash (₹)</label>
-                    <input type="number" id="b-split-cash" placeholder="0.00" min="0" step="0.01">
+            <div class="form-row" style="align-items: flex-start;">
+                <div class="form-group" id="mainAmountGroup" style="max-width: 160px;">
+                    <label>Amount (₹)</label>
+                    <input type="number" id="b-amount" placeholder="0.00" min="0" step="0.01">
                 </div>
+
                 <div class="form-group">
-                    <label>UPI (₹)</label>
-                    <input type="number" id="b-split-upi" placeholder="0.00" min="0" step="0.01">
+                    <label>Payment Mode</label>
+                    <div class="segmented-control">
+                        <button type="button" class="seg-btn active" id="payCash" onclick="setPaymentMode('Cash')">Cash</button>
+                        <button type="button" class="seg-btn" id="payUPI" onclick="setPaymentMode('UPI')">UPI</button>
+                        <button type="button" class="seg-btn" id="payCard" onclick="setPaymentMode('Card')">Card</button>
+                        <button type="button" class="seg-btn" id="payCredit" onclick="setPaymentMode('Credit')">Credit</button>
+                        <button type="button" class="seg-btn" id="paySplit" onclick="setPaymentMode('Split')">Split</button>
+                    </div>
                 </div>
-                <div class="form-group">
-                    <label>Card (₹)</label>
-                    <input type="number" id="b-split-card" placeholder="0.00" min="0" step="0.01">
+            </div>
+
+            <!-- Dynamic Split Row (Purple Styling matching the prompt) -->
+            <div class="split-box" id="splitInputsRow">
+                <div class="split-box-title">Split Payment — Cash + UPI + Card</div>
+                <div class="split-grid">
+                    <div class="form-group">
+                        <label>Cash (₹)</label>
+                        <input type="number" id="b-split-cash" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>UPI (₹)</label>
+                        <input type="number" id="b-split-upi" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Card (₹)</label>
+                        <input type="number" id="b-split-card" placeholder="0.00" min="0" step="0.01">
+                    </div>
                 </div>
+            </div>
+
+            <div style="margin-top: 5px;">
+                <button class="btn-add" id="btnSaveBill" onclick="saveBill()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+                    Save Bill
+                </button>
             </div>
         </div>
 
@@ -312,10 +330,10 @@
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
         let isAdmin = false;
         
-        // Cache for customer names to avoid repetitive DB calls
         let customerCache = {};
+        let selectedPaymentMode = 'Cash'; // Default payment mode
 
-        // Sidebar Auto-Collapse Logic
+        // Sidebar Logic
         let sidebarTimer;
         window.resetSidebarTimer = function() {
             clearTimeout(sidebarTimer);
@@ -330,7 +348,6 @@
             if(!sidebar.classList.contains('collapsed')) resetSidebarTimer();
             else clearSidebarTimer();
         }
-
         window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetSidebarTimer;
 
         async function checkAuth() {
@@ -360,7 +377,7 @@
 
         document.addEventListener("DOMContentLoaded", async () => {
             const now = new Date();
-            document.getElementById('headerDateTime').innerHTML = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight:bold; color:var(--text-main);">GSM SOLUTION</span>`;
+            document.getElementById('headerDateTime').innerText = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} | GSM SOLUTION`;
             document.getElementById('b-date').valueAsDate = now;
 
             await checkAuth(); 
@@ -370,9 +387,14 @@
             db.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { window.fetchBilling(); }).subscribe();
         });
 
-        // Toggle Split Row UI Visibility
-        window.toggleSplitRow = function() {
-            const mode = document.getElementById('b-paymentMode').value;
+        // Toggle Segmented UI
+        window.setPaymentMode = function(mode) {
+            selectedPaymentMode = mode;
+            
+            // Manage active button class
+            document.querySelectorAll('.seg-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('pay' + mode).classList.add('active');
+
             const splitRow = document.getElementById('splitInputsRow');
             const mainAmtGroup = document.getElementById('mainAmountGroup');
             
@@ -408,12 +430,13 @@
                 advInput.value = '';
                 return;
             }
+            
             // Auto fetch advance and customer details
-            const { data } = await db.from('repairOrders').select('advancePaid, customerName').ilike('jobNo', jobNo).maybeSingle();
+            const { data } = await db.from('repairOrders').select('advancePaid, customerName, contactNo').ilike('jobNo', jobNo).maybeSingle();
             if(data) {
                 advInput.value = data.advancePaid || 0;
-                // Pre-cache the customer name for the table rendering
-                customerCache[jobNo] = data.customerName;
+                // Pre-cache the customer name and contact for table and credit logic
+                customerCache[jobNo] = { name: data.customerName, contact: data.contactNo };
             } else {
                 advInput.value = '0.00';
             }
@@ -428,14 +451,13 @@
             }
         }
 
-        // Fetch customer names for jobs that aren't cached yet
         async function fetchMissingCustomers(billingData) {
             const missingJobs = billingData.map(b => b.jobNo).filter(j => j && !customerCache[j]);
             if (missingJobs.length > 0) {
-                const { data } = await db.from('repairOrders').select('jobNo, customerName').in('jobNo', missingJobs);
+                const { data } = await db.from('repairOrders').select('jobNo, customerName, contactNo').in('jobNo', missingJobs);
                 if (data) {
                     data.forEach(r => {
-                        customerCache[r.jobNo] = r.customerName;
+                        customerCache[r.jobNo] = { name: r.customerName, contact: r.contactNo };
                     });
                 }
             }
@@ -467,21 +489,21 @@
                     <svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                 </span></td>` : '';
                 
-                // Determine Payment Pill styling based on string
+                // Determine Payment Pill styling
                 let modeText = (bill.paymentMode || 'None').toUpperCase();
                 let pillClass = 'pill-card'; 
                 if(modeText.includes('+')) pillClass = 'pill-split';
-                else if(modeText.includes('CASH')) pillClass = 'pill-cash';
-                else if(modeText.includes('UPI')) pillClass = 'pill-upi';
+                else if(modeText === 'CASH') pillClass = 'pill-cash';
+                else if(modeText === 'UPI') pillClass = 'pill-upi';
+                else if(modeText === 'CREDIT') pillClass = 'pill-credit';
                 
                 let modePill = `<span class="pill ${pillClass}">${modeText}</span>`;
 
-                // Amounts styling matching screenshot
                 let amountStr = parseFloat(bill.amountPaid || 0).toLocaleString('en-IN', {minimumFractionDigits: 2});
                 let advanceVal = parseFloat(bill.advancePaid || 0);
                 let advanceStr = advanceVal > 0 ? `<span class="adv-val">₹${advanceVal.toLocaleString('en-IN', {minimumFractionDigits: 2})}</span>` : `<span class="adv-dash">—</span>`;
                 
-                let customerStr = customerCache[bill.jobNo] || '—';
+                let customerStr = customerCache[bill.jobNo] ? customerCache[bill.jobNo].name : '—';
 
                 tbody.innerHTML += `<tr>
                     <td><strong>${bill.invoiceNo}</strong></td>
@@ -504,12 +526,12 @@
         }
 
         window.deleteBill = async function(invoiceNo) {
-            if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This will also remove the payment from the ledgers.`)) return;
+            if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This will also wipe matching cashbook and UPI entries.`)) return;
             
-            // Clean up Ledgers first
+            // Clean up Ledgers strictly based on description logic
             const searchString = `Invoice #${invoiceNo}%`;
-            await db.from('cashbook_entries').delete().like('description', searchString);
-            await db.from('upi_transactions').delete().like('description', searchString);
+            await db.from('cashbook_entries').delete().ilike('description', searchString);
+            await db.from('upi_transactions').delete().ilike('description', searchString);
 
             // Delete the Bill
             const { error } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
@@ -519,15 +541,13 @@
 
         window.saveBill = async function() {
             const rawJobNo = document.getElementById('b-jobNo').value.trim();
-            const paymentMode = document.getElementById('b-paymentMode').value;
+            const paymentMode = selectedPaymentMode;
             
-            // Job number is strictly mandatory
             if(!rawJobNo) return alert("Please enter a mandatory Job Number.");
 
             let finalAmount = 0;
-            let cashAmt = 0, upiAmt = 0, cardAmt = 0;
+            let cashAmt = 0, upiAmt = 0, cardAmt = 0, creditAmt = 0;
 
-            // Calculate Split VS Single Payment amounts
             if (paymentMode === 'Split') {
                 cashAmt = parseFloat(document.getElementById('b-split-cash').value) || 0;
                 upiAmt = parseFloat(document.getElementById('b-split-upi').value) || 0;
@@ -542,6 +562,7 @@
                 if (paymentMode === 'Cash') cashAmt = finalAmount;
                 if (paymentMode === 'UPI') upiAmt = finalAmount;
                 if (paymentMode === 'Card') cardAmt = finalAmount;
+                if (paymentMode === 'Credit') creditAmt = finalAmount;
             }
 
             const btnSave = document.getElementById('btnSaveBill');
@@ -555,14 +576,13 @@
                     throw new Error(`A bill already exists for Job Number ${rawJobNo} (Invoice #${duplicateCheck.invoiceNo}). Multiple bills for the same job are not allowed.`);
                 }
 
-                // Get fresh invoice number dynamically on save
                 const invoiceNoStr = await getNextInvoiceNo();
                 
-                // Format the Payment Mode label perfectly for the table based on inputs
                 let modesArr = [];
                 if (cashAmt > 0) modesArr.push("CASH");
                 if (upiAmt > 0) modesArr.push("UPI");
                 if (cardAmt > 0) modesArr.push("CARD");
+                if (creditAmt > 0) modesArr.push("CREDIT");
                 const finalPaymentModeStr = modesArr.length > 1 ? modesArr.join(' + ') : (modesArr[0] || 'NONE');
 
                 const billData = {
@@ -579,6 +599,20 @@
 
                 const { error: billError } = await db.from('billing').insert([billData]);
                 if (billError) throw billError;
+
+                // Handle Customer Credit Update if applicable
+                if (creditAmt > 0) {
+                    const custInfo = customerCache[rawJobNo];
+                    if (custInfo && custInfo.name) {
+                        const { data: extCust } = await db.from('customers').select('id, pending_credit').eq('name', custInfo.name).eq('contact', custInfo.contact).maybeSingle();
+                        if (extCust) {
+                            await db.from('customers').update({ pending_credit: parseFloat(extCust.pending_credit || 0) + creditAmt }).eq('id', extCust.id);
+                        } else {
+                            // Creates customer if not existing
+                            await db.from('customers').insert([{ name: custInfo.name, contact: custInfo.contact, pending_credit: creditAmt }]);
+                        }
+                    }
+                }
                 
                 // Update Repair Orders Table
                 let updateData = { status: 'Goods Delivered' };
@@ -588,7 +622,7 @@
                 // Push amounts to relevant ledgers
                 let currentDate = new Date().toISOString().split('T')[0];
                 let currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
-                let desc = `Invoice #${billData.invoiceNo} - Job ${billData.jobNo || 'N/A'}`;
+                let desc = `Invoice #${billData.invoiceNo} - Job ${billData.jobNo}`;
 
                 if (cashAmt > 0) {
                     await db.from('cashbook_entries').insert([{
@@ -613,18 +647,17 @@
                 document.getElementById('b-jobNo').value = '';
                 document.getElementById('b-amount').value = '';
                 document.getElementById('b-advance').value = '';
-                document.getElementById('b-paymentMode').value = 'Cash';
                 document.getElementById('b-split-cash').value = '';
                 document.getElementById('b-split-upi').value = '';
                 document.getElementById('b-split-card').value = '';
-                toggleSplitRow(); // Ensure standard amount box shows again
+                setPaymentMode('Cash');
                 
                 window.fetchBilling();
             } catch (err) {
                 alert("Error: " + err.message);
             } finally {
                 btnSave.disabled = false;
-                btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add`;
+                btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Save Bill`;
             }
         }
     </script>
