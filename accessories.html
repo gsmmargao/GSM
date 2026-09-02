@@ -49,6 +49,7 @@
         .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
+        .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
@@ -90,7 +91,7 @@
 
         /* Dynamic Items Section */
         .items-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #f9fafb;}
-        .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1fr 0.5fr 1fr auto; gap: 15px; margin-bottom: 15px; align-items: end;}
+        .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr auto; gap: 15px; margin-bottom: 15px; align-items: end;}
         
         /* Custom Searchable Select */
         .search-select-container { position: relative; width: 100%; }
@@ -109,6 +110,13 @@
         .segmented-input .pay-btn:last-child { border-right: none; }
         .segmented-input .pay-btn.active { background: #111827; color: white; }
 
+        /* Split Payment Box */
+        .split-box { display: none; background: #faf5ff; border: 1px solid #e9d5ff; border-radius: 8px; padding: 20px; margin-top: 5px; margin-bottom: 20px; width: 100%; box-sizing: border-box; }
+        .split-box.active { display: block; }
+        .split-box-title { color: #9333ea; font-size: 0.85rem; font-weight: 700; margin-bottom: 15px; }
+        .split-grid { display: flex; gap: 15px; flex-wrap: wrap; }
+        .split-grid .form-group { flex: 1; min-width: 120px; }
+
         /* --- Table Styling --- */
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px; }
         .table-scroll { width: 100%; overflow-x: auto; }
@@ -123,7 +131,8 @@
         .pill { display: inline-block; padding: 4px 10px; border-radius: 12px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
         .pill-cash { background: var(--success-bg); color: var(--success-text); }
         .pill-upi { background: var(--upi-bg); color: var(--upi-text); }
-        .pill-card { background: #fef3c7; color: #b45309; }
+        .pill-credit { background: #fee2e2; color: #991b1b; }
+        .pill-split { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
         
         .btn-icon { background: transparent; border: 1px solid var(--border-color); padding: 4px 8px; border-radius: 4px; cursor: pointer; display: flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--text-main); transition: background 0.2s;}
         .btn-icon:hover { background: #f3f4f6; }
@@ -231,6 +240,7 @@
                 </svg>
             </button>
         </div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -298,12 +308,32 @@
                     <div class="segmented-input">
                         <button type="button" class="pay-btn active" id="payCash" onclick="setPaymentMode('Cash')">Cash</button>
                         <button type="button" class="pay-btn" id="payUPI" onclick="setPaymentMode('UPI')">UPI</button>
-                        <button type="button" class="pay-btn" id="payCard" onclick="setPaymentMode('Card')">Card</button>
+                        <button type="button" class="pay-btn" id="payCredit" onclick="setPaymentMode('Credit')">Credit</button>
+                        <button type="button" class="pay-btn" id="paySplit" onclick="setPaymentMode('Split')">Split</button>
                     </div>
                 </div>
                 <div class="form-group">
                     <label>Date</label>
                     <input type="date" id="inv-date">
+                </div>
+            </div>
+
+            <!-- Dynamic Split Row (Includes Credit) -->
+            <div class="split-box" id="splitInputsRow">
+                <div class="split-box-title">SPLIT PAYMENT — CASH + UPI + CREDIT</div>
+                <div class="form-grid" style="grid-template-columns: repeat(3, 1fr); margin-bottom:0;">
+                    <div class="form-group">
+                        <label>Cash (₹)</label>
+                        <input type="number" id="inv-split-cash" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>UPI (₹)</label>
+                        <input type="number" id="inv-split-upi" placeholder="0.00" min="0" step="0.01">
+                    </div>
+                    <div class="form-group">
+                        <label>Credit (₹)</label>
+                        <input type="number" id="inv-split-credit" placeholder="0.00" min="0" step="0.01">
+                    </div>
                 </div>
             </div>
 
@@ -538,9 +568,15 @@
         // --- Payment Toggle ---
         window.setPaymentMode = function(mode) {
             selectedPaymentMode = mode;
-            document.getElementById('payCash').className = mode === 'Cash' ? 'pay-btn active' : 'pay-btn';
-            document.getElementById('payUPI').className = mode === 'UPI' ? 'pay-btn active' : 'pay-btn';
-            document.getElementById('payCard').className = mode === 'Card' ? 'pay-btn active' : 'pay-btn';
+            document.querySelectorAll('.pay-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById('pay' + mode).classList.add('active');
+            
+            const splitRow = document.getElementById('splitInputsRow');
+            if (mode === 'Split') {
+                splitRow.classList.add('active');
+            } else {
+                splitRow.classList.remove('active');
+            }
         }
 
         // --- Searchable Dropdown & New Item Logic ---
@@ -675,6 +711,10 @@
             document.getElementById('inv-mobile').value = '';
             document.getElementById('inv-gstin').value = '';
             document.getElementById('inv-date').valueAsDate = new Date();
+            
+            document.getElementById('inv-split-cash').value = '';
+            document.getElementById('inv-split-upi').value = '';
+            document.getElementById('inv-split-credit').value = '';
             
             document.getElementById('invoiceItemsContainer').innerHTML = '';
             addInvoiceItem(); 
@@ -865,7 +905,12 @@
             const paginatedItems = allInvoices.slice(start, start + rowsPerPage);
 
             paginatedItems.forEach(inv => {
-                let pillClass = inv.payment_mode === 'Cash' ? 'pill-cash' : (inv.payment_mode === 'UPI' ? 'pill-upi' : 'pill-card');
+                let modeText = (inv.payment_mode || 'None').toUpperCase();
+                let pillClass = 'pill-card'; 
+                if(modeText.includes('+')) pillClass = 'pill-split';
+                else if(modeText === 'CASH') pillClass = 'pill-cash';
+                else if(modeText === 'UPI') pillClass = 'pill-upi';
+                else if(modeText === 'CREDIT') pillClass = 'pill-credit';
                 
                 let deleteBtn = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()
                     ? `<button class="btn-icon" onclick="deleteInvoice(${inv.id}, '${inv.invoice_no}')" style="color:var(--danger-color);" title="Delete"><svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`
@@ -894,7 +939,7 @@
                         <td>₹${inv.base_amt.toFixed(2)}</td>
                         <td style="color:#d97706;">₹${inv.gst_amt.toFixed(2)}</td>
                         <td style="font-weight:700; color:var(--text-main);">₹${inv.total_amt.toFixed(2)}</td>
-                        <td><span class="pill ${pillClass}">${inv.payment_mode.toUpperCase()}</span></td>
+                        <td><span class="pill ${pillClass}">${modeText}</span></td>
                         <td style="display:flex; gap:8px; justify-content:center;">
                             <button class="btn-icon" onclick='printInvoice(${JSON.stringify(inv).replace(/'/g, "&#39;")})'>
                                 <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
@@ -927,8 +972,18 @@
             document.getElementById('inv-gstin').value = inv.gstin || '';
             document.getElementById('inv-date').value = inv.date;
 
-            let mode = inv.payment_mode === 'Cash' ? 'Cash' : (inv.payment_mode === 'UPI' ? 'UPI' : 'Card');
-            setPaymentMode(mode);
+            // Determine payment mode (Fallbacks for legacy invoices vs new Splits)
+            let modeStr = inv.payment_mode || 'Cash';
+            if (modeStr.includes('+')) {
+                setPaymentMode('Split');
+                // We cannot perfectly reconstruct the exact split amounts unless stored explicitly.
+                // Leave fields blank for the user to re-enter, or prompt them.
+                document.getElementById('inv-split-cash').value = '';
+                document.getElementById('inv-split-upi').value = '';
+                document.getElementById('inv-split-credit').value = '';
+            } else {
+                setPaymentMode(modeStr);
+            }
 
             const container = document.getElementById('invoiceItemsContainer');
             container.innerHTML = '';
@@ -956,13 +1011,6 @@
             const date = document.getElementById('inv-date').value;
 
             if(!name || !mobile) return alert("Please fill required Customer details.");
-
-            // Customer Auto-save Check
-            let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === mobile);
-            if (!custExists) {
-                await db.from('customers').insert([{ name: name, contact: mobile, pending_credit: 0 }]);
-                await fetchCustomers();
-            }
 
             const itemRows = document.querySelectorAll('.item-row');
             const itemsArray = [];
@@ -1018,12 +1066,41 @@
 
             if (itemsArray.length === 0) return alert("Please search and select at least one valid item from the catalog.");
 
+            let finalAmount = grandTotal;
+            let cashAmt = 0, upiAmt = 0, creditAmt = 0;
+
+            if (selectedPaymentMode === 'Split') {
+                cashAmt = parseFloat(document.getElementById('inv-split-cash').value) || 0;
+                upiAmt = parseFloat(document.getElementById('inv-split-upi').value) || 0;
+                creditAmt = parseFloat(document.getElementById('inv-split-credit').value) || 0;
+                
+                let splitTotal = cashAmt + upiAmt + creditAmt;
+                if(Math.abs(splitTotal - grandTotal) > 0.01) {
+                    return alert(`Split amount (₹${splitTotal.toFixed(2)}) does not match the invoice total (₹${grandTotal.toFixed(2)}).`);
+                }
+            } else {
+                if (selectedPaymentMode === 'Cash') cashAmt = finalAmount;
+                if (selectedPaymentMode === 'UPI') upiAmt = finalAmount;
+                if (selectedPaymentMode === 'Credit') creditAmt = finalAmount;
+            }
+
             const btnSave = document.getElementById('btnSubmitInv');
             btnSave.disabled = true;
             btnSave.innerHTML = 'Saving...';
 
             try {
-                fetchCatalog();
+                // Customer Auto-save Check & Credit Addition
+                let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === mobile);
+                if (custExists) {
+                    if (creditAmt > 0) {
+                        await db.from('customers').update({ pending_credit: parseFloat(custExists.pending_credit || 0) + creditAmt }).eq('id', custExists.id);
+                    }
+                } else {
+                    await db.from('customers').insert([{ name: name, contact: mobile, pending_credit: creditAmt }]);
+                    await fetchCustomers();
+                }
+
+                fetchCatalog(); // Re-fetch catalog in background
 
                 let invoiceNoStr = editingInvoiceNo; 
                 
@@ -1047,6 +1124,12 @@
 
                 const summaryDesc = itemsArray.map(i => `${i.qty}x ${i.desc}`).join(', ');
 
+                let modesArr = [];
+                if (cashAmt > 0) modesArr.push("CASH");
+                if (upiAmt > 0) modesArr.push("UPI");
+                if (creditAmt > 0) modesArr.push("CREDIT");
+                const finalPaymentModeStr = modesArr.length > 1 ? modesArr.join(' + ') : (modesArr[0] || 'NONE');
+
                 const invData = {
                     invoice_no: invoiceNoStr,
                     invoice_type: 'Regular',
@@ -1061,7 +1144,7 @@
                     gst_amt: grandGst,
                     total_amt: grandTotal,
                     tax_percent: itemsArray[0].tax_percent, 
-                    payment_mode: selectedPaymentMode,
+                    payment_mode: finalPaymentModeStr,
                     created_by: document.getElementById('userNameDisplay').innerText,
                     date: date
                 };
@@ -1078,19 +1161,22 @@
                     if(error) throw error;
                 }
 
+                // Push to Ledgers (Credit DOES NOT go to ledger!)
                 let currentDate = new Date().toISOString().split('T')[0];
                 let currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
-                let descText = `Acc. Invoice #${invoiceNoStr} - ${name} (${selectedPaymentMode})`;
+                
+                let descBase = `Acc. Invoice #${invoiceNoStr} - ${name}`;
 
-                if(selectedPaymentMode === 'Cash') {
+                if(cashAmt > 0) {
                     await db.from('cashbook_entries').insert([{
-                        description: descText, category: 'Accessories', amount: grandTotal,
+                        description: `${descBase} (Cash Split)`, category: 'Accessories', amount: cashAmt,
                         type: 'in', date: currentDate, created_by: currentUserEmail
                     }]);
-                } else if (selectedPaymentMode === 'UPI' || selectedPaymentMode === 'Card') {
+                }
+                if (upiAmt > 0) {
                     await db.from('upi_transactions').insert([{
-                        date: currentDate, time: currentTime, description: descText,
-                        source: 'Accessories', amount: grandTotal, created_by: currentUserEmail
+                        date: currentDate, time: currentTime, description: `${descBase} (UPI Split)`,
+                        source: 'Accessories', amount: upiAmt, created_by: currentUserEmail
                     }]);
                 }
 
@@ -1117,7 +1203,7 @@
             fetchInvoices();
         }
 
-        // --- Export to Excel functionality ---
+        // --- Export to Excel functionality (Line-by-Line Item Level with IGST Logic) ---
         window.exportToExcel = function() {
             const selectedMonth = document.getElementById('exportMonth').value; 
             if (!selectedMonth) return alert("Please select a month to export data.");
