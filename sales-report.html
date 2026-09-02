@@ -18,8 +18,8 @@
             --primary-accent: #3b82f6;
             --sidebar-width: 240px;
             --danger-color: #ef4444;
-            --igst-color: #d97706; /* Orange for GST */
-            --profit-color: #16a34a; /* Green for Profit */
+            --igst-color: #d97706; 
+            --profit-color: #16a34a; 
         }
 
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -44,7 +44,6 @@
         .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
-        .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
@@ -74,7 +73,6 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
-        .form-group label span { color: var(--danger-color); }
         .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
         .form-group input:focus, .form-group select:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
 
@@ -201,7 +199,6 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.6 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -294,7 +291,7 @@
                         <tr>
                             <th rowspan="2" class="col-border">Date</th>
                             <th rowspan="2" class="col-border">Job Number</th>
-                            <th rowspan="2" class="col-border">Name</th>
+                            <th rowspan="2" class="col-border" style="display: none;">Created By</th>
                             <th rowspan="2" class="col-border">Part</th>
                             <th colspan="3" class="th-group col-border">Unit Price</th>
                             <th colspan="3" class="th-group col-border">Retail Price</th>
@@ -370,10 +367,10 @@
     let isAdmin = false;
 
     // Pagination State
-    let allSalesData = []; // Raw data from DB
-    let groupedSalesData = []; // Data grouped by job_no
+    let allSalesData = []; 
+    let groupedSalesData = []; 
     let currentPage = 1;
-    const jobsPerPage = 10; // Paginate by Job groups instead of individual rows
+    const jobsPerPage = 10; 
 
     // Sidebar Logic
     let sidebarTimer;
@@ -381,7 +378,7 @@
         clearTimeout(sidebarTimer);
         sidebarTimer = setTimeout(() => {
             document.getElementById('sidebar').classList.add('collapsed');
-        }, 30000); // Set to 30s
+        }, 30000); 
     }
     window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
     
@@ -395,7 +392,11 @@
     // Date formatting for Header
     const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
     document.getElementById('headerDateTime').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
-    document.getElementById('entryDate').valueAsDate = new Date();
+    
+    // Set initial date only if not already set (retained on save)
+    if (!document.getElementById('entryDate').value) {
+        document.getElementById('entryDate').valueAsDate = new Date();
+    }
 
     // Authentication Check
     async function checkAuth() {
@@ -461,10 +462,10 @@
 
     // Save Entry to Supabase
     window.saveSalesEntry = async function() {
-        const date = document.getElementById('entryDate').value;
+        const selectedDate = document.getElementById('entryDate').value;
         const jobNo = document.getElementById('entryJobNo').value.trim(); 
         
-        if (!date || !jobNo) {
+        if (!selectedDate || !jobNo) {
             return alert("Date and Job Number are required.");
         }
 
@@ -478,7 +479,7 @@
 
             if (label.trim() !== '' && (unit > 0 || retail > 0)) {
                 entries.push({
-                    date: date,
+                    date: selectedDate,
                     job_no: jobNo,
                     created_by: currentUserName,
                     part_label: label,
@@ -497,8 +498,14 @@
             if (error) throw error;
             
             alert("Sales entry saved successfully!");
+            
+            // Clear only Job Number and Parts, RETAIN the selected Date
             document.getElementById('entryJobNo').value = '';
             initializeRows();
+            
+            // Re-apply the retained date just in case
+            document.getElementById('entryDate').value = selectedDate;
+            
             fetchSalesReports();
         } catch (error) {
             alert("Error saving data: " + error.message);
@@ -510,7 +517,6 @@
         const fromDate = document.getElementById('filterFromDate').value;
         const toDate = document.getElementById('filterToDate').value;
 
-        // Order by Date, then by created_at so newest entries show at the top of the day
         let query = supabaseClient.from('sales_reports')
             .select('*')
             .order('date', { ascending: false })
@@ -661,7 +667,7 @@
                 if (index === 0) {
                     tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${group.date}</td>`;
                     tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${jobNoDisplay}</td>`;
-                    tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${group.created_by || 'Admin'}</td>`;
+                    tr.innerHTML += `<td rowspan="${partsCount}" class="col-border" style="display: none;">${group.created_by || 'Admin'}</td>`;
                 }
 
                 // Add Part specific cells
