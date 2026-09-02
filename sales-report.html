@@ -18,8 +18,8 @@
             --primary-accent: #3b82f6;
             --sidebar-width: 240px;
             --danger-color: #ef4444;
-            --igst-color: #d97706; 
-            --profit-color: #16a34a; 
+            --igst-color: #d97706; /* Orange for GST */
+            --profit-color: #16a34a; /* Green for Profit */
         }
 
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -73,6 +73,7 @@
         .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+        .form-group label span { color: var(--danger-color); }
         .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
         .form-group input:focus, .form-group select:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
 
@@ -88,7 +89,7 @@
         .filter-row .form-group label { margin: 0; }
 
         /* --- Table Styling --- */
-        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 25px; }
+        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px; }
         .table-scroll { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 16px 20px; background: var(--card-bg); font-size: 0.75rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
@@ -199,6 +200,7 @@
                 </svg>
             </button>
         </div>
+        <div class="version-text">v2.6 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -542,12 +544,26 @@
                         job_no: item.job_no, 
                         date: item.date, 
                         created_by: item.created_by, 
+                        max_created_at: new Date(item.created_at).getTime(),
                         parts: [] 
                     };
                     jobMap.set(key, newGroup);
                     groupedSalesData.push(newGroup);
                 }
                 jobMap.get(key).parts.push(item);
+            });
+
+            // Ensure groups are explicitly sorted newest first so latest entries are always on top
+            groupedSalesData.sort((a, b) => {
+                if (a.date !== b.date) {
+                    return new Date(b.date) - new Date(a.date);
+                }
+                return b.max_created_at - a.max_created_at;
+            });
+
+            // Make parts list in chronological ascending order (Part 1 -> Part 2) inside the group
+            groupedSalesData.forEach(group => {
+                group.parts.sort((a, b) => new Date(a.created_at) - new Date(b.created_at));
             });
 
             currentPage = 1; // Reset to page 1 on new fetch
