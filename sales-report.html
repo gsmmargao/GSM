@@ -19,6 +19,7 @@
             --sidebar-width: 240px;
             --danger-color: #ef4444;
             --igst-color: #d97706; /* Orange for GST */
+            --profit-color: #16a34a; /* Green for Profit */
         }
 
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
@@ -59,7 +60,7 @@
         /* --- Buttons --- */
         .btn { padding: 8px 16px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
         .btn:hover { background: #f3f4f6; }
-        .btn-primary { background: #9ca3af; color: white; border: none; } /* Grey button matching screenshot */
+        .btn-primary { background: #9ca3af; color: white; border: none; } 
         .btn-primary:hover { background: #6b7280; }
         .btn-text { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); font-size: 0.8rem; cursor: pointer; font-weight: 600; border-radius: 6px; padding: 6px 12px; display: flex; align-items: center; gap: 4px;}
         .btn-text:hover { background: #f3f4f6; }
@@ -89,7 +90,7 @@
         .filter-row .form-group label { margin: 0; }
 
         /* --- Table Styling --- */
-        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px; }
+        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 25px; }
         .table-scroll { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 16px 20px; background: var(--card-bg); font-size: 0.75rem; color: var(--text-muted); font-weight: 600; white-space: nowrap; border-bottom: 1px solid var(--border-color); }
@@ -99,7 +100,10 @@
         .th-sub { font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
         .col-border { border-right: 1px solid #f3f4f6; }
         
-        .c-orange { color: var(--igst-color); }
+        tfoot td { background-color: #ffffff; font-weight: 700; border-top: 1px solid var(--border-color); font-size: 0.85rem; padding: 20px;}
+        
+        .c-orange { color: var(--igst-color); font-weight: 500;}
+        .c-green { color: var(--profit-color); font-weight: 700; }
         .c-bold { font-weight: 600; }
         .action-delete { color: var(--text-muted); cursor: pointer; background: none; border: none; padding: 5px; transition: color 0.2s; }
         .action-delete:hover { color: var(--danger-color); }
@@ -108,6 +112,12 @@
         .page-btn { padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer; color: var(--text-main); font-weight: 600; transition: background 0.2s;}
         .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
         .page-btn:not(:disabled):hover { background: #f3f4f6; }
+
+        /* --- Stats Grid Styling (Bottom Cards) --- */
+        .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; margin-bottom: 30px; }
+        .stat-card { background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); flex: 1; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .stat-card h3 { margin: 0 0 8px 0; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase;}
+        .stat-card .number { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
     </style>
 </head>
 <body>
@@ -284,7 +294,7 @@
                         <tr>
                             <th rowspan="2" class="col-border">Date</th>
                             <th rowspan="2" class="col-border">Job Number</th>
-                            <th rowspan="2" class="col-border" style="display: none;">Created By</th> <!-- Hidden to match screenshot structure visually -->
+                            <th rowspan="2" class="col-border">Name</th>
                             <th rowspan="2" class="col-border">Part</th>
                             <th colspan="3" class="th-group col-border">Unit Price</th>
                             <th colspan="3" class="th-group col-border">Retail Price</th>
@@ -303,6 +313,19 @@
                     <tbody id="salesTableBody">
                         <!-- Data populated by JS -->
                     </tbody>
+                    <tfoot id="salesTableFoot">
+                        <tr>
+                            <td colspan="4" style="text-align: right; color: var(--text-main);">TOTALS</td>
+                            <td id="tf-ubase">₹0.00</td>
+                            <td id="tf-ugst" class="c-orange">₹0.00</td>
+                            <td id="tf-utotal" class="c-bold col-border">₹0.00</td>
+                            <td id="tf-rbase">₹0.00</td>
+                            <td id="tf-rgst" class="c-orange">₹0.00</td>
+                            <td id="tf-rtotal" class="c-bold col-border">₹0.00</td>
+                            <td id="tf-profit" class="profit-col c-green" style="text-align: center;">₹0.00</td>
+                            <td></td>
+                        </tr>
+                    </tfoot>
                 </table>
             </div>
             <div class="pagination-controls">
@@ -314,6 +337,23 @@
                 </div>
             </div>
         </div>
+
+        <!-- Summary Stats Grid (Bottom Cards) -->
+        <div class="stats-grid">
+            <div class="stat-card">
+                <h3>Total Unit Cost (Incl. GST)</h3>
+                <p class="number" id="s-unit-total">₹0.00</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Retail Revenue (Incl. GST)</h3>
+                <p class="number" id="s-retail-total">₹0.00</p>
+            </div>
+            <div class="stat-card profit-col" id="netProfitCard">
+                <h3>Net Profit</h3>
+                <p class="number c-green" id="s-profit">₹0.00</p>
+            </div>
+        </div>
+
     </div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -330,9 +370,10 @@
     let isAdmin = false;
 
     // Pagination State
-    let allSalesData = [];
+    let allSalesData = []; // Raw data from DB
+    let groupedSalesData = []; // Data grouped by job_no
     let currentPage = 1;
-    const rowsPerPage = 10;
+    const jobsPerPage = 10; // Paginate by Job groups instead of individual rows
 
     // Sidebar Logic
     let sidebarTimer;
@@ -374,7 +415,7 @@
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
             } else {
                 isAdmin = false;
-                // Hide Profit column for non-admins
+                // Hide Profit columns/cards for non-admins
                 const profitCols = document.querySelectorAll('.profit-col');
                 profitCols.forEach(col => col.style.display = 'none');
             }
@@ -483,6 +524,26 @@
             if (error) throw error;
 
             allSalesData = data || [];
+            
+            // Group Data by Job Number + Date
+            groupedSalesData = [];
+            const jobMap = new Map();
+            
+            allSalesData.forEach(item => {
+                const key = `${item.job_no}_${item.date}`;
+                if (!jobMap.has(key)) {
+                    const newGroup = { 
+                        job_no: item.job_no, 
+                        date: item.date, 
+                        created_by: item.created_by, 
+                        parts: [] 
+                    };
+                    jobMap.set(key, newGroup);
+                    groupedSalesData.push(newGroup);
+                }
+                jobMap.get(key).parts.push(item);
+            });
+
             currentPage = 1; // Reset to page 1 on new fetch
             renderTable();
 
@@ -491,82 +552,144 @@
         }
     }
 
-    // Render Paginated Table
+    // Render Paginated Grouped Table
     function renderTable() {
         const tableBody = document.getElementById('salesTableBody');
         tableBody.innerHTML = '';
 
-        const total = allSalesData.length;
-        const totalPages = Math.ceil(total / rowsPerPage) || 1;
+        const totalGroups = groupedSalesData.length;
+        const totalPages = Math.ceil(totalGroups / jobsPerPage) || 1;
 
         if (currentPage < 1) currentPage = 1;
         if (currentPage > totalPages) currentPage = totalPages;
 
-        if(total === 0) {
-            tableBody.innerHTML = `<tr><td colspan="10" style="text-align: center; color: var(--text-muted);">No entries found.</td></tr>`;
+        // Calculate Global Totals for Footer and Cards
+        let globalUnitBase = 0, globalUnitGst = 0, globalUnitTotal = 0;
+        let globalRetailBase = 0, globalRetailGst = 0, globalRetailTotal = 0;
+        let globalProfit = 0;
+
+        allSalesData.forEach(item => {
+            const gstRate = 0.18;
+            const uBase = parseFloat(item.unit_price_base) || 0;
+            const uGst = uBase * gstRate;
+            const uTotal = uBase + uGst;
+
+            const rBase = parseFloat(item.retail_price_base) || 0;
+            const rGst = rBase * gstRate;
+            const rTotal = rBase + rGst;
+
+            globalUnitBase += uBase;
+            globalUnitGst += uGst;
+            globalUnitTotal += uTotal;
+            
+            globalRetailBase += rBase;
+            globalRetailGst += rGst;
+            globalRetailTotal += rTotal;
+            
+            globalProfit += (rTotal - uTotal);
+        });
+
+        // Update Footer
+        document.getElementById('tf-ubase').innerText = `₹${globalUnitBase.toFixed(2)}`;
+        document.getElementById('tf-ugst').innerText = `₹${globalUnitGst.toFixed(3)}`;
+        document.getElementById('tf-utotal').innerText = `₹${globalUnitTotal.toFixed(3)}`;
+        document.getElementById('tf-rbase').innerText = `₹${globalRetailBase.toFixed(2)}`;
+        document.getElementById('tf-rgst').innerText = `₹${globalRetailGst.toFixed(3)}`;
+        document.getElementById('tf-rtotal').innerText = `₹${globalRetailTotal.toFixed(3)}`;
+        document.getElementById('tf-profit').innerText = `₹${globalProfit.toFixed(3)}`;
+
+        // Update Bottom Cards
+        document.getElementById('s-unit-total').innerText = `₹${globalUnitTotal.toLocaleString('en-IN', {minimumFractionDigits: 3, maximumFractionDigits: 3})}`;
+        document.getElementById('s-retail-total').innerText = `₹${globalRetailTotal.toLocaleString('en-IN', {minimumFractionDigits: 3, maximumFractionDigits: 3})}`;
+        document.getElementById('s-profit').innerText = `₹${globalProfit.toLocaleString('en-IN', {minimumFractionDigits: 3, maximumFractionDigits: 3})}`;
+
+
+        if(totalGroups === 0) {
+            tableBody.innerHTML = `<tr><td colspan="11" style="text-align: center; color: var(--text-muted);">No entries found.</td></tr>`;
             document.getElementById('pageInfoText').innerText = `Page 1 of 1`;
-            document.getElementById('pageCountInfo').innerText = `Showing 0 to 0 of 0 entries`;
+            document.getElementById('pageCountInfo').innerText = `Showing 0 to 0 of 0 jobs`;
             document.getElementById('btnPrevPage').disabled = true;
             document.getElementById('btnNextPage').disabled = true;
             return;
         }
 
-        const start = (currentPage - 1) * rowsPerPage;
-        const endIdx = start + rowsPerPage;
-        const paginatedItems = allSalesData.slice(start, endIdx);
+        const start = (currentPage - 1) * jobsPerPage;
+        const endIdx = start + jobsPerPage;
+        const paginatedGroups = groupedSalesData.slice(start, endIdx);
 
         document.getElementById('pageInfoText').innerText = `Page ${currentPage} of ${totalPages}`;
         document.getElementById('btnPrevPage').disabled = currentPage <= 1;
         document.getElementById('btnNextPage').disabled = currentPage >= totalPages;
         
-        let displayEnd = endIdx > total ? total : endIdx;
-        document.getElementById('pageCountInfo').innerText = `Showing ${start + 1} to ${displayEnd} of ${total} entries`;
+        let displayEnd = endIdx > totalGroups ? totalGroups : endIdx;
+        document.getElementById('pageCountInfo').innerText = `Showing ${start + 1} to ${displayEnd} of ${totalGroups} jobs`;
 
-        paginatedItems.forEach(item => {
-            const gstRate = 0.18;
-            
-            const unitBase = parseFloat(item.unit_price_base);
-            const unitGst = unitBase * gstRate;
-            const unitTotal = unitBase + unitGst;
+        const gstRate = 0.18;
 
-            const retailBase = parseFloat(item.retail_price_base);
-            const retailGst = retailBase * gstRate;
-            const retailTotal = retailBase + retailGst;
+        paginatedGroups.forEach(group => {
+            const partsCount = group.parts.length;
+            const jobNoDisplay = partsCount > 1 
+                ? `${group.job_no} <span style="color:#9ca3af; font-size:0.75rem;">(${partsCount}p)</span>` 
+                : group.job_no;
 
-            const profit = retailTotal - unitTotal;
+            // Calculate Job Profit for the spanned cell
+            let jobProfit = 0;
+            group.parts.forEach(part => {
+                const uBase = parseFloat(part.unit_price_base) || 0;
+                const rBase = parseFloat(part.retail_price_base) || 0;
+                const uTotal = uBase + (uBase * gstRate);
+                const rTotal = rBase + (rBase * gstRate);
+                jobProfit += (rTotal - uTotal);
+            });
 
-            let deleteBtn = isAdmin
-                ? `<button class="action-delete" onclick="deleteEntry('${item.id}')" title="Delete Entry"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`
-                : ``;
-
-            let profitCell = isAdmin 
-                ? `<td class="profit-col col-border" style="text-align: center; color: #16a34a; font-weight: 600;">₹${profit.toFixed(3)}</td>` 
-                : `<td class="profit-col" style="display:none;"></td>`;
-
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="c-bold col-border">${item.date}</td>
-                <td class="c-bold col-border">${item.job_no}</td>
-                <td class="col-border" style="display: none;">${item.created_by || 'Admin'}</td>
-                <td class="col-border" style="color: var(--text-muted);">${item.part_label}</td>
+            group.parts.forEach((part, index) => {
+                const tr = document.createElement('tr');
                 
-                <!-- Unit Breakdown -->
-                <td>₹${unitBase.toFixed(2)}</td>
-                <td class="c-orange">₹${unitGst.toFixed(3)}</td>
-                <td class="c-bold col-border">₹${unitTotal.toFixed(3)}</td>
+                const unitBase = parseFloat(part.unit_price_base) || 0;
+                const unitGst = unitBase * gstRate;
+                const unitTotal = unitBase + unitGst;
+
+                const retailBase = parseFloat(part.retail_price_base) || 0;
+                const retailGst = retailBase * gstRate;
+                const retailTotal = retailBase + retailGst;
+
+                let deleteBtn = isAdmin
+                    ? `<button class="action-delete" onclick="deleteEntry('${part.id}')" title="Delete Part"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`
+                    : ``;
+
+                // Add Grouped cells only on the first row of the group
+                if (index === 0) {
+                    tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${group.date}</td>`;
+                    tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${jobNoDisplay}</td>`;
+                    tr.innerHTML += `<td rowspan="${partsCount}" class="c-bold col-border">${group.created_by || 'Admin'}</td>`;
+                }
+
+                // Add Part specific cells
+                tr.innerHTML += `
+                    <td class="col-border" style="color: var(--text-muted);">${part.part_label}</td>
+                    
+                    <td>₹${unitBase.toFixed(2)}</td>
+                    <td class="c-orange">₹${unitGst.toFixed(3)}</td>
+                    <td class="c-bold col-border">₹${unitTotal.toFixed(3)}</td>
+                    
+                    <td>₹${retailBase.toFixed(2)}</td>
+                    <td class="c-orange">₹${retailGst.toFixed(3)}</td>
+                    <td class="c-bold col-border">₹${retailTotal.toFixed(3)}</td>
+                `;
+
+                // Add Grouped Profit cell only on the first row
+                if (index === 0) {
+                    let profitCell = isAdmin 
+                        ? `<td rowspan="${partsCount}" class="profit-col col-border c-green" style="text-align: center;">₹${jobProfit.toFixed(3)}</td>` 
+                        : `<td rowspan="${partsCount}" class="profit-col" style="display:none;"></td>`;
+                    tr.innerHTML += profitCell;
+                }
+
+                // Add Action cell for each part
+                tr.innerHTML += `<td style="text-align: center;">${deleteBtn}</td>`;
                 
-                <!-- Retail Breakdown -->
-                <td>₹${retailBase.toFixed(2)}</td>
-                <td class="c-orange">₹${retailGst.toFixed(3)}</td>
-                <td class="c-bold col-border">₹${retailTotal.toFixed(3)}</td>
-                
-                <!-- Profit -->
-                ${profitCell}
-                
-                <!-- Action -->
-                <td style="text-align: center;">${deleteBtn}</td>
-            `;
-            tableBody.appendChild(tr);
+                tableBody.appendChild(tr);
+            });
         });
     }
 
@@ -578,7 +701,9 @@
         } 
     }
     window.nextPage = function() { 
-        if (currentPage < Math.ceil(allSalesData.length / rowsPerPage)) { 
+        const totalGroups = groupedSalesData.length;
+        const totalPages = Math.ceil(totalGroups / jobsPerPage) || 1;
+        if (currentPage < totalPages) { 
             currentPage++; 
             renderTable(); 
         } 
