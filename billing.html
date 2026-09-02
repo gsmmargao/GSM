@@ -59,7 +59,7 @@
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
         .header-left h1 { margin: 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
         
-        /* --- Form Styling (Inline to match screenshot) --- */
+        /* --- Form Styling --- */
         .form-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
         .form-header-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
         
@@ -74,6 +74,9 @@
         .btn-add:hover { background: #374151; }
         .btn-add:disabled { background: #9ca3af; cursor: not-allowed; }
 
+        .split-row { display: none; gap: 15px; align-items: flex-end; margin-top: 15px; padding: 15px; background: #f9fafb; border-radius: 8px; border: 1px dashed var(--border-color); width: 100%; flex-wrap: wrap;}
+        .split-row.active { display: flex; }
+
         /* --- Table Styling --- */
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 30px; }
         .table-scroll { width: 100%; overflow-x: auto; }
@@ -87,6 +90,7 @@
         .pill-cash { background: var(--success-bg); color: var(--success-text); }
         .pill-upi { background: var(--upi-bg); color: var(--upi-text); }
         .pill-card { background: #fef3c7; color: #b45309; }
+        .pill-split { background: #f1f5f9; color: #334155; border: 1px solid #cbd5e1; }
         
         .amount-bold { font-weight: 700; color: #111827; }
         .adv-dash { color: #ef4444; font-weight: 700; }
@@ -182,7 +186,7 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.4 - GSM Solution</div>
+        <div class="version-text">v2.5 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -219,21 +223,22 @@
                 </div>
                 
                 <div class="form-group">
-                    <label>Job Number</label>
+                    <label>Job Number <span style="color:red;">*</span></label>
                     <input type="text" id="b-jobNo" placeholder="Job No." onblur="fetchAdvancePaid()">
                 </div>
                 
-                <div class="form-group">
+                <div class="form-group" id="mainAmountGroup">
                     <label>Amount (₹)</label>
                     <input type="number" id="b-amount" placeholder="0.00" min="0" step="0.01">
                 </div>
                 
                 <div class="form-group">
                     <label>Payment Mode</label>
-                    <select id="b-paymentMode">
+                    <select id="b-paymentMode" onchange="toggleSplitRow()">
                         <option value="Cash">Cash</option>
                         <option value="UPI">UPI</option>
                         <option value="Card">Card</option>
+                        <option value="Split">Split</option>
                     </select>
                 </div>
                 
@@ -246,6 +251,23 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Add
                 </button>
+            </div>
+
+            <!-- Dynamic Split Row -->
+            <div class="split-row" id="splitInputsRow">
+                <span style="font-size: 0.75rem; font-weight: 700; color: var(--text-muted); width: 100%;">SPLIT PAYMENT AMOUNTS:</span>
+                <div class="form-group">
+                    <label>Cash (₹)</label>
+                    <input type="number" id="b-split-cash" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>UPI (₹)</label>
+                    <input type="number" id="b-split-upi" placeholder="0.00" min="0" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Card (₹)</label>
+                    <input type="number" id="b-split-card" placeholder="0.00" min="0" step="0.01">
+                </div>
             </div>
         </div>
 
@@ -299,7 +321,7 @@
             clearTimeout(sidebarTimer);
             sidebarTimer = setTimeout(() => {
                 document.getElementById('sidebar').classList.add('collapsed');
-            }, 30000); // Set to 30s to match index.html behavior
+            }, 30000); 
         }
         window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
         window.toggleSidebar = function() {
@@ -348,6 +370,21 @@
             db.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { window.fetchBilling(); }).subscribe();
         });
 
+        // Toggle Split Row UI Visibility
+        window.toggleSplitRow = function() {
+            const mode = document.getElementById('b-paymentMode').value;
+            const splitRow = document.getElementById('splitInputsRow');
+            const mainAmtGroup = document.getElementById('mainAmountGroup');
+            
+            if (mode === 'Split') {
+                splitRow.classList.add('active');
+                mainAmtGroup.style.display = 'none';
+            } else {
+                splitRow.classList.remove('active');
+                mainAmtGroup.style.display = 'flex';
+            }
+        }
+
         async function getNextInvoiceNo() {
             try {
                 const { data } = await db.from('billing').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
@@ -371,7 +408,8 @@
                 advInput.value = '';
                 return;
             }
-            const { data } = await db.from('repairOrders').select('advancePaid, customerName').ilike('jobNo', jobNo).single();
+            // Auto fetch advance and customer details
+            const { data } = await db.from('repairOrders').select('advancePaid, customerName').ilike('jobNo', jobNo).maybeSingle();
             if(data) {
                 advInput.value = data.advancePaid || 0;
                 // Pre-cache the customer name for the table rendering
@@ -394,7 +432,6 @@
         async function fetchMissingCustomers(billingData) {
             const missingJobs = billingData.map(b => b.jobNo).filter(j => j && !customerCache[j]);
             if (missingJobs.length > 0) {
-                // Batch fetch
                 const { data } = await db.from('repairOrders').select('jobNo, customerName').in('jobNo', missingJobs);
                 if (data) {
                     data.forEach(r => {
@@ -432,8 +469,9 @@
                 
                 // Determine Payment Pill styling based on string
                 let modeText = (bill.paymentMode || 'None').toUpperCase();
-                let pillClass = 'pill-card'; // Default / Other
-                if(modeText.includes('CASH')) pillClass = 'pill-cash';
+                let pillClass = 'pill-card'; 
+                if(modeText.includes('+')) pillClass = 'pill-split';
+                else if(modeText.includes('CASH')) pillClass = 'pill-cash';
                 else if(modeText.includes('UPI')) pillClass = 'pill-upi';
                 
                 let modePill = `<span class="pill ${pillClass}">${modeText}</span>`;
@@ -481,26 +519,51 @@
 
         window.saveBill = async function() {
             const rawJobNo = document.getElementById('b-jobNo').value.trim();
-            const amountInput = document.getElementById('b-amount').value;
             const paymentMode = document.getElementById('b-paymentMode').value;
             
-            if(!rawJobNo) return alert("Please enter a valid Job Number.");
-            if(!amountInput || parseFloat(amountInput) <= 0) return alert("Please enter a valid Amount.");
+            // Job number is strictly mandatory
+            if(!rawJobNo) return alert("Please enter a mandatory Job Number.");
+
+            let finalAmount = 0;
+            let cashAmt = 0, upiAmt = 0, cardAmt = 0;
+
+            // Calculate Split VS Single Payment amounts
+            if (paymentMode === 'Split') {
+                cashAmt = parseFloat(document.getElementById('b-split-cash').value) || 0;
+                upiAmt = parseFloat(document.getElementById('b-split-upi').value) || 0;
+                cardAmt = parseFloat(document.getElementById('b-split-card').value) || 0;
+                finalAmount = cashAmt + upiAmt + cardAmt;
+                if(finalAmount <= 0) return alert("Please enter valid split amounts.");
+            } else {
+                const amountInput = document.getElementById('b-amount').value;
+                if(!amountInput || parseFloat(amountInput) <= 0) return alert("Please enter a valid Amount.");
+                finalAmount = parseFloat(amountInput);
+                
+                if (paymentMode === 'Cash') cashAmt = finalAmount;
+                if (paymentMode === 'UPI') upiAmt = finalAmount;
+                if (paymentMode === 'Card') cardAmt = finalAmount;
+            }
 
             const btnSave = document.getElementById('btnSaveBill');
             btnSave.disabled = true;
             btnSave.innerHTML = 'Saving...';
 
             try {
+                // Prevent duplicate Job Number billing
+                const { data: duplicateCheck } = await db.from('billing').select('invoiceNo').ilike('jobNo', rawJobNo).maybeSingle();
+                if (duplicateCheck) {
+                    throw new Error(`A bill already exists for Job Number ${rawJobNo} (Invoice #${duplicateCheck.invoiceNo}). Multiple bills for the same job are not allowed.`);
+                }
+
                 // Get fresh invoice number dynamically on save
                 const invoiceNoStr = await getNextInvoiceNo();
                 
-                const finalAmount = parseFloat(amountInput);
-                let cashAmt = 0, upiAmt = 0, cardAmt = 0;
-                
-                if (paymentMode === 'Cash') cashAmt = finalAmount;
-                if (paymentMode === 'UPI') upiAmt = finalAmount;
-                if (paymentMode === 'Card') cardAmt = finalAmount;
+                // Format the Payment Mode label perfectly for the table based on inputs
+                let modesArr = [];
+                if (cashAmt > 0) modesArr.push("CASH");
+                if (upiAmt > 0) modesArr.push("UPI");
+                if (cardAmt > 0) modesArr.push("CARD");
+                const finalPaymentModeStr = modesArr.length > 1 ? modesArr.join(' + ') : (modesArr[0] || 'NONE');
 
                 const billData = {
                     invoiceNo: invoiceNoStr,
@@ -508,7 +571,7 @@
                     jobNo: rawJobNo,
                     advancePaid: parseFloat(document.getElementById('b-advance').value) || 0,
                     amountPaid: finalAmount,
-                    paymentMode: paymentMode,
+                    paymentMode: finalPaymentModeStr,
                     upiAmount: upiAmt,
                     cardAmount: cardAmt,
                     createdBy: document.getElementById('userNameDisplay').innerText 
@@ -551,10 +614,14 @@
                 document.getElementById('b-amount').value = '';
                 document.getElementById('b-advance').value = '';
                 document.getElementById('b-paymentMode').value = 'Cash';
+                document.getElementById('b-split-cash').value = '';
+                document.getElementById('b-split-upi').value = '';
+                document.getElementById('b-split-card').value = '';
+                toggleSplitRow(); // Ensure standard amount box shows again
                 
                 window.fetchBilling();
             } catch (err) {
-                alert("Error saving Bill: " + err.message);
+                alert("Error: " + err.message);
             } finally {
                 btnSave.disabled = false;
                 btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Add`;
