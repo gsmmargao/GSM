@@ -63,6 +63,7 @@
         .btn:hover { background: #f3f4f6; }
         .btn-primary { background: #111827; color: white; border: none; }
         .btn-primary:hover { background: #374151; }
+        .btn-primary:disabled { background: #9ca3af; cursor: not-allowed; }
 
         /* --- Stats Grid --- */
         .stats-grid { display: flex; gap: 20px; margin-bottom: 30px; flex-wrap: wrap; flex-shrink: 0;}
@@ -93,7 +94,7 @@
         .form-group { display: flex; flex-direction: column; position: relative; }
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
         .form-group label span { color: #ef4444; }
-        .form-group input, .form-group textarea { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; }
+        .form-group input, .form-group textarea, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; }
         .form-group input:focus, .form-group textarea:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
         
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; max-height: 150px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
@@ -124,6 +125,7 @@
         .form-actions { display: flex; gap: 12px; }
         .btn-save-form { background: #6b7280; color: white; border: none; padding: 10px 18px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; transition: background 0.2s; }
         .btn-save-form:hover { background: #4b5563; }
+        .btn-save-form:disabled { background: #9ca3af; cursor: not-allowed; }
         
         /* --- Tabs Navigation --- */
         .tabs-container { display: flex; gap: 25px; margin-bottom: 20px; border-bottom: 1px solid var(--border-color); padding-bottom: 0; flex-shrink: 0;}
@@ -144,18 +146,26 @@
 
         .tab-badge { background: #f3f4f6; padding: 2px 6px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; color: var(--text-muted); }
 
-        /* --- Table Styling --- */
-        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); overflow-y: auto; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+        /* --- Table & Pagination Styling --- */
+        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); flex: 1; display: flex; flex-direction: column; box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; }
+        .table-scroll { overflow-y: auto; flex: 1; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
         th { padding: 12px 20px; background: #f9fafb; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; position: sticky; top: 0; z-index: 5; }
         td { padding: 15px 20px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
         tr:hover { background-color: #f9fafb; }
         tr.hwc-row { background-color: #fef2f2 !important; }
         
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; padding: 12px 20px; background: #f9fafb; border-top: 1px solid var(--border-color); font-size: 0.85rem; font-weight: 500; color: var(--text-muted); }
+        .page-btn { padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; cursor: pointer; color: var(--text-main); font-weight: 600; }
+        .page-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .page-btn:not(:disabled):hover { background: #f3f4f6; }
+
         .tbl-icon { cursor: pointer; color: #9ca3af; margin-left: 5px; vertical-align: middle; width: 14px; height: 14px; transition: color 0.2s; }
         .tbl-icon:hover { color: var(--primary-accent); }
         .undo-icon { color: #f59e0b; width: 16px; height: 16px; cursor: pointer; margin-left: 8px; vertical-align: middle;}
         .undo-icon:hover { color: #d97706; }
+        .trash-icon { color: #ef4444; width: 16px; height: 16px; cursor: pointer; margin-left: 8px; vertical-align: middle; transition: color 0.2s;}
+        .trash-icon:hover { color: #b91c1c; }
         
         /* Status & Formats */
         .status-toggle-wrapper { display: flex; align-items: center; gap: 8px; cursor: pointer; }
@@ -257,7 +267,7 @@
         <div class="user-area">
             <div class="user-profile">
                 <div class="user-avatar" id="userAvatar">M</div>
-                <div class="user-name-text" id="userNameDisplay">Mohammed Saleem</div>
+                <div class="user-name-text" id="userNameDisplay">Loading...</div>
             </div>
             <button class="logout-btn" onclick="logOut()" title="Logout">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -267,7 +277,7 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.2 - GSM Solution</div>
+        <div class="version-text">v2.3 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -358,7 +368,6 @@
                     <label>Advance Paid (₹)</label>
                     <div class="advance-wrapper">
                         <div class="advance-top">
-                            <!-- Input is blank by default -->
                             <input type="number" id="formAdvance" placeholder="0.00" step="0.01">
                             <div class="segmented-control">
                                 <button type="button" class="segmented-btn active" id="btnPayCash" onclick="setPaymentMode('Cash')">Cash</button>
@@ -416,7 +425,7 @@
             </label>
 
             <div class="form-actions">
-                <button class="btn-save-form" onclick="saveNewOrder()">
+                <button class="btn-save-form" id="btnSaveOrder" onclick="saveNewOrder()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     Save Order
                 </button>
@@ -442,39 +451,71 @@
         
         <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 0; margin-bottom: 20px;" id="tabDescription">Showing all pending service orders awaiting repair.</p>
 
-        <!-- Main Table -->
+        <!-- Main Table with Scroll Area -->
         <div class="table-card">
-            <table>
-                <thead>
-                    <tr>
-                        <th>Date</th>
-                        <th>Job No.</th>
-                        <th>Customer Name</th>
-                        <th>Contact No.</th>
-                        <th>IMEI / Model</th>
-                        <th>Problem</th>
-                        <th>Notes</th>
-                        <th>Advance Paid (₹)</th>
-                        <th>Status</th>
-                        <th>HWC</th>
-                    </tr>
-                </thead>
-                <tbody id="ordersTableBody"></tbody>
-            </table>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="admin-col" style="display: none;">Created By</th>
+                            <th>Date</th>
+                            <th>Job No.</th>
+                            <th>Customer Name</th>
+                            <th>Contact No.</th>
+                            <th>IMEI / Model</th>
+                            <th>Problem</th>
+                            <th>Notes</th>
+                            <th>Advance Paid (₹)</th>
+                            <th>Status</th>
+                            <th>HWC</th>
+                        </tr>
+                    </thead>
+                    <tbody id="ordersTableBody"></tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination Controls -->
+            <div class="pagination-controls">
+                <div style="font-size: 0.75rem;" id="pageCountInfo">Showing 0 to 0 of 0 entries</div>
+                <div style="display:flex; gap:10px; align-items:center;">
+                    <button class="page-btn" id="btnPrevPage" onclick="changePage(-1)">Previous</button>
+                    <span id="pageInfoText">Page 1 of 1</span>
+                    <button class="page-btn" id="btnNextPage" onclick="changePage(1)">Next</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <!-- Modals -->
+
+    <!-- Generic Edit Modal (Job No & Notes) -->
+    <div class="modal-overlay" id="modalEditGeneric">
+        <div class="modal-container" style="width: 400px;">
+            <h2 class="modal-title">Edit Details</h2>
+            <p class="modal-subtitle" id="modalEditGenericSubtitle"></p>
+            
+            <div class="form-group" style="margin-bottom: 15px;">
+                <label id="lblEditGeneric">Value</label>
+                <input type="text" id="editGenericValue">
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('modalEditGeneric').style.display='none'">Cancel</button>
+                <button class="btn-confirm-modal" onclick="saveEditedField()">Save Updates</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Status Update Modal -->
     <div class="modal-overlay" id="modalStatusUpdate">
         <div class="modal-container">
             <h2 class="modal-title">Update Order Status</h2>
             <p class="modal-subtitle" id="modalStatusSubtitle"></p>
             
-            <span class="outcome-label">SELECT OUTCOME:</span>
+            <span style="font-size: 0.75rem; font-weight: 600; color: var(--text-muted); display: block; margin-bottom: 10px;">SELECT OUTCOME:</span>
             
             <label class="outcome-card" id="cardRefusal">
-                <input type="radio" name="outcome" value="Repair Refusal" class="custom-radio" onchange="handleModalSelection()">
+                <input type="radio" name="outcome" value="Repair Refusal" style="accent-color: var(--danger-color);" onchange="handleModalSelection()">
                 <div>
                     <h4>Repair Refusal</h4>
                     <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Device could not be repaired. Will move to Repair Refusal tab.</p>
@@ -482,14 +523,14 @@
             </label>
             
             <label class="outcome-card" id="cardCancelled">
-                <input type="radio" name="outcome" value="Cancelled Service Order" class="custom-radio" onchange="handleModalSelection()">
+                <input type="radio" name="outcome" value="Cancelled Service Order" style="accent-color: var(--danger-color);" onchange="handleModalSelection()">
                 <div>
                     <h4>Cancelled Service Order</h4>
                     <p style="margin:0; font-size:0.8rem; color:var(--text-muted);">Customer cancelled the service request.</p>
                 </div>
             </label>
             
-            <div class="modal-info-box" id="modalStatusInfoBox">
+            <div id="modalStatusInfoBox" style="margin-top: 15px; background: #eff6ff; padding: 12px; border-radius: 6px; border: 1px solid #bfdbfe; display: flex; gap: 10px;">
                 <span class="dot" style="margin-top: 5px; background: var(--primary-accent); flex-shrink: 0;"></span>
                 <p style="margin:0; font-size: 0.8rem; color: #1e3a8a; font-weight: 500;">No box checked → will mark as <strong>Repair Completed</strong>.</p>
             </div>
@@ -513,7 +554,7 @@
             </div>
             <div class="form-group">
                 <label>Payment Method</label>
-                <select id="editAdvMethod" style="padding: 10px; border-radius: 6px; border: 1px solid var(--border-color); background: var(--input-bg);">
+                <select id="editAdvMethod">
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
                 </select>
@@ -545,10 +586,26 @@
         let currentEditOrderId = null;
         let selectedPaymentMode = 'Cash';
 
+        // Pagination Variables
+        let currentPage = 1;
+        const itemsPerPage = 10;
+
         // Icons
         const pencilIcon = `<svg class="tbl-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>`;
         const lockIcon = `<svg class="tbl-icon" style="width:10px; height:10px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>`;
         const undoIcon = `<svg class="undo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7v6h6"></path><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"></path></svg>`;
+        const trashIconSVG = `<svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>`;
+
+        // Helper: Universally Unique Identifier generator for robust Primary Key creation
+        function generateUUID() {
+            if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+                return crypto.randomUUID();
+            }
+            return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+                var r = Math.random() * 16 | 0, v = c == 'x' ? r : (r & 0x3 | 0x8);
+                return v.toString(16);
+            });
+        }
 
         // Auto Logout & Sidebar Collapse (30 secs)
         let inactivityTimer;
@@ -581,7 +638,7 @@
             document.getElementById('formDate').valueAsDate = now;
 
             await checkAuth();
-            fetchCustomers(); // VERY IMPORTANT: Fetches customers so the auto-suggest and sync logic works
+            fetchCustomers(); 
             fetchOrders();
 
             // Real-time subscriptions
@@ -597,6 +654,7 @@
                 
                 if (isAdmin) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.querySelectorAll('.admin-col').forEach(el => el.style.display = 'table-cell');
                 }
                 
                 let name = currentUserEmail.split('@')[0];
@@ -651,7 +709,7 @@
             }
         });
 
-        // --- Orders Logic ---
+        // --- Orders Logic & Pagination ---
         async function fetchOrders() {
             try {
                 const { data, error } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
@@ -695,6 +753,8 @@
             if(tabName === 'Repair Completed') desc.innerText = "Showing all items where repairs have successfully concluded.";
             if(tabName === 'Goods Delivered') desc.innerText = "Showing history of completed & returned items.";
             if(tabName === 'Repair Refusal') desc.innerText = "Showing orders marked as refused or cancelled.";
+            
+            document.getElementById("searchInput").value = ''; // Clear search on tab switch
             applyFilters();
         }
 
@@ -707,15 +767,43 @@
                 if (currentTab === 'Repair Refusal' && o.status === 'Cancelled Service Order') matchTab = true;
                 return matchQ && matchTab;
             });
+            
+            currentPage = 1; // Reset to page 1 on new filter
             renderOrdersTable();
         }
         window.searchTable = applyFilters;
 
+        window.changePage = function(direction) {
+            currentPage += direction;
+            renderOrdersTable();
+        }
+
         function renderOrdersTable() {
             const tbody = document.getElementById('ordersTableBody');
             tbody.innerHTML = ''; 
+            
+            // Pagination Calculations
+            const total = filteredOrdersData.length;
+            const totalPages = Math.ceil(total / itemsPerPage) || 1;
+            
+            if (currentPage < 1) currentPage = 1;
+            if (currentPage > totalPages) currentPage = totalPages;
+            
+            const startIdx = (currentPage - 1) * itemsPerPage;
+            const endIdx = startIdx + itemsPerPage;
+            const paginatedData = filteredOrdersData.slice(startIdx, endIdx);
 
-            filteredOrdersData.forEach(order => {
+            // Update Pagination UI Elements
+            document.getElementById('pageInfoText').innerText = `Page ${currentPage} of ${totalPages}`;
+            document.getElementById('btnPrevPage').disabled = currentPage === 1;
+            document.getElementById('btnNextPage').disabled = currentPage === totalPages;
+            
+            let displayEnd = endIdx > total ? total : endIdx;
+            document.getElementById('pageCountInfo').innerText = `Showing ${total === 0 ? 0 : startIdx + 1} to ${displayEnd} of ${total} entries`;
+
+            const adminStyle = isAdmin ? '' : 'style="display:none;"';
+
+            paginatedData.forEach(order => {
                 const tr = document.createElement('tr');
                 if (order.hwc) tr.classList.add('hwc-row');
 
@@ -771,18 +859,28 @@
                     statusUI = `<span style="font-size: 0.75rem; font-weight: 700; color: ${sColor};">${order.status}</span>`;
                 }
 
-                // HWC Interactive UI
+                // Admin Delete Capability
+                if (isAdmin) {
+                    statusUI += `<br><span onclick="deleteOrder('${order.id}')" title="Delete Order Permanently" style="margin-top:5px; display:inline-block;">${trashIconSVG}</span>`;
+                }
+
+                // HWC Interactive UI with confirmation logic embedded
                 let hwcChecked = order.hwc ? 'checked' : '';
-                let hwcUI = `<label class="hwc-label"><input type="checkbox" class="hwc-checkbox" ${hwcChecked} onchange="toggleOrderHwc('${order.id}', this.checked)"> HWC</label>`;
+                let hwcUI = `<label class="hwc-label"><input type="checkbox" class="hwc-checkbox" ${hwcChecked} onchange="handleHwcChange(this, '${order.id}')"> HWC</label>`;
+
+                // Editable Job Number and Notes via SVG clicks
+                let jobNoStr = `<strong style="font-size:0.9rem;">${order.jobNo || ''}</strong> <span onclick="openEditGeneric('${order.id}', 'jobNo', '${order.jobNo || ''}', 'Job Number')">${pencilIcon}</span>`;
+                let notesStr = `<span style="font-size:0.8rem; font-weight:500;">${order.notes || '—'}</span> <span onclick="openEditGeneric('${order.id}', 'notes', '${(order.notes || '').replace(/'/g, "\\'")}', 'Notes')">${pencilIcon}</span>`;
 
                 tr.innerHTML = `
+                    <td class="admin-col" ${adminStyle}><span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">${order.createdBy || 'Unknown'}</span></td>
                     <td><span style="font-weight:600;">${dateStr}</span><br><span style="font-size:0.7rem; color:var(--text-muted);">${timeStr}</span></td>
-                    <td><strong style="font-size:0.9rem;">${order.jobNo || ''}</strong></td>
+                    <td>${jobNoStr}</td>
                     <td><strong style="font-size:0.85rem;">${order.customerName || ''}</strong></td>
                     <td><strong style="font-size:0.85rem;">${order.contactNo || '—'}</strong></td>
                     <td><span style="color:var(--text-muted); font-size:0.75rem;">${order.imeiNo || ''}</span><br><strong style="font-size:0.8rem; color:#4b5563;">${order.modelNo || ''}</strong></td>
                     <td><span style="font-size:0.8rem; font-weight:500;">${order.problemDesc || '—'}</span></td>
-                    <td><span style="font-size:0.8rem; font-weight:500;">${order.notes || '—'}</span></td>
+                    <td>${notesStr}</td>
                     <td>${advanceHtml}</td>
                     <td>${statusUI}</td>
                     <td>${hwcUI}</td>
@@ -799,7 +897,13 @@
             } catch (e) { alert("Error updating status: " + e.message); }
         }
 
-        window.toggleOrderHwc = async function(id, isChecked) {
+        window.handleHwcChange = async function(checkboxEl, id) {
+            const isChecked = checkboxEl.checked;
+            if(!confirm(`Are you sure you want to change the status to ${isChecked ? 'HWC (With Customer)' : 'NOT HWC'}?`)) {
+                // Revert checkbox state if user clicks cancel
+                checkboxEl.checked = !isChecked;
+                return;
+            }
             try {
                 await supabaseClient.from('repairOrders').update({ hwc: isChecked }).eq('id', id);
                 fetchOrders(); 
@@ -812,6 +916,14 @@
                 await supabaseClient.from('repairOrders').update({ status: 'Pending' }).eq('id', id);
                 fetchOrders();
             } catch (e) { console.error(e); }
+        }
+
+        window.deleteOrder = async function(id) {
+            if(!confirm("⚠️ WARNING: Are you sure you want to permanently delete this order? This action cannot be undone.")) return;
+            try {
+                await supabaseClient.from('repairOrders').delete().eq('id', id);
+                fetchOrders();
+            } catch (e) { alert("Failed to delete order: " + e.message); }
         }
 
         // --- New Order Form Logic ---
@@ -853,43 +965,49 @@
                 return;
             }
 
-            // Customer verification/creation Fix: It will now successfully push to DB
-            let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === contact);
-            if (!custExists) {
-                try {
-                    await supabaseClient.from('customers').insert([{ name: name, contact: contact, pending_credit: 0 }]);
-                    await fetchCustomers(); // Re-sync local database array so autocomplete works immediately
-                } catch (e) {
-                    console.error("Failed to add new customer to database", e);
-                }
-            }
-
-            // Advance / Split parsing
-            let totalAdvance = 0;
-            let cashAmt = 0, upiAmt = 0;
-            
-            if (selectedPaymentMode === 'Split') {
-                cashAmt = parseFloat(document.getElementById('splitCashAmt').value) || 0;
-                upiAmt = parseFloat(document.getElementById('splitUpiAmt').value) || 0;
-                totalAdvance = cashAmt + upiAmt;
-            } else {
-                totalAdvance = parseFloat(document.getElementById('formAdvance').value) || 0;
-                if (selectedPaymentMode === 'Cash') cashAmt = totalAdvance;
-                if (selectedPaymentMode === 'UPI') upiAmt = totalAdvance;
-            }
-
-            const newOrder = {
-                customerName: name, contactNo: contact, jobNo: jobNo,
-                advancePaid: totalAdvance, payment_method: selectedPaymentMode,
-                date: date, imeiNo: document.getElementById('formImei').value.trim(),
-                modelNo: document.getElementById('formModel').value.trim(),
-                problemDesc: document.getElementById('formProblem').value.trim(),
-                notes: document.getElementById('formNotes').value.trim(),
-                hwc: document.getElementById('formHwc').checked,
-                status: 'Pending', createdBy: currentUserEmail || 'Admin'
-            };
+            const btnSave = document.getElementById('btnSaveOrder');
+            btnSave.disabled = true;
+            btnSave.innerHTML = 'Saving...';
 
             try {
+                // Customer logic 
+                let custExists = allCustomersData.find(c => c.name.toLowerCase() === name.toLowerCase() && c.contact === contact);
+                if (!custExists) {
+                    await supabaseClient.from('customers').insert([{ id: generateUUID(), name: name, contact: contact, pending_credit: 0 }]);
+                    await fetchCustomers(); // Re-sync local database array so autocomplete works immediately
+                }
+
+                // Advance / Split parsing
+                let totalAdvance = 0;
+                let cashAmt = 0, upiAmt = 0;
+                
+                if (selectedPaymentMode === 'Split') {
+                    cashAmt = parseFloat(document.getElementById('splitCashAmt').value) || 0;
+                    upiAmt = parseFloat(document.getElementById('splitUpiAmt').value) || 0;
+                    totalAdvance = cashAmt + upiAmt;
+                } else {
+                    totalAdvance = parseFloat(document.getElementById('formAdvance').value) || 0;
+                    if (selectedPaymentMode === 'Cash') cashAmt = totalAdvance;
+                    if (selectedPaymentMode === 'UPI') upiAmt = totalAdvance;
+                }
+
+                const newOrder = {
+                    id: generateUUID(), // FIX: Explicitly generating a unique ID circumvents 'pkey violation' completely
+                    customerName: name, 
+                    contactNo: contact, 
+                    jobNo: jobNo,
+                    advancePaid: totalAdvance, 
+                    payment_method: selectedPaymentMode,
+                    date: date, 
+                    imeiNo: document.getElementById('formImei').value.trim(),
+                    modelNo: document.getElementById('formModel').value.trim(),
+                    problemDesc: document.getElementById('formProblem').value.trim(),
+                    notes: document.getElementById('formNotes').value.trim(),
+                    hwc: document.getElementById('formHwc').checked,
+                    status: 'Pending', 
+                    createdBy: currentUserEmail || 'Admin'
+                };
+
                 const { error } = await supabaseClient.from('repairOrders').insert([newOrder]);
                 if (error) throw error;
                 
@@ -915,15 +1033,46 @@
                 fetchOrders();
             } catch (err) {
                 alert("Failed to save order: " + err.message);
+            } finally {
+                // Re-enable save button
+                btnSave.disabled = false;
+                btnSave.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg> Save Order`;
             }
         }
 
         function clearForm() {
             ['formCustName', 'formContact', 'formJobNo', 'formImei', 'formModel', 'formProblem', 'formNotes', 'splitCashAmt', 'splitUpiAmt'].forEach(id => document.getElementById(id).value = '');
-            document.getElementById('formAdvance').value = ''; // Fully blank as requested
+            document.getElementById('formAdvance').value = ''; 
             document.getElementById('formHwc').checked = false;
             setPaymentMode('Cash');
             document.getElementById('formDate').valueAsDate = new Date();
+        }
+
+        // --- Generic Field Edit Modal (For Job No & Notes) ---
+        let currentEditField = '';
+        window.openEditGeneric = function(id, fieldName, currentValue, displayLabel) {
+            currentEditOrderId = id;
+            currentEditField = fieldName;
+            
+            document.getElementById('modalEditGenericSubtitle').innerText = `Updating ${displayLabel}`;
+            document.getElementById('lblEditGeneric').innerText = `New ${displayLabel}`;
+            document.getElementById('editGenericValue').value = currentValue === '—' ? '' : currentValue;
+            
+            document.getElementById('modalEditGeneric').style.display = 'flex';
+        }
+
+        window.saveEditedField = async function() {
+            const newValue = document.getElementById('editGenericValue').value.trim();
+            try {
+                const updateObj = {};
+                updateObj[currentEditField] = newValue;
+                await supabaseClient.from('repairOrders').update(updateObj).eq('id', currentEditOrderId);
+                
+                document.getElementById('modalEditGeneric').style.display = 'none';
+                fetchOrders();
+            } catch (e) {
+                alert("Update failed: " + e.message);
+            }
         }
 
         // --- Status Update Modal ---
@@ -951,12 +1100,12 @@
             const btn = document.getElementById('btnConfirmStatus');
             
             if (sel) {
-                box.classList.add('hidden');
+                box.style.display = 'none';
                 btn.innerText = `Yes, Mark ${sel.value}`;
                 btn.classList.add('danger');
                 btn.classList.remove('btn-primary');
             } else {
-                box.classList.remove('hidden');
+                box.style.display = 'flex';
                 btn.innerText = 'Yes, Mark Repair Completed';
                 btn.classList.remove('danger');
             }
