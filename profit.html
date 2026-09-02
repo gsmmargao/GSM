@@ -9,8 +9,18 @@
     <style>
         :root {
             --bg-color: #f8fafc;
-            --sidebar-width: 250px;
-            --border-color: #e2e8f0;
+            --sidebar-bg: #f9fafb;
+            --card-bg: #ffffff;
+            --input-bg: #ffffff;
+            --border-color: #e5e7eb;
+            --text-main: #111827;
+            --text-muted: #6b7280;
+            --primary-accent: #3b82f6;
+            --sidebar-width: 240px;
+            --danger-color: #ef4444;
+            --success-color: #10b981;
+            
+            /* Profit specific colors */
             --c-green: #22c55e;
             --c-green-dark: #15803d;
             --bg-green-light: #f0fdf4;
@@ -19,64 +29,64 @@
             --c-red-dark: #b91c1c;
             --bg-red-light: #fef2f2;
             --border-red: #fecaca;
-            --text-main: #0f172a;
-            --text-muted: #64748b;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); display: flex; height: 100vh; overflow: hidden; position: relative; color: var(--text-main); }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: white; border-right: 1px solid var(--border-color); display: flex; flex-direction: column; transition: width 0.4s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; }
-        .logo-area { display: flex; align-items: center; padding: 20px; font-weight: 800; font-size: 1.2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 10px;}
-        .logo-icon { background: #1e293b; color: white; padding: 6px 8px; border-radius: 6px; margin-right: 10px; font-size: 0.8rem; letter-spacing: 1px;}
+        /* --- Sidebar Styling --- */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
+        .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
         
-        .nav-item { padding: 10px 20px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; gap: 12px; font-size: 0.9rem; cursor: pointer; font-weight: 500; transition: 0.2s;}
-        .nav-item.active { background: #0f172a; color: white; border-radius: 0 24px 24px 0; margin-right: 20px; }
-        .nav-item:hover:not(.active) { background: #f1f5f9; color: var(--text-main); }
+        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
         
-        .admin-badge { background: #e2e8f0; color: #475569; font-size: 0.6rem; padding: 2px 6px; border-radius: 12px; font-weight: bold; margin-left: auto; }
-        .nav-item.active .admin-badge { background: #334155; color: #cbd5e1; }
+        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
+        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
+        .nav-item.active { background: #111827; color: white; }
+        .nav-item.active svg { opacity: 1; }
+        .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
+        .admin-only { display: none; color: #b91c1c; }
 
-        .user-profile { margin-top: auto; padding: 15px 20px; border-top: 1px solid var(--border-color); display: flex; align-items: center; gap: 10px; cursor: pointer; }
-        .user-avatar { background: #e2e8f0; color: #475569; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
-        .user-info { display: flex; flex-direction: column; }
-        .user-name { font-size: 0.85rem; font-weight: bold; color: var(--text-main); }
-        .user-role { font-size: 0.75rem; color: var(--text-muted); }
+        .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
+        .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
+        .logout-btn:hover { color: #ef4444; }
 
-        /* Top Bar */
-        .top-bar { background: white; border-bottom: 1px solid var(--border-color); height: 60px; display: flex; justify-content: space-between; align-items: center; padding: 0 30px; font-size: 0.9rem;}
-        .top-bar-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
-        .top-bar-right { color: var(--text-muted); display: flex; align-items: center; gap: 10px;}
-
-        /* Main Content */
-        .main-content-wrapper { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
-        .main-content { flex: 1; overflow-y: auto; padding: 40px 50px; }
-
-        /* Header & Controls */
-        .page-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 30px; }
-        .page-title h1 { margin: 0; font-size: 1.6rem; font-weight: 700; color: var(--text-main); }
-        .page-title p { margin: 5px 0 0 0; color: var(--text-muted); font-size: 0.95rem; }
+        /* --- Main Content & Header --- */
+        .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
         
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); }
+        .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
+        .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+        .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
+        
+        .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
+        .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
+        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+        .header-right { display: flex; gap: 10px; align-items: center;}
+
+        /* Month Controls */
         .month-controls { display: flex; align-items: center; gap: 15px; }
-        .month-selector { display: flex; align-items: center; background: white; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.05);}
-        .month-btn { background: white; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1rem; transition: 0.2s; }
-        .month-btn:hover { background: #f8fafc; color: var(--text-main); }
+        .month-selector { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+        .month-btn { background: transparent; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1rem; transition: 0.2s; font-weight: bold;}
+        .month-btn:hover { background: #f3f4f6; color: var(--text-main); }
         .month-btn:first-child { border-right: 1px solid var(--border-color); }
         .month-btn:last-child { border-left: 1px solid var(--border-color); }
         
-        .month-display { position: relative; padding: 8px 15px; font-weight: 600; color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; background: white; cursor: pointer; min-width: 130px; justify-content: center;}
+        .month-display { position: relative; padding: 8px 15px; font-weight: 600; color: var(--text-main); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 120px; justify-content: center;}
         .month-display input[type="month"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        
-        .selected-month-text { font-weight: bold; color: var(--text-main); font-size: 1.1rem; min-width: 120px; text-align: right; }
+        .selected-month-text { font-weight: 700; color: var(--text-main); font-size: 1.05rem; min-width: 130px; text-align: right; text-transform: uppercase; letter-spacing: 0.5px;}
 
-        /* Layout Grid */
+        /* --- Profit & Expenses Layout Grid --- */
         .profit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; align-items: start;}
 
         /* Base Card */
-        .card { background: white; border-radius: 12px; padding: 25px; display: flex; flex-direction: column; min-height: 380px;}
+        .card { background: var(--card-bg); border-radius: 10px; padding: 25px; display: flex; flex-direction: column; min-height: 400px; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
 
         /* Income Card */
-        .card-income { border: 1px solid var(--border-green); box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.05); }
+        .card-income { border: 1px solid var(--border-green); }
         .card-header-green { color: var(--c-green-dark); font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 25px; letter-spacing: 0.5px; }
         
         .ow-profit-box { background: var(--bg-green-light); border: 1px solid var(--border-green); border-radius: 8px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;}
@@ -84,107 +94,168 @@
         .ow-icon { color: var(--c-green); font-size: 1.2rem; }
         .ow-text h4 { margin: 0; color: var(--c-green-dark); font-size: 0.95rem; font-weight: 600;}
         .ow-text p { margin: 2px 0 0 0; font-size: 0.75rem; color: var(--c-green); }
-        .ow-amount { font-size: 1.3rem; font-weight: 800; color: var(--c-green-dark); }
+        .ow-amount { font-size: 1.25rem; font-weight: 800; color: var(--c-green-dark); }
 
         .add-income-box { border: 1px dashed var(--border-green); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
-        .add-income-box h5 { margin: 0 0 15px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px;}
+        .add-income-box h5 { margin: 0 0 15px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
         .input-group { margin-bottom: 12px; }
-        .input-group input { width: 100%; padding: 12px 15px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.9rem; box-sizing: border-box; color: var(--text-main); font-family: inherit;}
+        .input-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.85rem; box-sizing: border-box; color: var(--text-main); font-family: inherit;}
         .input-group input:focus { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
         
         .input-row { display: flex; gap: 12px; }
-        .currency-input { display: flex; flex: 1; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: white; }
+        .currency-input { display: flex; flex: 1; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--input-bg); }
         .currency-input:focus-within { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
-        .currency-input span { padding: 0 15px; color: var(--text-muted); background: #f8fafc; border-right: 1px solid var(--border-color); font-weight: 500;}
+        .currency-input span { padding: 0 15px; color: var(--text-muted); background: #f9fafb; border-right: 1px solid var(--border-color); font-weight: 600; font-size: 0.85rem; height: 100%; display: flex; align-items: center;}
         .currency-input input { border: none; box-shadow: none; border-radius: 0; }
         
-        .btn-add { background: #94a3b8; color: white; border: none; padding: 0 25px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap;}
+        .btn-add { background: #94a3b8; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; font-size: 0.85rem;}
         .btn-add:hover { background: #64748b; }
+        .btn-icon-danger { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
+        .btn-icon-danger:hover { color: var(--danger-color); }
 
         .other-income-list { max-height: 150px; overflow-y: auto; margin-bottom: 20px;}
-        .other-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.9rem;}
+        .other-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; align-items: center;}
 
         .total-row-green { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-green-dark); font-size: 1.1rem; padding-top: 20px; border-top: 1px solid var(--border-green); margin-top: auto;}
 
         /* Expenses Card */
-        .card-expenses { border: 1px solid var(--border-red); box-shadow: 0 4px 6px -1px rgba(239, 68, 68, 0.05); }
-        .card-header-red { color: var(--c-red-dark); font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; letter-spacing: 0.5px; }
-        .card-header-red a { color: var(--c-red); text-decoration: none; font-size: 0.75rem; font-weight: 500; display: flex; align-items: center; gap: 5px; transition: 0.2s;}
+        .card-expenses { border: 1px solid var(--border-red); }
+        .card-header-red { color: var(--c-red-dark); font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; letter-spacing: 0.5px; text-transform: uppercase;}
+        .card-header-red a { color: var(--c-red); text-decoration: none; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: 0.2s; text-transform: none;}
         .card-header-red a:hover { color: var(--c-red-dark); }
 
         .expense-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .expense-item { border-bottom: 1px solid var(--border-color); padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
         .expense-item:last-child { border-bottom: none; }
-        .expense-info h4 { margin: 0; color: var(--text-main); font-size: 0.9rem; font-weight: 600;}
+        .expense-info h4 { margin: 0; color: var(--text-main); font-size: 0.85rem; font-weight: 600;}
         .expense-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.75rem; }
         .expense-amount-date { text-align: right; }
-        .expense-amount-date h4 { margin: 0; color: var(--c-red); font-size: 0.95rem; font-weight: 600;}
+        .expense-amount-date h4 { margin: 0; color: var(--c-red); font-size: 0.9rem; font-weight: 700;}
 
-        .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.9rem; padding: 20px;}
+        .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;}
         
         .total-row-red { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-red-dark); font-size: 1.1rem; padding-top: 20px; border-top: 1px solid var(--border-red); margin-top: auto;}
 
         /* EBITDA Card */
-        .ebitda-card { background: var(--bg-green-light); border: 1px solid var(--border-green); border-radius: 12px; padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 4px 6px -1px rgba(34, 197, 94, 0.05);}
-        .ebitda-title h2 { margin: 0; color: var(--c-green-dark); font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px;}
-        .ebitda-title p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
+        .ebitda-card { background: var(--bg-green-light); border: 1px solid var(--border-green); border-radius: 10px; padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
+        .ebitda-title h2 { margin: 0; color: var(--c-green-dark); font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;}
+        .ebitda-title p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
         .ebitda-value-box { text-align: right; }
-        .ebitda-value { font-size: 2.5rem; font-weight: 800; color: var(--c-green-dark); margin: 0; line-height: 1;}
-        .ebitda-calc { margin: 8px 0 0 0; font-size: 0.8rem; color: var(--text-muted); }
+        .ebitda-value { font-size: 2.25rem; font-weight: 800; color: var(--c-green-dark); margin: 0; line-height: 1;}
+        .ebitda-calc { margin: 8px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
 
     </style>
 </head>
 <body>
 
-<div class="sidebar" id="sidebar">
-    <div class="logo-area"><div class="logo-icon">GSM</div>SOLUTION</div>
-    
-    <a href="index.html" class="nav-item">📋 Order Details</a>
-    <a href="billing.html" class="nav-item">💳 Billing</a>
-    <a href="store-plus.html" class="nav-item">📦 Store Plus</a>
-    <a href="accessories.html" class="nav-item">🛍️ Accessories</a>
-    <a href="sales-report.html" class="nav-item">📊 Sales Report</a>
-    <a href="upi-book.html" class="nav-item">📖 UPI Book</a>
-    <a href="cashbook.html" class="nav-item">💵 Cashbook</a>
-    <a href="customers.html" class="nav-item">👥 Customer</a>
-    <a href="estimate.html" class="nav-item">🧾 Estimate</a>
-    <a href="technical-report.html" class="nav-item">📄 Technical Report</a>
-    <a href="expenses.html" class="nav-item admin-only" style="display: none;">💸 Expenses <span class="admin-badge">ADMIN</span></a>
-    <a href="profit.html" class="nav-item active admin-only" style="display: none;">📈 Profit Book</a>
-    <a href="users.html" class="nav-item admin-only" style="display: none;">👥 Users <span class="admin-badge">ADMIN</span></a>
+    <!-- SIDEBAR -->
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
+        <div class="logo-area">
+            <div class="logo-icon">
+                <div style="font-size: 10px; line-height:1;">GSM</div>
+            </div>
+            <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
+        </div>
+        
+        <a href="index.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
+            Order Details
+        </a>
+        <a href="billing.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
+            Billing
+        </a>
+        <a href="store-plus.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>
+            Store Plus
+        </a>
+        <a href="accessories.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
+            Accessories
+        </a>
+        <a href="sales-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Sales Report
+        </a>
+        <a href="upi-book.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+            UPI Book
+        </a>
+        <a href="cashbook.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Cashbook
+        </a>
+        <a href="customer.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Customer
+        </a>
+        <a href="estimate.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Estimate
+        </a>
+        <a href="technical-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Technical Report
+        </a>
 
-    <div class="user-profile" onclick="logOut()">
-        <div class="user-avatar" id="userAvatar">A</div>
-        <div class="user-info">
-            <span class="user-name" id="userNameDisplay">Administrator</span>
-            <span class="user-role">Administrator</span>
+        <!-- Admin Only Tabs -->
+        <a href="expenses.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            Expenses
+        </a>
+        <a href="profit.html" class="nav-item active admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Profitbook
+        </a>
+        <a href="users.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Users
+        </a>
+
+        <div style="flex-grow: 1;"></div> 
+        
+        <div class="user-area">
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar">M</div>
+                <div class="user-name-text" id="userNameDisplay">Loading...</div>
+            </div>
+            <button class="logout-btn" onclick="logOut()" title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
         </div>
     </div>
-</div>    
 
-<div class="main-content-wrapper">
-    <div class="top-bar">
-        <div class="top-bar-left">
-            <span>📄</span> Profit Book
-        </div>
-        <div class="top-bar-right" id="currentDateDisplay">
-            Sat, 01 Aug, 2026 | GSM SOLUTION
-        </div>
-    </div>
-
+    <!-- MAIN CONTENT -->
     <div class="main-content">
-        <div class="page-header">
-            <div class="page-title">
+        
+        <div class="top-nav">
+            <div class="top-nav-left">
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    Profitbook
+                </div>
+            </div>
+            <div style="font-weight: 500;" id="headerDateTime"></div>
+        </div>
+
+        <div class="header">
+            <div class="header-left">
                 <h1>Profit Book</h1>
                 <p>Monthly profit & expense summary</p>
             </div>
-            
-            <div class="month-controls">
+            <div class="header-right month-controls">
                 <div class="month-selector">
                     <button class="month-btn" onclick="changeMonth(-1)">‹</button>
                     <div class="month-display">
                         <span id="monthDisplayText">August, 2026</span>
-                        <span>📅</span>
+                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
                         <input type="month" id="monthInput" onchange="fetchData()">
                     </div>
                     <button class="month-btn" onclick="changeMonth(1)">›</button>
@@ -196,7 +267,10 @@
         <div class="profit-grid">
             <!-- LEFT COLUMN -->
             <div class="card card-income">
-                <div class="card-header-green">↗ INCOME / PROFIT</div>
+                <div class="card-header-green">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+                    INCOME / PROFIT
+                </div>
                 
                 <div class="ow-profit-box">
                     <div class="ow-text">
@@ -210,7 +284,7 @@
                 </div>
 
                 <div class="add-income-box">
-                    <h5>ADD OTHER INCOME</h5>
+                    <h5>Add Other Income</h5>
                     <div class="input-group">
                         <input type="text" id="otherIncomeLabel" placeholder="Income label (e.g. Labour charges)">
                     </div>
@@ -236,14 +310,17 @@
             <!-- RIGHT COLUMN -->
             <div class="card card-expenses">
                 <div class="card-header-red">
-                    <span>↘ EXPENSES</span>
-                    <a href="expenses.html">↗ from Expenses tab</a>
+                    <div style="display:flex; align-items:center; gap:8px;">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="23 18 13.5 8.5 8.5 13.5 1 6"></polyline><polyline points="17 18 23 18 23 12"></polyline></svg>
+                        EXPENSES
+                    </div>
+                    <a href="expenses.html">from Expenses tab ➔</a>
                 </div>
 
                 <div class="expense-list" id="expensesList">
                     <!-- Empty state or list goes here -->
                     <div class="empty-state" id="expensesEmptyState">
-                        No expenses recorded for <span id="emptyStateMonth">August 2026</span>.<br>
+                        No expenses recorded for <span id="emptyStateMonth" style="font-weight:600; color:var(--text-main);">August 2026</span>.<br>
                         Add entries from the <strong>Expenses</strong> tab.
                     </div>
                 </div>
@@ -267,15 +344,11 @@
             </div>
         </div>
     </div>
-</div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-    // Supabase Configuration
-    const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
-    const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
-    const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
-
+    const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
+    const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
     let currentUserEmail = '';
     
     // Totals State
@@ -285,17 +358,31 @@
         totalExpenses: 0
     };
 
-    // Set Date Formats
+    // --- Sidebar & Base Logic ---
+    let sidebarTimer;
+    window.resetSidebarTimer = function() {
+        clearTimeout(sidebarTimer);
+        sidebarTimer = setTimeout(() => {
+            document.getElementById('sidebar').classList.add('collapsed');
+        }, 30000); // 30s auto collapse
+    }
+    window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
+    window.toggleSidebar = function() {
+        document.getElementById('sidebar').classList.toggle('collapsed');
+        if(!document.getElementById('sidebar').classList.contains('collapsed')) resetSidebarTimer();
+        else clearSidebarTimer();
+    }
+    window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetSidebarTimer;
+
     const dateOptions = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
-    document.getElementById('currentDateDisplay').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
+    document.getElementById('headerDateTime').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
     
     const monthInput = document.getElementById('monthInput');
     let currentDate = new Date();
-    // Default to current month
     monthInput.value = `${currentDate.getFullYear()}-${String(currentDate.getMonth() + 1).padStart(2, '0')}`;
 
     async function checkAuth() {
-        const { data } = await supabaseClient.auth.getSession();
+        const { data } = await db.auth.getSession();
         if (!data.session) window.location.href = 'login.html';
         else {
             currentUserEmail = data.session.user.email;
@@ -303,20 +390,20 @@
             document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
             document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
             
-            if (currentUserEmail.trim().toLowerCase() === 'gsmmargao@gmail.com') {
+            if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
             }
         }
     }
     
     async function logOut() {
-        await supabaseClient.auth.signOut();
+        await db.auth.signOut();
         window.location.href = 'login.html';
     }
 
-    // --- Format Currency ---
+    // --- Format Utils ---
     function formatMoney(amount) {
-        return amount.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+        return parseFloat(amount || 0).toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
     }
     
     function formatMonthYearLong(dateString) {
@@ -342,7 +429,6 @@
         const selectedMonth = monthInput.value; // YYYY-MM
         const startOfMonth = `${selectedMonth}-01`;
         
-        // Calculate end of month dynamically
         const dateObj = new Date(startOfMonth);
         const nextMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 1);
         const endOfMonthDate = new Date(nextMonth - 1);
@@ -354,10 +440,9 @@
         
         document.getElementById('monthDisplayText').innerText = shortFormat;
         document.getElementById('selectedMonthLabel').innerText = longFormat;
-        document.getElementById('ebitdaTitleText').innerText = `EBITDA — ${longFormat.toUpperCase()}`;
+        document.getElementById('ebitdaTitleText').innerText = `EBITDA — ${longFormat}`;
         document.getElementById('emptyStateMonth').innerText = longFormat;
 
-        // Reset state
         state = { owProfit: 0, otherIncome: 0, totalExpenses: 0 };
 
         await Promise.all([
@@ -372,8 +457,7 @@
     // 1. Fetch Sales Report Profit
     async function fetchOWProfit(start, end) {
         try {
-            const { data, error } = await supabaseClient
-                .from('sales_reports')
+            const { data, error } = await db.from('sales_reports')
                 .select('unit_price_base, retail_price_base')
                 .gte('date', start)
                 .lte('date', end);
@@ -397,8 +481,7 @@
     // 2. Fetch Other Income
     async function fetchOtherIncomeData(start, end) {
         try {
-            const { data, error } = await supabaseClient
-                .from('profit_other_income')
+            const { data, error } = await db.from('profit_other_income')
                 .select('*')
                 .gte('date', start)
                 .lte('date', end)
@@ -417,10 +500,10 @@
                 const div = document.createElement('div');
                 div.className = 'other-item';
                 div.innerHTML = `
-                    <span style="color:var(--text-muted);">${item.label}</span>
+                    <span style="color:var(--text-muted); font-weight:500;">${item.label}</span>
                     <div style="display:flex; align-items:center; gap:10px;">
-                        <span style="font-weight:600; color:var(--text-main);">${formatMoney(amt)}</span>
-                        ${currentUserEmail === 'gsmmargao@gmail.com' ? `<button onclick="deleteOtherIncome('${item.id}')" style="background:none; border:none; color:var(--c-red); cursor:pointer; font-size:14px; padding:0;">✕</button>` : ''}
+                        <span style="font-weight:700; color:var(--text-main);">${formatMoney(amt)}</span>
+                        ${currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase() ? `<button class="btn-icon-danger" onclick="deleteOtherIncome('${item.id}')" title="Remove"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg></button>` : ''}
                     </div>
                 `;
                 listDiv.appendChild(div);
@@ -433,8 +516,7 @@
     // 3. Fetch Expenses
     async function fetchExpensesData(start, end) {
         try {
-            const { data, error } = await supabaseClient
-                .from('expenses')
+            const { data, error } = await db.from('expenses')
                 .select('*')
                 .gte('date', start)
                 .lte('date', end)
@@ -445,7 +527,6 @@
             const listDiv = document.getElementById('expensesList');
             const emptyState = document.getElementById('expensesEmptyState');
             
-            // Clear current list items, keeping empty state node if needed
             Array.from(listDiv.children).forEach(child => {
                 if(child.id !== 'expensesEmptyState') listDiv.removeChild(child);
             });
@@ -459,7 +540,7 @@
                 data.forEach(item => {
                     const amt = parseFloat(item.amount);
                     sum += amt;
-                    const d = new Date(item.date).toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+                    const d = new Date(item.date).toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
 
                     const div = document.createElement('div');
                     div.className = 'expense-item';
@@ -490,10 +571,8 @@
         document.getElementById('totalIncomeDisplay').innerText = formatMoney(totalIncome);
         document.getElementById('ebitdaTotalDisplay').innerText = formatMoney(ebitda);
         
-        // The bottom calc text
         document.getElementById('ebitdaCalcText').innerText = `${formatMoney(totalIncome)} income - ${formatMoney(state.totalExpenses)} expenses`;
 
-        // Color toggle for EBITDA depending on profit/loss
         const ebitdaValText = document.getElementById('ebitdaTotalDisplay');
         const ebitdaCard = document.getElementById('ebitdaCard');
         const ebitdaTitle = document.querySelector('.ebitda-title h2');
@@ -526,11 +605,10 @@
             return alert("Please enter a valid label and amount.");
         }
 
-        // Save to current selected month with day as 01 for reference
         const insertDate = `${monthInput.value}-01`;
 
         try {
-            const { error } = await supabaseClient.from('profit_other_income').insert([{
+            const { error } = await db.from('profit_other_income').insert([{
                 date: insertDate,
                 label: label,
                 amount: amount,
@@ -548,7 +626,7 @@
     window.deleteOtherIncome = async function(id) {
         if(!confirm("Delete this income record?")) return;
         try {
-            const { error } = await supabaseClient.from('profit_other_income').delete().eq('id', id);
+            const { error } = await db.from('profit_other_income').delete().eq('id', id);
             if (error) throw error;
             fetchData();
         } catch (error) { alert("Failed to delete: " + error.message); }
@@ -558,6 +636,7 @@
     document.addEventListener("DOMContentLoaded", async () => {
         await checkAuth();
         fetchData();
+        resetSidebarTimer();
     });
 </script>
 </body>
