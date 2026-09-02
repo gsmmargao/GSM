@@ -45,7 +45,6 @@
         .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
-        /* Changed to allow natural page scrolling */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
         
         .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); }
@@ -96,7 +95,7 @@
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
         .form-group label span { color: #ef4444; }
         .form-group input, .form-group textarea, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; }
-        .form-group input:focus, .form-group textarea:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
         
         .autocomplete-list { position: absolute; top: 100%; left: 0; right: 0; background: white; border: 1px solid var(--border-color); border-top: none; border-radius: 0 0 6px 6px; max-height: 150px; overflow-y: auto; z-index: 50; display: none; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
         .autocomplete-item { padding: 8px 12px; font-size: 0.85rem; cursor: pointer; border-bottom: 1px solid #f3f4f6; }
@@ -200,7 +199,7 @@
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
             <div class="logo-icon">
                 <div style="font-size: 10px; line-height:1;">GSM</div>
@@ -278,7 +277,7 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.4 - GSM Solution</div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -555,10 +554,17 @@
             </div>
             <div class="form-group">
                 <label>Payment Method</label>
-                <select id="editAdvMethod">
+                <select id="editAdvMethod" onchange="toggleEditAdvanceSplit()">
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
+                    <option value="Split">Split</option>
                 </select>
+            </div>
+            
+            <!-- Split Option for Edit Modal -->
+            <div class="split-inputs" id="editAdvSplitInputs" style="display: none; margin-bottom: 15px;">
+                <input type="number" id="editAdvSplitCash" placeholder="Cash Amount ₹" step="0.01">
+                <input type="number" id="editAdvSplitUpi" placeholder="UPI Amount ₹" step="0.01">
             </div>
             
             <div class="modal-footer">
@@ -645,12 +651,15 @@
                 if (isAdmin) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
                     document.querySelectorAll('.admin-col').forEach(el => el.style.display = 'table-cell');
+                    
+                    document.getElementById('userNameDisplay').innerText = 'Administrator';
+                    document.getElementById('userAvatar').innerText = 'A';
+                } else {
+                    let name = currentUserEmail.split('@')[0];
+                    name = name.charAt(0).toUpperCase() + name.slice(1);
+                    document.getElementById('userNameDisplay').innerText = name;
+                    document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
                 }
-                
-                let name = currentUserEmail.split('@')[0];
-                name = name.charAt(0).toUpperCase() + name.slice(1);
-                document.getElementById('userNameDisplay').innerText = name;
-                document.getElementById('userAvatar').innerText = name.charAt(0);
             }
         }
         
@@ -849,21 +858,33 @@
                     statusUI = `<span style="font-size: 0.75rem; font-weight: 700; color: ${sColor};">${order.status}</span>`;
                 }
 
-                // Admin Delete Capability
-                if (isAdmin) {
+                // Admin Delete Capability (ONLY SHOW IN PENDING TAB)
+                if (isAdmin && order.status === 'Pending') {
                     statusUI += `<br><span onclick="deleteOrder('${order.id}')" title="Delete Order Permanently" style="margin-top:5px; display:inline-block;">${trashIconSVG}</span>`;
                 }
 
-                // HWC Interactive UI with confirmation logic embedded
-                let hwcChecked = order.hwc ? 'checked' : '';
-                let hwcUI = `<label class="hwc-label"><input type="checkbox" class="hwc-checkbox" ${hwcChecked} onchange="handleHwcChange(this, '${order.id}')"> HWC</label>`;
+                // HWC Interactive UI (ONLY SHOW IN PENDING TAB)
+                let hwcUI = '';
+                if (order.status === 'Pending') {
+                    let hwcChecked = order.hwc ? 'checked' : '';
+                    hwcUI = `<label class="hwc-label"><input type="checkbox" class="hwc-checkbox" ${hwcChecked} onchange="handleHwcChange(this, '${order.id}')"> HWC</label>`;
+                } else {
+                    // Hide entirely when not pending
+                    hwcUI = order.hwc ? '<span class="status-pill-static" style="background:#fef2f2; color:var(--danger-color); padding: 4px 8px;">HWC</span>' : '-';
+                }
 
                 // Editable Job Number and Notes via SVG clicks
                 let jobNoStr = `<strong style="font-size:0.9rem;">${order.jobNo || ''}</strong> <span onclick="openEditGeneric('${order.id}', 'jobNo', '${order.jobNo || ''}', 'Job Number')">${pencilIcon}</span>`;
                 let notesStr = `<span style="font-size:0.8rem; font-weight:500;">${order.notes || '—'}</span> <span onclick="openEditGeneric('${order.id}', 'notes', '${(order.notes || '').replace(/'/g, "\\'")}', 'Notes')">${pencilIcon}</span>`;
 
+                // Set 'Admin' instead of email prefix
+                let creatorText = order.createdBy || 'Unknown';
+                if (creatorText.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                    creatorText = 'Admin';
+                }
+
                 tr.innerHTML = `
-                    <td class="admin-col" ${adminStyle}><span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">${order.createdBy || 'Unknown'}</span></td>
+                    <td class="admin-col" ${adminStyle}><span style="font-size:0.75rem; font-weight:600; color:var(--text-muted);">${creatorText}</span></td>
                     <td><span style="font-weight:600;">${dateStr}</span><br><span style="font-size:0.7rem; color:var(--text-muted);">${timeStr}</span></td>
                     <td>${jobNoStr}</td>
                     <td><strong style="font-size:0.85rem;">${order.customerName || ''}</strong></td>
@@ -1114,24 +1135,61 @@
 
         // --- Edit Advance Modal & Sync Logic ---
         let editAdvJobNo = '';
+
+        window.toggleEditAdvanceSplit = function() {
+            const method = document.getElementById('editAdvMethod').value;
+            const splitArea = document.getElementById('editAdvSplitInputs');
+            const mainAmt = document.getElementById('editAdvAmount').parentElement;
+            
+            if (method === 'Split') {
+                splitArea.style.display = 'flex';
+                mainAmt.style.display = 'none';
+            } else {
+                splitArea.style.display = 'none';
+                mainAmt.style.display = 'flex';
+            }
+        }
+
         window.openEditAdvance = function(id, currentAdv, currentMethod, jobNo) {
             currentEditOrderId = id;
             editAdvJobNo = jobNo;
             document.getElementById('modalEditAdvSubtitle').innerHTML = `Editing Job: <strong>${jobNo}</strong>`;
             document.getElementById('editAdvAmount').value = currentAdv;
-            document.getElementById('editAdvMethod').value = (currentMethod === 'Split' ? 'Cash' : currentMethod) || 'Cash'; 
+            
+            document.getElementById('editAdvMethod').value = currentMethod || 'Cash';
+            if (currentMethod === 'Split') {
+                // If the existing entry was split, clear amounts since they aren't stored individually in repairOrders yet
+                document.getElementById('editAdvSplitCash').value = '';
+                document.getElementById('editAdvSplitUpi').value = '';
+            }
+            toggleEditAdvanceSplit();
+            
             document.getElementById('modalEditAdvance').style.display = 'flex';
         }
 
         window.saveEditedAdvance = async function() {
-            const newAmt = parseFloat(document.getElementById('editAdvAmount').value) || 0;
             const newMethod = document.getElementById('editAdvMethod').value;
+            let newAmt = 0;
+            let cashAmt = 0;
+            let upiAmt = 0;
+
+            if (newMethod === 'Split') {
+                cashAmt = parseFloat(document.getElementById('editAdvSplitCash').value) || 0;
+                upiAmt = parseFloat(document.getElementById('editAdvSplitUpi').value) || 0;
+                newAmt = cashAmt + upiAmt;
+                
+                if (newAmt <= 0) return alert("Please enter valid split amounts.");
+            } else {
+                newAmt = parseFloat(document.getElementById('editAdvAmount').value) || 0;
+                if (newMethod === 'Cash') cashAmt = newAmt;
+                if (newMethod === 'UPI') upiAmt = newAmt;
+            }
             
             try {
                 // Update Order
                 await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: newMethod }).eq('id', currentEditOrderId);
                 
-                // Book Sync
+                // Book Sync - Delete Old First
                 const searchDesc = `Advance - Job ${editAdvJobNo}%`;
                 await supabaseClient.from('cashbook_entries').delete().like('description', searchDesc);
                 await supabaseClient.from('upi_transactions').delete().like('description', searchDesc);
@@ -1139,14 +1197,16 @@
                 if (newAmt > 0) {
                     const today = new Date().toISOString().split('T')[0];
                     const exactDesc = `Advance - Job ${editAdvJobNo} (Edited)`;
-                    if (newMethod === 'Cash') {
+                    
+                    if (cashAmt > 0) {
                         await supabaseClient.from('cashbook_entries').insert([{
-                            description: exactDesc, category: 'Advances', amount: newAmt, type: 'in', date: today, created_by: currentUserEmail
+                            description: exactDesc, category: 'Advances', amount: cashAmt, type: 'in', date: today, created_by: currentUserEmail
                         }]);
-                    } else if (newMethod === 'UPI') {
+                    } 
+                    if (upiAmt > 0) {
                         await supabaseClient.from('upi_transactions').insert([{
                             date: today, time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-                            description: exactDesc, source: 'Advance Towards Repair', amount: newAmt, created_by: currentUserEmail
+                            description: exactDesc, source: 'Advance Towards Repair', amount: upiAmt, created_by: currentUserEmail
                         }]);
                     }
                 }
