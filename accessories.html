@@ -90,7 +90,7 @@
 
         /* Dynamic Items Section */
         .items-section { border: 1px solid var(--border-color); border-radius: 8px; padding: 15px; margin-bottom: 20px; background: #f9fafb;}
-        .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1fr 1fr auto; gap: 15px; margin-bottom: 15px; align-items: end;}
+        .item-row { display: grid; grid-template-columns: 2.5fr 1fr 1fr 0.5fr 1fr auto; gap: 15px; margin-bottom: 15px; align-items: end;}
         
         /* Custom Searchable Select */
         .search-select-container { position: relative; width: 100%; }
@@ -238,6 +238,7 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
+                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -452,12 +453,16 @@
             if (!data.session) return window.location.href = 'login.html';
             
             currentUserEmail = data.session.user.email;
-            let displayEmail = currentUserEmail.split('@')[0];
-            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
-            document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
             
+            // Unhide Admin-only elements & manage display name
             if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                document.getElementById('userNameDisplay').innerText = 'Administrator';
+                document.getElementById('userAvatar').innerText = 'A';
+            } else {
+                let displayEmail = currentUserEmail.split('@')[0];
+                document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+                document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
             }
         }
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
@@ -592,7 +597,7 @@
             hidden.value = li.getAttribute('data-id'); 
             
             row.querySelector('.item-hsn').value = li.getAttribute('data-hsn');
-            row.querySelector('.item-amount').value = li.getAttribute('data-amt');
+            row.querySelector('.item-rate').value = li.getAttribute('data-amt');
             
             li.parentElement.style.display = 'none'; 
         }
@@ -623,8 +628,12 @@
                     <input type="text" class="item-hsn" placeholder="HSN code">
                 </div>
                 <div class="form-group">
-                    <label>Amount (₹) <span>*</span></label>
-                    <input type="number" class="item-amount" placeholder="0.00" step="0.01">
+                    <label>Rate (₹) <span>*</span></label>
+                    <input type="number" class="item-rate" placeholder="0.00" step="0.01">
+                </div>
+                <div class="form-group">
+                    <label>Qty <span>*</span></label>
+                    <input type="number" class="item-qty" value="1" min="1" step="1">
                 </div>
                 <div class="form-group">
                     <label>Serial (Opt)</label>
@@ -640,7 +649,13 @@
             if (existingItem) {
                 row.querySelector('.search-select-input').value = existingItem.desc;
                 row.querySelector('.item-hsn').value = existingItem.hsn || '';
-                row.querySelector('.item-amount').value = existingItem.total_amt || 0;
+                
+                // Backwards compatibility logic: older invoices may not have unit_rate or qty saved.
+                const rate = existingItem.unit_rate !== undefined ? existingItem.unit_rate : existingItem.total_amt;
+                const qty = existingItem.qty !== undefined ? existingItem.qty : 1;
+                
+                row.querySelector('.item-rate').value = rate;
+                row.querySelector('.item-qty').value = qty;
                 row.querySelector('.item-serial').value = existingItem.serial || '';
                 
                 // Map back to catalog ID if possible
@@ -856,7 +871,7 @@
                     ? `<button class="btn-icon" onclick="deleteInvoice(${inv.id}, '${inv.invoice_no}')" style="color:var(--danger-color);" title="Delete"><svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></button>`
                     : `-`;
 
-                // Add an Edit Button for users
+                // Add an Edit Button
                 let editBtn = `<button class="btn-icon" onclick="editInvoice(${inv.id})" title="Edit Invoice" style="color:var(--primary-accent);"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg></button>`;
 
                 let summaryDesc = inv.item_desc;
@@ -864,10 +879,14 @@
                     summaryDesc = `${inv.items.length} items (Total: ₹${inv.total_amt})`;
                 }
 
+                // Check Admin explicitly to prevent revealing exact email
+                let displayCreator = inv.created_by || '-';
+                if(displayCreator.toLowerCase() === ADMIN_EMAIL.toLowerCase()) displayCreator = 'Admin';
+
                 tbody.innerHTML += `
                     <tr>
                         <td><strong>${inv.invoice_no}</strong></td>
-                        <td style="text-transform: capitalize;">${inv.created_by || '-'}</td>
+                        <td style="text-transform: capitalize;">${displayCreator}</td>
                         <td>${inv.date}</td>
                         <td style="font-weight:600;">${inv.customer_name}</td>
                         <td>${inv.mobile}</td>
@@ -908,11 +927,9 @@
             document.getElementById('inv-gstin').value = inv.gstin || '';
             document.getElementById('inv-date').value = inv.date;
 
-            // Determine payment mode
             let mode = inv.payment_mode === 'Cash' ? 'Cash' : (inv.payment_mode === 'UPI' ? 'UPI' : 'Card');
             setPaymentMode(mode);
 
-            // Populate items
             const container = document.getElementById('invoiceItemsContainer');
             container.innerHTML = '';
             
@@ -921,18 +938,14 @@
                     addInvoiceItem(item);
                 });
             } else {
-                // Fallback for legacy items
                 addInvoiceItem({ desc: inv.item_desc, hsn: inv.hsn, total_amt: inv.total_amt, serial: inv.serial_no });
             }
 
-            // UI adjustments for edit mode
             document.getElementById('formTitle').innerText = `EDITING INVOICE: ${inv.invoice_no}`;
             const btnSubmit = document.getElementById('btnSubmitInv');
             btnSubmit.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"></path><polyline points="17 21 17 13 7 13 7 21"></polyline><polyline points="7 3 7 8 15 8"></polyline></svg> Update Invoice`;
             
             document.getElementById('btnCancelEdit').style.display = 'block';
-
-            // Scroll up
             document.getElementById('invoiceFormCard').scrollIntoView({ behavior: 'smooth' });
         }
 
@@ -960,19 +973,23 @@
             for (let row of itemRows) {
                 const desc = row.querySelector('.search-select-input').value.trim();
                 const hsn = row.querySelector('.item-hsn').value.trim();
-                const amtStr = row.querySelector('.item-amount').value;
+                const rateStr = row.querySelector('.item-rate').value;
+                const qtyStr = row.querySelector('.item-qty').value;
                 const serialVal = row.querySelector('.item-serial').value.trim();
                 const catId = row.querySelector('.item-select').value;
                 
-                if (!desc || !amtStr) continue;
-                const amount = parseFloat(amtStr);
-                if (isNaN(amount) || amount <= 0) continue;
-
-                let tax_percent = 18; // Default for totally new typed items
+                if (!desc || !rateStr) continue;
+                
+                const rate = parseFloat(rateStr);
+                const qty = parseInt(qtyStr) || 1;
+                
+                if (isNaN(rate) || rate <= 0) continue;
+                
+                const amount = rate * qty;
+                let tax_percent = 18; 
 
                 if (!catId) {
-                    // User typed a custom item not in dropdown, auto-save to catalog
-                    const payload = { description: desc, hsn: hsn, amount_incl_gst: amount, tax_percent: tax_percent };
+                    const payload = { description: desc, hsn: hsn, amount_incl_gst: rate, tax_percent: tax_percent };
                     await db.from('accessories_catalog').insert([payload]);
                 } else {
                     const existing = catalogItems.find(c => c.id == catId);
@@ -990,6 +1007,8 @@
                     desc: desc,
                     hsn: hsn,
                     serial: serialVal,
+                    qty: qty,
+                    unit_rate: rate,
                     tax_percent: tax_percent,
                     base_amt: base,
                     gst_amt: gst,
@@ -1004,12 +1023,10 @@
             btnSave.innerHTML = 'Saving...';
 
             try {
-                // Re-fetch catalog in background to include new dynamic additions
                 fetchCatalog();
 
-                let invoiceNoStr = editingInvoiceNo; // Use existing if editing
+                let invoiceNoStr = editingInvoiceNo; 
                 
-                // If creating completely new invoice
                 if (!editingInvoiceId) {
                     const prefix = 'GSM';
                     const { data: latest } = await db.from('accessories_invoices')
@@ -1018,7 +1035,7 @@
                                                      .order('created_at', { ascending: false })
                                                      .limit(1);
                     
-                    let nextNum = 65; // Starting logic as requested
+                    let nextNum = 65; 
                     if (latest && latest.length > 0 && latest[0].invoice_no) {
                         const lastNum = parseInt(latest[0].invoice_no.replace(/\D/g, ''));
                         if(!isNaN(lastNum) && lastNum >= 65) {
@@ -1028,8 +1045,7 @@
                     invoiceNoStr = `${prefix}${nextNum}`;
                 }
 
-                // Create a summary description for single string view
-                const summaryDesc = itemsArray.map(i => i.desc).join(', ');
+                const summaryDesc = itemsArray.map(i => `${i.qty}x ${i.desc}`).join(', ');
 
                 const invData = {
                     invoice_no: invoiceNoStr,
@@ -1051,22 +1067,17 @@
                 };
 
                 if (editingInvoiceId) {
-                    // Update
                     const { error } = await db.from('accessories_invoices').update(invData).eq('id', editingInvoiceId);
                     if(error) throw error;
                     
-                    // We must delete old ledgers before inserting new ones to prevent duplication
                     const searchString = `Acc. Invoice #${invoiceNoStr}%`;
                     await db.from('cashbook_entries').delete().like('description', searchString);
                     await db.from('upi_transactions').delete().like('description', searchString);
-                    
                 } else {
-                    // Insert
                     const { error } = await db.from('accessories_invoices').insert([invData]);
                     if(error) throw error;
                 }
 
-                // INTEGRATION: Push to Cashbook or UPI Book
                 let currentDate = new Date().toISOString().split('T')[0];
                 let currentTime = new Date().toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute:'2-digit' });
                 let descText = `Acc. Invoice #${invoiceNoStr} - ${name} (${selectedPaymentMode})`;
@@ -1098,7 +1109,6 @@
         window.deleteInvoice = async function(id, invoiceNoStr) {
             if(!confirm("Are you sure you want to delete this invoice? Associated ledger entries will also be removed.")) return;
             
-            // Cleanup Ledgers
             const searchString = `Acc. Invoice #${invoiceNoStr}%`;
             await db.from('cashbook_entries').delete().like('description', searchString);
             await db.from('upi_transactions').delete().like('description', searchString);
@@ -1107,7 +1117,7 @@
             fetchInvoices();
         }
 
-        // --- Export to Excel functionality (Line-by-Line Item Level with IGST Logic) ---
+        // --- Export to Excel functionality ---
         window.exportToExcel = function() {
             const selectedMonth = document.getElementById('exportMonth').value; 
             if (!selectedMonth) return alert("Please select a month to export data.");
@@ -1118,7 +1128,6 @@
             const exportData = [];
 
             filtered.forEach(inv => {
-                // Evaluate GST Type
                 let isIGST = inv.gstin && inv.gstin.trim() !== '' && !inv.gstin.trim().startsWith('30');
                 
                 if (inv.items && inv.items.length > 0) {
@@ -1135,6 +1144,8 @@
                             "Customer GSTIN": inv.gstin || 'Unregistered',
                             "Item Description": item.desc,
                             "HSN Code": item.hsn || '-',
+                            "Quantity": item.qty || 1,
+                            "Unit Rate": item.unit_rate || item.total_amt,
                             "Line Taxable Value (Base)": parseFloat(item.base_amt.toFixed(2)),
                             "Line CGST Amount": cgst,
                             "Line SGST Amount": sgst,
@@ -1158,6 +1169,8 @@
                         "Customer GSTIN": inv.gstin || 'Unregistered',
                         "Item Description": inv.item_desc,
                         "HSN Code": inv.hsn || '-',
+                        "Quantity": 1,
+                        "Unit Rate": parseFloat(inv.total_amt.toFixed(2)),
                         "Line Taxable Value (Base)": parseFloat(inv.base_amt.toFixed(2)),
                         "Line CGST Amount": cgst,
                         "Line SGST Amount": sgst,
@@ -1199,7 +1212,8 @@
                 <th style="width: 5%;">#</th>
                 <th style="width: 30%;">ITEM DESCRIPTION</th>
                 <th class="text-center">HSN</th>
-                <th>SERIAL NO.</th>
+                <th class="text-center">QTY</th>
+                <th class="text-right">RATE</th>
                 <th class="text-center">IGST %</th>
                 <th class="text-right">BASE AMT</th>
                 <th class="text-right">IGST</th>
@@ -1208,7 +1222,8 @@
                 <th style="width: 5%;">#</th>
                 <th style="width: 30%;">ITEM DESCRIPTION</th>
                 <th class="text-center">HSN</th>
-                <th>SERIAL NO.</th>
+                <th class="text-center">QTY</th>
+                <th class="text-right">RATE</th>
                 <th class="text-center">CGST/SGST %</th>
                 <th class="text-right">BASE AMT</th>
                 <th class="text-right">CGST</th>
@@ -1218,18 +1233,22 @@
 
             let itemsHtml = '';
             let itemsList = inv.items || [{
-                desc: inv.item_desc, hsn: inv.hsn, serial: inv.serial_no,
+                desc: inv.item_desc, hsn: inv.hsn, serial: inv.serial_no, qty: 1, unit_rate: inv.total_amt,
                 base_amt: inv.base_amt, gst_amt: inv.gst_amt, total_amt: inv.total_amt, tax_percent: inv.tax_percent
             }];
 
             itemsList.forEach((item, index) => {
+                let qty = item.qty || 1;
+                let rate = item.unit_rate || item.total_amt;
+                
                 if(isIGST) {
                     itemsHtml += `
                         <tr>
                             <td>${index + 1}</td>
-                            <td style="font-weight:bold;">${item.desc}</td>
+                            <td style="font-weight:bold;">${item.desc} ${item.serial ? `<br><span style="font-size:10px;color:gray;">S/N: ${item.serial}</span>` : ''}</td>
                             <td class="text-center" style="color:gray;">${item.hsn || '-'}</td>
-                            <td style="color:gray; font-size:10px;">${item.serial || '-'}</td>
+                            <td class="text-center">${qty}</td>
+                            <td class="text-right">${rate.toFixed(2)}</td>
                             <td class="text-center">${item.tax_percent}%</td>
                             <td class="text-right">₹${item.base_amt.toFixed(2)}</td>
                             <td class="text-right">₹${item.gst_amt.toFixed(2)}</td>
@@ -1242,9 +1261,10 @@
                     itemsHtml += `
                         <tr>
                             <td>${index + 1}</td>
-                            <td style="font-weight:bold;">${item.desc}</td>
+                            <td style="font-weight:bold;">${item.desc} ${item.serial ? `<br><span style="font-size:10px;color:gray;">S/N: ${item.serial}</span>` : ''}</td>
                             <td class="text-center" style="color:gray;">${item.hsn || '-'}</td>
-                            <td style="color:gray; font-size:10px;">${item.serial || '-'}</td>
+                            <td class="text-center">${qty}</td>
+                            <td class="text-right">${rate.toFixed(2)}</td>
                             <td class="text-center">${halfTax}%</td>
                             <td class="text-right">₹${item.base_amt.toFixed(2)}</td>
                             <td class="text-right">₹${cgstAmt}</td>
@@ -1255,7 +1275,7 @@
                 }
             });
 
-            let totalsColspan = isIGST ? 7 : 8;
+            let totalsColspan = isIGST ? 6 : 7;
 
             const printWindow = window.open('', '_blank');
             printWindow.document.write(`
