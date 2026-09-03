@@ -291,6 +291,15 @@
 
         <!-- Top Stats -->
         <div class="stats-grid">
+            <div class="stat-card blue">
+                <div>
+                    <div class="stat-title">Closing Balance 
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
+                    </div>
+                    <div class="stat-value" id="dailyClosing">₹0.00</div>
+                </div>
+                <div class="stat-sub" id="closingSubtext">Today's net collection</div>
+            </div>
             <div class="stat-card green">
                 <div>
                     <div class="stat-title">Cash In 
@@ -308,15 +317,6 @@
                     <div class="stat-value" id="dailyCashOut">₹0.00</div>
                 </div>
                 <div class="stat-sub" id="cashOutCount">0 transactions</div>
-            </div>
-            <div class="stat-card blue">
-                <div>
-                    <div class="stat-title">Closing Balance 
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="5" width="20" height="14" rx="2"></rect><line x1="2" y1="10" x2="22" y2="10"></line></svg>
-                    </div>
-                    <div class="stat-value" id="dailyClosing">₹0.00</div>
-                </div>
-                <div class="stat-sub">Available balance</div>
             </div>
         </div>
 
@@ -681,11 +681,14 @@
             });
 
             // Update DOM - Top Cards
+            document.getElementById('dailyClosing').innerText = formatCurr(periodIn - periodOut);
+            document.getElementById('closingSubtext').innerText = currentMode === 'Daily' ? "Today's net collection" : "Period net collection";
+            
             document.getElementById('dailyCashIn').innerText = formatCurr(periodIn);
             document.getElementById('cashInCount').innerText = `${periodInCount} transactions`;
+            
             document.getElementById('dailyCashOut').innerText = formatCurr(periodOut);
             document.getElementById('cashOutCount').innerText = `${periodOutCount} transactions`;
-            document.getElementById('dailyClosing').innerText = formatCurr(periodClosingBalance);
 
             // Update DOM - Ledger Table
             // Invert the HTML array so newest rows show up on top of the list in the UI visually, 
