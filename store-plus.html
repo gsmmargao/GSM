@@ -28,10 +28,10 @@
         .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
         .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
         
-        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
-        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
+        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 1rem; color: var(--text-main); letter-spacing: 0.5px; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.8rem; line-height: 1; text-align: center;}
         
-        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
+        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.95rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
         .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
         .nav-item.active { background: #111827; color: white; }
         .nav-item.active svg { opacity: 1; }
@@ -40,33 +40,33 @@
 
         .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
         .user-profile { display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
-        .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.95rem; }
+        .user-name-text { font-size: 0.9rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
         
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.9rem; color: var(--text-muted); }
         .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
         .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
         .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
         
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
-        .header-left h1 { margin: 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
+        .header-left h1 { margin: 0; font-size: 1.55rem; color: var(--text-main); font-weight: 700; }
         
         /* --- Form Styling (Inline) --- */
         .form-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .form-header-title { font-size: 0.75rem; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .form-header-title { font-size: 0.8rem; font-weight: 700; color: var(--text-muted); margin-bottom: 20px; text-transform: uppercase; letter-spacing: 0.5px; }
         
         .inline-form { display: flex; gap: 15px; align-items: flex-end; flex-wrap: wrap; }
         .form-group { display: flex; flex-direction: column; flex: 1; min-width: 140px; }
-        .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
-        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
+        .form-group label { font-size: 0.8rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
+        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.9rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit; height: 38px; box-sizing: border-box; }
         .form-group input:focus { border-color: var(--primary-accent); box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1); }
         
-        .btn-add { height: 38px; padding: 0 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; border: none; background: #111827; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; white-space: nowrap; }
+        .btn-add { height: 38px; padding: 0 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.9rem; border: none; background: #111827; color: white; display: flex; align-items: center; justify-content: center; gap: 6px; transition: background 0.2s; white-space: nowrap; }
         .btn-add:hover { background: #374151; }
         .btn-add:disabled { background: #9ca3af; cursor: not-allowed; }
 
@@ -74,16 +74,16 @@
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.02); overflow: hidden; margin-bottom: 25px; }
         .table-scroll { width: 100%; overflow-x: auto; }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 16px 20px; background: #f9fafb; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; white-space: nowrap; }
-        td { padding: 16px 20px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; white-space: nowrap; }
+        th { padding: 16px 20px; background: #f9fafb; font-size: 0.8rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; white-space: nowrap; }
+        td { padding: 16px 20px; font-size: 0.9rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; white-space: nowrap; }
         tr:hover { background-color: #f9fafb; }
-        tfoot td { background: #ffffff; font-weight: 700; border-top: 1px solid var(--border-color); font-size: 0.85rem; padding: 20px;}
+        tfoot td { background: #ffffff; font-weight: 700; border-top: 1px solid var(--border-color); font-size: 0.9rem; padding: 20px;}
 
         /* --- Stats Grid Styling --- */
         .stats-grid { display: flex; gap: 20px; flex-wrap: wrap; }
         .stat-card { background: var(--card-bg); padding: 20px; border-radius: 10px; border: 1px solid var(--border-color); flex: 1; min-width: 200px; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
-        .stat-card h3 { margin: 0 0 8px 0; font-size: 0.75rem; font-weight: 600; color: var(--text-muted); }
-        .stat-card .number { margin: 0; font-size: 1.5rem; font-weight: 700; color: var(--text-main); }
+        .stat-card h3 { margin: 0 0 8px 0; font-size: 0.8rem; font-weight: 600; color: var(--text-muted); }
+        .stat-card .number { margin: 0; font-size: 1.55rem; font-weight: 700; color: var(--text-main); }
         
         .trash-icon { color: #ef4444; width: 16px; height: 16px; cursor: pointer; transition: color 0.2s;}
         .trash-icon:hover { color: #b91c1c; }
@@ -95,7 +95,7 @@
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
             <div class="logo-icon">
-                <div style="font-size: 10px; line-height:1;">GSM</div>
+                <div style="font-size: 11px; line-height:1;">GSM</div>
             </div>
             <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
         </div>
@@ -170,6 +170,7 @@
                 </svg>
             </button>
         </div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -177,7 +178,6 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
-                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -195,7 +195,7 @@
             </div>
         </div>
 
-        <!-- Form Card (Matched to Screenshot) -->
+        <!-- Form Card -->
         <div class="form-card" id="storeForm">
             <div class="form-header-title">NEW ENTRY</div>
             
@@ -244,12 +244,12 @@
                     </thead>
                     <tbody id="storeTableBody"></tbody>
                     <tfoot>
-                        <tr>
+                        <tr id="tableFooterRow">
                             <td colspan="3" style="text-align: right; color: var(--text-main);">TOTALS</td>
                             <td id="tf-amount">₹0.00</td>
                             <td id="tf-igst" style="color: var(--igst-color);">₹0.00</td>
                             <td id="tf-total" style="color: var(--total-color);">₹0.00</td>
-                            <td id="tf-actionCol"></td>
+                            <td id="tf-gstCol"></td>
                         </tr>
                     </tfoot>
                 </table>
@@ -303,21 +303,36 @@
             if (!data.session) return window.location.href = 'login.html';
             
             currentUserEmail = data.session.user.email;
-            let displayEmail = currentUserEmail.split('@')[0];
-            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
-            document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
-
             isAdmin = (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase());
             
-            // Unhide Admin-only elements
             if (isAdmin) {
                 document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
-                document.getElementById('tableHeaderRow').innerHTML += '<th style="text-align: center;">Action</th>';
-                document.getElementById('tf-actionCol').innerHTML = ''; // Placeholder for footer alignment
+                
+                if (!document.getElementById('actionTh')) {
+                    document.getElementById('tableHeaderRow').innerHTML += '<th id="actionTh" style="text-align: center;">Action</th>';
+                    document.getElementById('tableFooterRow').innerHTML += '<td id="tf-actionCol"></td>';
+                }
+                
+                document.getElementById('userNameDisplay').innerText = 'Administrator';
+                document.getElementById('userAvatar').innerText = 'A';
+            } else {
+                let namePart = currentUserEmail.split('@')[0];
+                namePart = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                document.getElementById('userNameDisplay').innerText = namePart;
+                document.getElementById('userAvatar').innerText = namePart.charAt(0).toUpperCase();
             }
         }
         
         window.logOut = async () => { await db.auth.signOut(); window.location.href = 'login.html'; }
+
+        // Safe String Function for displaying user input
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;");
+        }
 
         document.addEventListener("DOMContentLoaded", async () => {
             const now = new Date();
@@ -355,17 +370,17 @@
                     globalTotal += total;
 
                     let actionColHtml = isAdmin 
-                        ? `<td style="text-align: center;"><span onclick="deleteEntry('${entry.invoiceNo}')" title="Delete Entry"><svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span></td>` 
+                        ? `<td style="text-align: center;"><span onclick="deleteEntry('${escapeHtml(entry.invoiceNo)}')" title="Delete Entry"><svg class="trash-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg></span></td>` 
                         : '';
 
                     tbody.innerHTML += `<tr>
-                        <td><strong>${entry.invoiceNo || '-'}</strong></td>
-                        <td>${entry.date || '-'}</td>
-                        <td>${entry.hsn || '-'}</td>
+                        <td><strong>${escapeHtml(entry.invoiceNo) || '-'}</strong></td>
+                        <td>${escapeHtml(entry.date) || '-'}</td>
+                        <td>${escapeHtml(entry.hsn) || '-'}</td>
                         <td><strong style="color:var(--text-main);">₹${amount.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
                         <td style="color: var(--igst-color);">₹${igst.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
                         <td><strong style="color: var(--text-main);">₹${total.toLocaleString('en-IN', {minimumFractionDigits: 2, maximumFractionDigits: 2})}</strong></td>
-                        <td><span style="color:var(--text-muted); font-size: 0.8rem;">${entry.gstNumber || ''}</span></td>
+                        <td><span style="color:var(--text-muted); font-size: 0.85rem;">${escapeHtml(entry.gstNumber) || ''}</span></td>
                         ${actionColHtml}
                     </tr>`;
                 });
