@@ -488,16 +488,16 @@
         async function getNextInvoiceNo() {
             try {
                 const { data } = await db.from('billing').select('invoiceNo').order('created_at', { ascending: false }).limit(1);
-                let nextNum = 1000; 
+                let nextNum = 8985; 
                 if (data && data.length > 0 && data[0].invoiceNo) {
                     const lastNum = parseInt(String(data[0].invoiceNo).replace(/\D/g, ''));
                     if (!isNaN(lastNum)) {
-                        nextNum = lastNum >= 1000 ? lastNum + 1 : 1000;
+                        nextNum = lastNum >= 8985 ? lastNum + 1 : 8985;
                     }
                 }
                 return nextNum.toString();
             } catch (err) {
-                return '1000';
+                return '8985';
             }
         }
 
