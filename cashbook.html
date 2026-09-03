@@ -476,13 +476,11 @@
         clearTimeout(sidebarTimer);
         sidebarTimer = setTimeout(() => {
             document.getElementById('sidebar').classList.add('collapsed');
-            document.getElementById('sidebarToggle').classList.add('sidebar-collapsed-btn');
         }, 30000); // 30s match for standard
     }
     window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
     window.toggleSidebar = function() {
         document.getElementById('sidebar').classList.toggle('collapsed');
-        document.getElementById('sidebarToggle').classList.toggle('sidebar-collapsed-btn');
         if(!document.getElementById('sidebar').classList.contains('collapsed')) resetSidebarTimer();
         else clearSidebarTimer();
     }
@@ -526,6 +524,7 @@
         return d.toLocaleTimeString('en-US', {hour: '2-digit', minute:'2-digit'}).toLowerCase();
     };
     const formatDateObj = (dateStr) => {
+        if (!dateStr) return '';
         const d = new Date(dateStr);
         return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year:'numeric' });
     };
@@ -580,6 +579,7 @@
             const cashOutHtml = [];
             
             let runningBalance = 0;
+            let periodClosingBalance = 0; // Calculates closing balance constrained to the selected date/period
 
             // Establish Filtering rules
             let targetDate, fromDate, toDate;
@@ -603,22 +603,31 @@
 
                 // Determine if row belongs in the currently viewed ledger
                 let isVisible = false;
+                let isBeforeOrOnTarget = false;
+                
                 if (currentMode === 'Daily') {
                     isVisible = (rowDate === targetDate);
+                    isBeforeOrOnTarget = (rowDate <= targetDate);
                 } else {
                     isVisible = (!fromDate || rowDate >= fromDate) && (!toDate || rowDate <= toDate);
+                    // For period closing balance calculation, count all entries strictly up to the selected 'toDate'
+                    isBeforeOrOnTarget = (!toDate || rowDate <= toDate);
                 }
 
                 // Lifetime Totals & Global Running Balance Calculation
                 if (row.type === 'in') {
                     lifeIn += amt;
                     runningBalance += amt;
+                    if (isBeforeOrOnTarget) periodClosingBalance += amt;
+                    
                     if(row.category === 'Billing') lifeBilling += amt;
                     if(row.category === 'Accessories') lifeAccessories += amt;
                     if(row.category === 'Advances') lifeAdvances += amt;
                 } else {
                     lifeOut += amt;
                     runningBalance -= amt;
+                    if (isBeforeOrOnTarget) periodClosingBalance -= amt;
+                    
                     if(row.category === 'Store Purchases') lifeStore += amt;
                     else lifeManual += amt;
                 }
@@ -676,7 +685,7 @@
             document.getElementById('cashInCount').innerText = `${periodInCount} transactions`;
             document.getElementById('dailyCashOut').innerText = formatCurr(periodOut);
             document.getElementById('cashOutCount').innerText = `${periodOutCount} transactions`;
-            document.getElementById('dailyClosing').innerText = formatCurr(runningBalance);
+            document.getElementById('dailyClosing').innerText = formatCurr(periodClosingBalance);
 
             // Update DOM - Ledger Table
             // Invert the HTML array so newest rows show up on top of the list in the UI visually, 
@@ -685,7 +694,7 @@
             
             document.getElementById('totalCashInCol').innerText = formatCurr(periodIn);
             document.getElementById('totalCashOutCol').innerText = formatCurr(periodOut);
-            document.getElementById('totalBalanceCol').innerText = formatCurr(runningBalance);
+            document.getElementById('totalBalanceCol').innerText = formatCurr(periodClosingBalance);
 
             // Update DOM - Breakdowns
             document.getElementById('cashInBreakdownBody').innerHTML = cashInHtml.reverse().join('');
