@@ -77,7 +77,7 @@
         .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 20px 0; }
         .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
         .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-        .form-group input { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit;}
         
         .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;}
         .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: white; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
@@ -156,7 +156,7 @@
         <div class="user-area">
             <div class="user-profile">
                 <div class="user-avatar" id="userAvatar">M</div>
-                <div class="user-name-text" id="userNameDisplay">Mohammed Saleem</div>
+                <div class="user-name-text" id="userNameDisplay">Loading...</div>
             </div>
             <button class="logout-btn" onclick="logOut()" title="Logout">
                 <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
@@ -166,7 +166,7 @@
                 </svg>
             </button>
         </div>
-        <div class="version-text">v2.2 - GSM Solution</div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
@@ -237,6 +237,31 @@
         </div>
     </div>
 
+    <!-- Settle Dues Modal -->
+    <div class="modal-overlay" id="modalSettleDues">
+        <div class="modal-container">
+            <h2 class="modal-title">Settle Pending Dues</h2>
+            <p class="modal-subtitle" id="settleCustName"></p>
+            
+            <div class="form-group">
+                <label>Amount to Settle (₹)</label>
+                <input type="number" id="settleAmount" step="0.01" placeholder="0.00">
+            </div>
+            <div class="form-group">
+                <label>Payment Mode</label>
+                <select id="settleMode">
+                    <option value="Cash">Cash</option>
+                    <option value="UPI">UPI</option>
+                </select>
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('modalSettleDues').style.display='none'">Cancel</button>
+                <button class="btn-confirm" onclick="confirmSettleDues()">Confirm Settlement</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Customer Ledger Modal -->
     <div class="modal-overlay" id="modalCustomerLedger">
         <div class="modal-container" style="width: 700px;">
@@ -272,6 +297,7 @@
         const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
 
         const ADMIN_EMAIL = 'gsmmargao@gmail.com';
+        let currentUserEmail = '';
         let isAdmin = false;
         let allCustomersData = [];
         let allOrdersData = [];
@@ -313,17 +339,19 @@
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
             if (data.session) {
-                const currentUserEmail = data.session.user.email;
+                currentUserEmail = data.session.user.email;
                 isAdmin = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
                 
                 if (isAdmin) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.getElementById('userNameDisplay').innerText = 'Administrator';
+                    document.getElementById('userAvatar').innerText = 'A';
+                } else {
+                    let name = currentUserEmail.split('@')[0];
+                    name = name.charAt(0).toUpperCase() + name.slice(1);
+                    document.getElementById('userNameDisplay').innerText = name;
+                    document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
                 }
-                
-                let name = currentUserEmail.split('@')[0];
-                name = name.charAt(0).toUpperCase() + name.slice(1);
-                document.getElementById('userNameDisplay').innerText = name;
-                document.getElementById('userAvatar').innerText = name.charAt(0);
             }
         }
         
@@ -357,7 +385,9 @@
             }
 
             filtered.forEach(cust => {
-                let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:4px 8px; font-size:0.75rem;" onclick="deleteCustomer('${cust.id}', '${cust.name}')">Delete</button>` : '';
+                let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:4px 8px; font-size:0.75rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
+                
+                let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:4px 8px; font-size:0.75rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
@@ -366,7 +396,8 @@
                     <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'};">₹${cust.pending_credit || 0}</strong></td>
                     <td>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn" onclick="viewLedger('${cust.name}', '${cust.contact}')">View Ledger</button>
+                            <button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact}')">View Ledger</button>
+                            ${settleBtn}
                             ${deleteBtn}
                         </div>
                     </td>
@@ -413,6 +444,73 @@
                 fetchCustomersAndOrders();
             } catch (e) {
                 alert("Failed to delete customer: " + e.message);
+            }
+        }
+
+        // --- Settle Dues Logic ---
+        let currentSettleCustId = null;
+        let currentSettleCustName = '';
+        let currentSettleCustContact = '';
+        let currentPendingCredit = 0;
+
+        window.openSettleModal = function(id, name, contact, pendingAmount) {
+            currentSettleCustId = id;
+            currentSettleCustName = name;
+            currentSettleCustContact = contact;
+            currentPendingCredit = parseFloat(pendingAmount) || 0;
+
+            document.getElementById('settleCustName').innerHTML = `Settling dues for <strong>${name}</strong>`;
+            document.getElementById('settleAmount').value = currentPendingCredit;
+            document.getElementById('settleMode').value = 'Cash';
+
+            document.getElementById('modalSettleDues').style.display = 'flex';
+        }
+
+        window.confirmSettleDues = async function() {
+            const settleAmt = parseFloat(document.getElementById('settleAmount').value) || 0;
+            const mode = document.getElementById('settleMode').value;
+
+            if (settleAmt <= 0 || settleAmt > currentPendingCredit) {
+                alert("Please enter a valid amount up to the total pending credit.");
+                return;
+            }
+
+            try {
+                const newCredit = currentPendingCredit - settleAmt;
+
+                // Update Customer table
+                const { error: custError } = await supabaseClient.from('customers').update({ pending_credit: newCredit }).eq('id', currentSettleCustId);
+                if (custError) throw custError;
+
+                const today = new Date().toISOString().split('T')[0];
+                const descText = `Dues Settlement - ${currentSettleCustName}`;
+
+                // Process book entry based on selected mode
+                if (mode === 'Cash') {
+                    await supabaseClient.from('cashbook_entries').insert([{
+                        description: descText,
+                        category: 'Billing', // Logged as income under Billing category
+                        amount: settleAmt,
+                        type: 'in',
+                        date: today,
+                        created_by: currentUserEmail || 'Admin'
+                    }]);
+                } else if (mode === 'UPI') {
+                    await supabaseClient.from('upi_transactions').insert([{
+                        date: today,
+                        time: new Date().toLocaleTimeString('en-US', { hour12: false }),
+                        description: descText,
+                        source: 'Dues Recovery',
+                        amount: settleAmt,
+                        created_by: currentUserEmail || 'Admin'
+                    }]);
+                }
+
+                alert("Dues settled successfully!");
+                document.getElementById('modalSettleDues').style.display = 'none';
+                fetchCustomersAndOrders();
+            } catch (e) {
+                alert("Failed to settle dues: " + e.message);
             }
         }
 
