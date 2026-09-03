@@ -829,7 +829,7 @@
                 }
                 
                 if (isEditable) {
-                    advanceHtml += `<span style="cursor:pointer;" onclick="openEditAdvance('${order.id}', ${advVal}, '${order.payment_method || 'Cash'}', '${order.jobNo}')">${pencilIcon}</span>`;
+                    advanceHtml += `<span style="cursor:pointer;" onclick="openEditAdvance('${order.id}', ${advVal}, '${order.payment_method || 'Cash'}', '${(order.jobNo || '').replace(/'/g, "\\'")}')">${pencilIcon}</span>`;
                 } else if (advVal > 0) {
                     advanceHtml += ` ${lockIcon}`;
                 }
@@ -860,7 +860,7 @@
 
                 // Admin Delete Capability (ONLY SHOW IN PENDING TAB)
                 if (isAdmin && order.status === 'Pending') {
-                    statusUI += `<br><span onclick="deleteOrder('${order.id}')" title="Delete Order Permanently" style="margin-top:5px; display:inline-block;">${trashIconSVG}</span>`;
+                    statusUI += `<br><span onclick="deleteOrder('${order.id}', '${(order.jobNo || '').replace(/'/g, "\\'")}')" title="Delete Order Permanently" style="margin-top:5px; display:inline-block;">${trashIconSVG}</span>`;
                 }
 
                 // HWC Interactive UI (ONLY SHOW IN PENDING TAB)
@@ -874,7 +874,7 @@
                 }
 
                 // Editable Job Number and Notes via SVG clicks
-                let jobNoStr = `<strong style="font-size:0.9rem;">${order.jobNo || ''}</strong> <span onclick="openEditGeneric('${order.id}', 'jobNo', '${order.jobNo || ''}', 'Job Number')">${pencilIcon}</span>`;
+                let jobNoStr = `<strong style="font-size:0.9rem;">${order.jobNo || ''}</strong> <span onclick="openEditGeneric('${order.id}', 'jobNo', '${(order.jobNo || '').replace(/'/g, "\\'")}', 'Job Number')">${pencilIcon}</span>`;
                 let notesStr = `<span style="font-size:0.8rem; font-weight:500;">${order.notes || '—'}</span> <span onclick="openEditGeneric('${order.id}', 'notes', '${(order.notes || '').replace(/'/g, "\\'")}', 'Notes')">${pencilIcon}</span>`;
 
                 // Set 'Admin' instead of email prefix
@@ -929,9 +929,17 @@
             } catch (e) { console.error(e); }
         }
 
-        window.deleteOrder = async function(id) {
+        window.deleteOrder = async function(id, jobNo) {
             if(!confirm("⚠️ WARNING: Are you sure you want to permanently delete this order? This action cannot be undone.")) return;
             try {
+                // If there's an associated advance, delete its ledger entries
+                if (jobNo) {
+                    const searchDesc = `Advance - Job ${jobNo}%`;
+                    await supabaseClient.from('cashbook_entries').delete().like('description', searchDesc);
+                    await supabaseClient.from('upi_transactions').delete().like('description', searchDesc);
+                }
+
+                // Delete the actual repair order
                 await supabaseClient.from('repairOrders').delete().eq('id', id);
                 fetchOrders();
             } catch (e) { alert("Failed to delete order: " + e.message); }
@@ -1061,13 +1069,16 @@
 
         // --- Generic Field Edit Modal (For Job No & Notes) ---
         let currentEditField = '';
+        let currentEditOldValue = '';
+
         window.openEditGeneric = function(id, fieldName, currentValue, displayLabel) {
             currentEditOrderId = id;
             currentEditField = fieldName;
+            currentEditOldValue = currentValue === '—' ? '' : currentValue;
             
             document.getElementById('modalEditGenericSubtitle').innerText = `Updating ${displayLabel}`;
             document.getElementById('lblEditGeneric').innerText = `New ${displayLabel}`;
-            document.getElementById('editGenericValue').value = currentValue === '—' ? '' : currentValue;
+            document.getElementById('editGenericValue').value = currentEditOldValue;
             
             document.getElementById('modalEditGeneric').style.display = 'flex';
         }
@@ -1075,6 +1086,27 @@
         window.saveEditedField = async function() {
             const newValue = document.getElementById('editGenericValue').value.trim();
             try {
+                // If they edit the Job Number, we must also rewrite any corresponding ledger entries to maintain the link
+                if (currentEditField === 'jobNo' && currentEditOldValue && newValue !== currentEditOldValue) {
+                    const searchDesc = `Advance - Job ${currentEditOldValue}%`;
+                    
+                    const { data: cbData } = await supabaseClient.from('cashbook_entries').select('id, description').like('description', searchDesc);
+                    if (cbData && cbData.length) {
+                        for (let row of cbData) {
+                            const newDesc = row.description.replace(`Advance - Job ${currentEditOldValue}`, `Advance - Job ${newValue}`);
+                            await supabaseClient.from('cashbook_entries').update({ description: newDesc }).eq('id', row.id);
+                        }
+                    }
+                    
+                    const { data: upiData } = await supabaseClient.from('upi_transactions').select('id, description').like('description', searchDesc);
+                    if (upiData && upiData.length) {
+                        for (let row of upiData) {
+                            const newDesc = row.description.replace(`Advance - Job ${currentEditOldValue}`, `Advance - Job ${newValue}`);
+                            await supabaseClient.from('upi_transactions').update({ description: newDesc }).eq('id', row.id);
+                        }
+                    }
+                }
+
                 const updateObj = {};
                 updateObj[currentEditField] = newValue;
                 await supabaseClient.from('repairOrders').update(updateObj).eq('id', currentEditOrderId);
@@ -1158,7 +1190,6 @@
             
             document.getElementById('editAdvMethod').value = currentMethod || 'Cash';
             if (currentMethod === 'Split') {
-                // If the existing entry was split, clear amounts since they aren't stored individually in repairOrders yet
                 document.getElementById('editAdvSplitCash').value = '';
                 document.getElementById('editAdvSplitUpi').value = '';
             }
@@ -1177,8 +1208,6 @@
                 cashAmt = parseFloat(document.getElementById('editAdvSplitCash').value) || 0;
                 upiAmt = parseFloat(document.getElementById('editAdvSplitUpi').value) || 0;
                 newAmt = cashAmt + upiAmt;
-                
-                if (newAmt <= 0) return alert("Please enter valid split amounts.");
             } else {
                 newAmt = parseFloat(document.getElementById('editAdvAmount').value) || 0;
                 if (newMethod === 'Cash') cashAmt = newAmt;
@@ -1189,11 +1218,14 @@
                 // Update Order
                 await supabaseClient.from('repairOrders').update({ advancePaid: newAmt, payment_method: newMethod }).eq('id', currentEditOrderId);
                 
-                // Book Sync - Delete Old First
-                const searchDesc = `Advance - Job ${editAdvJobNo}%`;
-                await supabaseClient.from('cashbook_entries').delete().like('description', searchDesc);
-                await supabaseClient.from('upi_transactions').delete().like('description', searchDesc);
+                // Book Sync - Delete Old First (if job number exists)
+                if (editAdvJobNo) {
+                    const searchDesc = `Advance - Job ${editAdvJobNo}%`;
+                    await supabaseClient.from('cashbook_entries').delete().like('description', searchDesc);
+                    await supabaseClient.from('upi_transactions').delete().like('description', searchDesc);
+                }
 
+                // If new advance > 0, insert updated ledger entries
                 if (newAmt > 0) {
                     const today = new Date().toISOString().split('T')[0];
                     const exactDesc = `Advance - Job ${editAdvJobNo} (Edited)`;
