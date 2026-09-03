@@ -309,7 +309,7 @@
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
         
         // CRITICAL: See instructions above to get this key from your Supabase Dashboard
-        const SERVICE_ROLE_KEY = 'ENTER_YOUR_SERVICE_ROLE_KEY_HERE'; 
+        const SERVICE_ROLE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic21zY2xteXl4Z3d3enRxd3NjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzc3ODYxOCwiZXhwIjoyMDk5MzU0NjE4fQ._XME0CEqHHdAs2-HDwwjwXdQz82Y3piRxyMqjMteEYk'; 
 
         const db = window.supabase.createClient(supabaseUrl, supabaseKey);
         const adminSilentDb = window.supabase.createClient(supabaseUrl, supabaseKey, {
@@ -468,7 +468,7 @@
             if (newPassword !== confirmPassword) return alert("Passwords do not match.");
             if (newPassword.length < 6) return alert("Password must be at least 6 characters.");
 
-            if (SERVICE_ROLE_KEY === 'ENTER_YOUR_SERVICE_ROLE_KEY_HERE') {
+            if (SERVICE_ROLE_KEY === 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNic21zY2xteXl4Z3d3enRxd3NjIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4Mzc3ODYxOCwiZXhwIjoyMDk5MzU0NjE4fQ._XME0CEqHHdAs2-HDwwjwXdQz82Y3piRxyMqjMteEYk') {
                 alert("SETUP REQUIRED:\n\nTo change passwords directly from this panel, you must paste your Supabase 'service_role' key into the SERVICE_ROLE_KEY variable in your code file.");
                 return;
             }
