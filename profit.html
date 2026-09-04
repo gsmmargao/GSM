@@ -31,16 +31,17 @@
             --border-red: #fecaca;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        /* Matched base font scaling */
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* --- Sidebar Styling --- */
         .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
         .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
         
-        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
-        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
+        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 1.05rem; color: var(--text-main); letter-spacing: 0.5px; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.85rem; line-height: 1; text-align: center;}
         
-        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
+        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 1rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
         .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
         .nav-item.active { background: #111827; color: white; }
         .nav-item.active svg { opacity: 1; }
@@ -49,35 +50,35 @@
 
         .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
         .user-profile { display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
-        .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; }
+        .user-name-text { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
         
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); }
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.95rem; color: var(--text-muted); }
         .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
         .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
         .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
         
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
-        .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
-        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.85rem; }
+        .header-left h1 { margin: 0 0 5px 0; font-size: 1.6rem; color: var(--text-main); font-weight: 700; }
+        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
         .header-right { display: flex; gap: 10px; align-items: center;}
 
         /* Month Controls */
         .month-controls { display: flex; align-items: center; gap: 15px; }
         .month-selector { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
-        .month-btn { background: transparent; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1rem; transition: 0.2s; font-weight: bold;}
+        .month-btn { background: transparent; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1.05rem; transition: 0.2s; font-weight: bold;}
         .month-btn:hover { background: #f3f4f6; color: var(--text-main); }
         .month-btn:first-child { border-right: 1px solid var(--border-color); }
         .month-btn:last-child { border-left: 1px solid var(--border-color); }
         
-        .month-display { position: relative; padding: 8px 15px; font-weight: 600; color: var(--text-main); font-size: 0.85rem; display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 120px; justify-content: center;}
+        .month-display { position: relative; padding: 8px 15px; font-weight: 600; color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 120px; justify-content: center;}
         .month-display input[type="month"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
-        .selected-month-text { font-weight: 700; color: var(--text-main); font-size: 1.05rem; min-width: 130px; text-align: right; text-transform: uppercase; letter-spacing: 0.5px;}
+        .selected-month-text { font-weight: 700; color: var(--text-main); font-size: 1.1rem; min-width: 130px; text-align: right; text-transform: uppercase; letter-spacing: 0.5px;}
 
         /* --- Profit & Expenses Layout Grid --- */
         .profit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 25px; margin-bottom: 25px; align-items: start;}
@@ -87,62 +88,62 @@
 
         /* Income Card */
         .card-income { border: 1px solid var(--border-green); }
-        .card-header-green { color: var(--c-green-dark); font-size: 0.85rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 25px; letter-spacing: 0.5px; }
+        .card-header-green { color: var(--c-green-dark); font-size: 0.95rem; font-weight: 700; display: flex; align-items: center; gap: 8px; margin-bottom: 25px; letter-spacing: 0.5px; }
         
         .ow-profit-box { background: var(--bg-green-light); border: 1px solid var(--border-green); border-radius: 8px; padding: 18px 20px; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px;}
         .ow-text { display: flex; align-items: center; gap: 12px; }
-        .ow-icon { color: var(--c-green); font-size: 1.2rem; }
-        .ow-text h4 { margin: 0; color: var(--c-green-dark); font-size: 0.95rem; font-weight: 600;}
-        .ow-text p { margin: 2px 0 0 0; font-size: 0.75rem; color: var(--c-green); }
-        .ow-amount { font-size: 1.25rem; font-weight: 800; color: var(--c-green-dark); }
+        .ow-icon { color: var(--c-green); font-size: 1.3rem; }
+        .ow-text h4 { margin: 0; color: var(--c-green-dark); font-size: 1.05rem; font-weight: 600;}
+        .ow-text p { margin: 2px 0 0 0; font-size: 0.85rem; color: var(--c-green); }
+        .ow-amount { font-size: 1.4rem; font-weight: 800; color: var(--c-green-dark); }
 
         .add-income-box { border: 1px dashed var(--border-green); border-radius: 8px; padding: 20px; margin-bottom: 25px; }
-        .add-income-box h5 { margin: 0 0 15px 0; font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
+        .add-income-box h5 { margin: 0 0 15px 0; font-size: 0.85rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.5px; font-weight: 700;}
         .input-group { margin-bottom: 12px; }
-        .input-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.85rem; box-sizing: border-box; color: var(--text-main); font-family: inherit;}
+        .input-group input { width: 100%; padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; outline: none; font-size: 0.95rem; box-sizing: border-box; color: var(--text-main); font-family: inherit;}
         .input-group input:focus { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
         
         .input-row { display: flex; gap: 12px; }
         .currency-input { display: flex; flex: 1; align-items: center; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; background: var(--input-bg); }
         .currency-input:focus-within { border-color: var(--c-green); box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.1); }
-        .currency-input span { padding: 0 15px; color: var(--text-muted); background: #f9fafb; border-right: 1px solid var(--border-color); font-weight: 600; font-size: 0.85rem; height: 100%; display: flex; align-items: center;}
+        .currency-input span { padding: 0 15px; color: var(--text-muted); background: #f9fafb; border-right: 1px solid var(--border-color); font-weight: 600; font-size: 0.95rem; height: 100%; display: flex; align-items: center;}
         .currency-input input { border: none; box-shadow: none; border-radius: 0; }
         
-        .btn-add { background: #94a3b8; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; font-size: 0.85rem;}
+        .btn-add { background: #94a3b8; color: white; border: none; padding: 0 20px; border-radius: 6px; cursor: pointer; font-weight: 600; transition: 0.2s; white-space: nowrap; font-size: 0.95rem;}
         .btn-add:hover { background: #64748b; }
         .btn-icon-danger { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s;}
         .btn-icon-danger:hover { color: var(--danger-color); }
 
         .other-income-list { max-height: 150px; overflow-y: auto; margin-bottom: 20px;}
-        .other-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.85rem; align-items: center;}
+        .other-item { display: flex; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; align-items: center;}
 
-        .total-row-green { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-green-dark); font-size: 1.1rem; padding-top: 20px; border-top: 1px solid var(--border-green); margin-top: auto;}
+        .total-row-green { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-green-dark); font-size: 1.2rem; padding-top: 20px; border-top: 1px solid var(--border-green); margin-top: auto;}
 
         /* Expenses Card */
         .card-expenses { border: 1px solid var(--border-red); }
-        .card-header-red { color: var(--c-red-dark); font-size: 0.85rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; letter-spacing: 0.5px; text-transform: uppercase;}
-        .card-header-red a { color: var(--c-red); text-decoration: none; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: 0.2s; text-transform: none;}
+        .card-header-red { color: var(--c-red-dark); font-size: 0.95rem; font-weight: 700; display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; letter-spacing: 0.5px; text-transform: uppercase;}
+        .card-header-red a { color: var(--c-red); text-decoration: none; font-size: 0.85rem; font-weight: 600; display: flex; align-items: center; gap: 5px; transition: 0.2s; text-transform: none;}
         .card-header-red a:hover { color: var(--c-red-dark); }
 
         .expense-list { flex: 1; overflow-y: auto; display: flex; flex-direction: column; }
         .expense-item { border-bottom: 1px solid var(--border-color); padding: 12px 0; display: flex; justify-content: space-between; align-items: center; }
         .expense-item:last-child { border-bottom: none; }
-        .expense-info h4 { margin: 0; color: var(--text-main); font-size: 0.85rem; font-weight: 600;}
-        .expense-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.75rem; }
+        .expense-info h4 { margin: 0; color: var(--text-main); font-size: 0.95rem; font-weight: 600;}
+        .expense-info p { margin: 4px 0 0 0; color: var(--text-muted); font-size: 0.85rem; }
         .expense-amount-date { text-align: right; }
-        .expense-amount-date h4 { margin: 0; color: var(--c-red); font-size: 0.9rem; font-weight: 700;}
+        .expense-amount-date h4 { margin: 0; color: var(--c-red); font-size: 1rem; font-weight: 700;}
 
-        .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px;}
+        .empty-state { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; color: var(--text-muted); font-size: 0.95rem; padding: 20px;}
         
-        .total-row-red { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-red-dark); font-size: 1.1rem; padding-top: 20px; border-top: 1px solid var(--border-red); margin-top: auto;}
+        .total-row-red { display: flex; justify-content: space-between; align-items: center; font-weight: 800; color: var(--c-red-dark); font-size: 1.2rem; padding-top: 20px; border-top: 1px solid var(--border-red); margin-top: auto;}
 
         /* EBITDA Card */
         .ebitda-card { background: var(--bg-green-light); border: 1px solid var(--border-green); border-radius: 10px; padding: 30px 40px; display: flex; justify-content: space-between; align-items: center; box-shadow: 0 1px 3px rgba(0,0,0,0.02);}
-        .ebitda-title h2 { margin: 0; color: var(--c-green-dark); font-size: 1.1rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;}
-        .ebitda-title p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.8rem; font-weight: 500; }
+        .ebitda-title h2 { margin: 0; color: var(--c-green-dark); font-size: 1.25rem; font-weight: 800; letter-spacing: 0.5px; text-transform: uppercase;}
+        .ebitda-title p { margin: 6px 0 0 0; color: var(--text-muted); font-size: 0.95rem; font-weight: 500; }
         .ebitda-value-box { text-align: right; }
-        .ebitda-value { font-size: 2.25rem; font-weight: 800; color: var(--c-green-dark); margin: 0; line-height: 1;}
-        .ebitda-calc { margin: 8px 0 0 0; font-size: 0.75rem; color: var(--text-muted); font-weight: 500;}
+        .ebitda-value { font-size: 2.5rem; font-weight: 800; color: var(--c-green-dark); margin: 0; line-height: 1;}
+        .ebitda-calc { margin: 8px 0 0 0; font-size: 0.85rem; color: var(--text-muted); font-weight: 500;}
 
     </style>
 </head>
@@ -152,7 +153,7 @@
     <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
             <div class="logo-icon">
-                <div style="font-size: 10px; line-height:1;">GSM</div>
+                <div style="font-size: 11px; line-height:1;">GSM</div>
             </div>
             <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
         </div>
@@ -173,6 +174,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             Accessories
         </a>
+        
+        <!-- INVOICES TAB ADDED HERE -->
+        <a href="invoices.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Invoices
+        </a>
+
         <a href="sales-report.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             Sales Report
@@ -227,6 +235,7 @@
                 </svg>
             </button>
         </div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
