@@ -281,7 +281,7 @@
                             <th>Job No.</th>
                             <th>Device</th>
                             <th>Status</th>
-                            <th>Total Paid (₹)</th> <!-- Changed from Advance -->
+                            <th>Total Paid (₹)</th>
                         </tr>
                     </thead>
                     <tbody id="ledgerTableBody"></tbody>
@@ -301,6 +301,7 @@
         let isAdmin = false;
         let allCustomersData = [];
         let allOrdersData = [];
+        let allBillingData = []; // NEW: Added to store billing records
 
         let inactivityTimer;
         let sidebarTimer;
@@ -332,8 +333,10 @@
             await checkAuth();
             fetchCustomersAndOrders();
 
+            // Added real-time listener for the billing table
             supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomersAndOrders(); }).subscribe();
             supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchCustomersAndOrders(); }).subscribe();
+            supabaseClient.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { fetchCustomersAndOrders(); }).subscribe();
         });
 
         async function checkAuth() {
@@ -368,6 +371,10 @@
                 const { data: oData } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
                 allOrdersData = oData || [];
                 
+                // NEW: Fetch billing data
+                const { data: bData } = await supabaseClient.from('billing').select('*');
+                allBillingData = bData || [];
+
                 renderCustomersTable();
             } catch (e) { console.error(e); }
         }
@@ -532,10 +539,20 @@
                     let statusColor = o.status === 'Repair Completed' ? '#3730a3' : (o.status === 'Goods Delivered' ? '#065f46' : '#b45309');
                     if (o.status === 'Repair Refusal' || o.status === 'Cancelled Service Order') statusColor = '#991b1b';
 
-                    // --- NEW TOTAL PAID LOGIC ---
-                    const advance = parseFloat(o.advancePaid) || 0;
-                    const billing = parseFloat(o.billingAmount) || 0; // Update 'billingAmount' if your Supabase schema uses a different name
-                    const totalPaid = advance + billing;
+                    // --- NEW TOTAL PAID LOGIC LINKED TO SCHEMA ---
+                    // Find corresponding billing record for this job number
+                    const bill = allBillingData.find(b => b.jobNo === o.jobNo);
+                    
+                    let advance = parseFloat(o.advancePaid) || 0; // Fallback to order table advance if not billed
+                    let billingAmount = 0;
+
+                    if (bill) {
+                        // If it has been billed, fetch the amounts directly from the billing table record
+                        advance = parseFloat(bill.advancePaid) || advance;
+                        billingAmount = parseFloat(bill.amountPaid) || 0;
+                    }
+
+                    const totalPaid = advance + billingAmount;
 
                     tbody.innerHTML += `
                         <tr>
