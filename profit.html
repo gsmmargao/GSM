@@ -423,9 +423,9 @@
             return;
         }
 
-        let displayEmail = currentUserEmail.split('@')[0];
-        document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
-        document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
+        // Properly display Administrator details
+        document.getElementById('userNameDisplay').innerText = 'Administrator';
+        document.getElementById('userAvatar').innerText = 'A';
 
         document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
     }
