@@ -281,7 +281,7 @@
                             <th>Job No.</th>
                             <th>Device</th>
                             <th>Status</th>
-                            <th>Advance</th>
+                            <th>Total Paid (₹)</th> <!-- Changed from Advance -->
                         </tr>
                     </thead>
                     <tbody id="ledgerTableBody"></tbody>
@@ -532,13 +532,18 @@
                     let statusColor = o.status === 'Repair Completed' ? '#3730a3' : (o.status === 'Goods Delivered' ? '#065f46' : '#b45309');
                     if (o.status === 'Repair Refusal' || o.status === 'Cancelled Service Order') statusColor = '#991b1b';
 
+                    // --- NEW TOTAL PAID LOGIC ---
+                    const advance = parseFloat(o.advancePaid) || 0;
+                    const billing = parseFloat(o.billingAmount) || 0; // Update 'billingAmount' if your Supabase schema uses a different name
+                    const totalPaid = advance + billing;
+
                     tbody.innerHTML += `
                         <tr>
                             <td>${d}</td>
                             <td><strong>${o.jobNo}</strong></td>
                             <td>${o.modelNo || '—'}</td>
                             <td><span style="font-size:0.75rem; font-weight:bold; color:${statusColor};">${o.status}</span></td>
-                            <td style="color:#10b981; font-weight:bold;">₹${o.advancePaid || 0}</td>
+                            <td style="color:#10b981; font-weight:bold;">₹${totalPaid.toFixed(2)}</td>
                         </tr>
                     `;
                 });
