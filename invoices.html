@@ -7,7 +7,6 @@
     <link rel="icon" href="data:,">
     
     <style>
-        /* Base CSS matching your existing template */
         :root {
             --bg-color: #f8fafc;
             --sidebar-bg: #f9fafb;
@@ -21,21 +20,38 @@
             --danger-color: #ef4444;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; }
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
-        /* Sidebar Styling */
-        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; overflow-y: auto; z-index: 40; flex-shrink: 0; }
+        /* --- Sidebar Styling --- */
+        .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
+        .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
+        
         .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 1.05rem; color: var(--text-main); letter-spacing: 0.5px; }
-        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.85rem; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.85rem; line-height: 1; text-align: center;}
+        
         .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 1rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
-        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; opacity: 0.7; flex-shrink: 0;}
+        .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
         .nav-item.active { background: #1f2937; color: white; }
         .nav-item.active svg { opacity: 1; }
         .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
         .admin-only { display: none; color: #b91c1c; }
 
-        /* Main Content */
-        .main-content { flex: 1; overflow-y: auto; padding: 20px 30px; }
+        .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
+        .user-profile { display: flex; align-items: center; gap: 10px; }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; }
+        .user-name-text { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
+        .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
+        .logout-btn:hover { color: #ef4444; }
+        .version-text { font-size: 0.8rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
+
+        /* --- Main Content & Header --- */
+        .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
+        
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.95rem; color: var(--text-muted); }
+        .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
+        .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
+        .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
+        
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
         .header-left h1 { margin: 0 0 5px 0; font-size: 1.6rem; color: var(--text-main); font-weight: 700; }
         .header-left p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
@@ -48,20 +64,22 @@
         .btn-export { background: #10b981; color: white; border: none; }
         .btn-export:hover { background: #059669; }
 
-        /* Forms */
+        /* --- Invoice Form Styling --- */
         .form-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); padding: 25px; margin-bottom: 25px; display: none; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
         .form-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; margin-bottom: 20px; }
         .form-group { display: flex; flex-direction: column; }
         .form-group label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; font-weight: 600; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: var(--input-bg); color: var(--text-main); }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit;}
         .form-group input:focus, .form-group select:focus { border-color: var(--primary-accent); }
-        .readonly-input { background: #f3f4f6 !important; font-weight: 600; color: #374151 !important; }
+        .readonly-input { background: #f3f4f6 !important; font-weight: 600; color: #374151 !important; cursor: not-allowed; }
 
         /* Invoice Items Table */
         .items-table { width: 100%; border-collapse: collapse; margin-bottom: 20px; border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; }
         .items-table th { background: #f9fafb; padding: 10px; font-size: 0.85rem; color: var(--text-muted); text-align: left; border-bottom: 1px solid var(--border-color); }
         .items-table td { padding: 10px; border-bottom: 1px solid var(--border-color); vertical-align: top; }
-        .items-table input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; }
+        .items-table input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-family: inherit;}
+        .items-table input:focus { outline: none; border-color: var(--primary-accent); }
+        
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px; }
         .btn-icon:hover { color: var(--text-main); }
         .btn-danger:hover { color: var(--danger-color); }
@@ -71,31 +89,29 @@
         .totals-row { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 0.95rem; }
         .totals-row.grand { font-size: 1.1rem; font-weight: 700; border-top: 1px solid var(--border-color); padding-top: 8px; color: #111827; }
 
-        /* Main Table */
-        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); overflow: hidden; }
+        /* Main Table Styling */
+        .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); box-shadow: 0 1px 3px rgba(0,0,0,0.05); overflow: hidden; margin-bottom: 30px; }
         .table-scroll { width: 100%; overflow-x: auto; }
         table.main-list { width: 100%; border-collapse: collapse; text-align: left; }
-        table.main-list th { padding: 12px 20px; background: #f9fafb; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); }
-        table.main-list td { padding: 15px 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); }
+        table.main-list th { padding: 12px 20px; background: #f9fafb; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; white-space: nowrap; }
+        table.main-list td { padding: 15px 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
         table.main-list tr:hover { background-color: #f9fafb; }
     </style>
 </head>
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar">
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
-            <div class="logo-icon"><div style="font-size: 11px; line-height:1;">GSM</div></div>
+            <div class="logo-icon">
+                <div style="font-size: 11px; line-height:1;">GSM</div>
+            </div>
             <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
         </div>
         
         <a href="index.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M14 2H6a2 2 0 0 0-2 2v16c0 1.1.9 2 2 2h12a2 2 0 0 0 2-2V8l-6-6z"/><path d="M14 3v5h5M16 13H8M16 17H8M10 9H8"/></svg>
             Order Details
-        </a>
-        <a href="invoices.html" class="nav-item active">
-            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
-            Invoices
         </a>
         <a href="billing.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="5" width="20" height="14" rx="2"/><line x1="2" y1="10" x2="22" y2="10"/></svg>
@@ -109,10 +125,88 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             Accessories
         </a>
+        
+        <!-- INVOICES TAB ADDED HERE -->
+        <a href="invoices.html" class="nav-item active">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Invoices
+        </a>
+
+        <a href="sales-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+            Sales Report
+        </a>
+        <a href="upi-book.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="M7 15h0M2 9.5h20"/></svg>
+            UPI Book
+        </a>
+        <a href="cashbook.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20"/><path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z"/></svg>
+            Cashbook
+        </a>
+        <a href="customer.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
+            Customer
+        </a>
+        <a href="estimate.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+            Estimate
+        </a>
+        <a href="technical-report.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+            Technical Report
+        </a>
+
+        <!-- Admin Only Tabs -->
+        <a href="expenses.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"></polyline></svg>
+            Expenses
+        </a>
+        <a href="profit.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"></polyline><polyline points="17 6 23 6 23 12"></polyline></svg>
+            Profitbook
+        </a>
+        <a href="users.html" class="nav-item admin-only">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            Users
+        </a>
+
+        <div style="flex-grow: 1;"></div> 
+        
+        <!-- User Profile & Logout Area -->
+        <div class="user-area">
+            <div class="user-profile">
+                <div class="user-avatar" id="userAvatar">M</div>
+                <div class="user-name-text" id="userNameDisplay">Loading...</div>
+            </div>
+            <button class="logout-btn" onclick="logOut()" title="Logout">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+                    <polyline points="16 17 21 12 16 7"></polyline>
+                    <line x1="21" y1="12" x2="9" y2="12"></line>
+                </svg>
+            </button>
+        </div>
+        <div class="version-text">v2.10 - GSM Solution</div>
     </div>
 
     <!-- MAIN CONTENT -->
     <div class="main-content">
+        
+        <div class="top-nav">
+            <div class="top-nav-left">
+                <!-- Open/Collapse Sidebar Button -->
+                <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
+                </button>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                    GST Invoices
+                </div>
+            </div>
+            <div style="font-weight: 500;" id="headerDateTime"></div>
+        </div>
+
         <div class="header">
             <div class="header-left">
                 <h1>GST Invoices</h1>
@@ -136,7 +230,7 @@
 
         <!-- New Invoice Form -->
         <div class="form-card" id="newInvoiceForm">
-            <h3 style="margin-top:0; font-size:1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom:10px;">Create New Invoice</h3>
+            <h3 style="margin-top:0; font-size:1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom:10px; color: var(--text-main);">Create New Invoice</h3>
             
             <div class="form-grid-3">
                 <div class="form-group">
@@ -148,7 +242,7 @@
                 </div>
                 <div class="form-group">
                     <label>Invoice Number (Auto)</label>
-                    <input type="text" id="invNo" class="readonly-input" readonly>
+                    <input type="text" id="invNo" class="readonly-input" readonly placeholder="Loading...">
                 </div>
                 <div class="form-group">
                     <label>Date</label>
@@ -259,18 +353,93 @@
     <script>
         const supabaseUrl = 'https://cbsmsclmyyxgwwztqwsc.supabase.co';
         const supabaseKey = 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-';
-        const supabase = window.supabase.createClient(supabaseUrl, supabaseKey);
+        const supabaseClient = window.supabase.createClient(supabaseUrl, supabaseKey);
+
+        const ADMIN_EMAIL = 'gsmmargao@gmail.com';
+        let currentUserEmail = '';
+        let isAdmin = false;
 
         let allInvoices = [];
         let rowCounter = 0;
 
-        document.addEventListener("DOMContentLoaded", () => {
-            document.getElementById('invDate').valueAsDate = new Date();
+        // --- Sidebar Auto-Collapse & Inactivity Logic ---
+        let inactivityTimer;
+        let sidebarTimer;
+        
+        function resetInactivityTimer() {
+            clearTimeout(inactivityTimer);
+            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); // 30 minutes
+        }
+        window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
+
+        window.toggleSidebar = function() {
+            const sb = document.getElementById('sidebar');
+            sb.classList.toggle('collapsed');
+            
+            if (!sb.classList.contains('collapsed')) {
+                clearTimeout(sidebarTimer);
+                sidebarTimer = setTimeout(() => {
+                    sb.classList.add('collapsed');
+                }, 30000);
+            } else {
+                clearTimeout(sidebarTimer);
+            }
+        }
+
+        window.clearSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+        }
+        window.resetSidebarTimer = function() {
+            const sb = document.getElementById('sidebar');
+            if (!sb.classList.contains('collapsed')) {
+                sidebarTimer = setTimeout(() => {
+                    sb.classList.add('collapsed');
+                }, 30000);
+            }
+        }
+
+        // --- Initialization ---
+        document.addEventListener("DOMContentLoaded", async () => {
+            const now = new Date();
+            document.getElementById('headerDateTime').innerHTML = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight:bold; color:var(--text-main);">GSM SOLUTION</span>`;
+            
+            document.getElementById('invDate').valueAsDate = now;
             addItemRow(); // add initial blank row
+            
+            await checkAuth();
             fetchInvoices();
         });
 
-        function toggleInvoiceForm() {
+        // --- Authentication & User Profile Logic ---
+        async function checkAuth() {
+            const { data } = await supabaseClient.auth.getSession();
+            if (data.session) {
+                currentUserEmail = data.session.user.email;
+                isAdmin = (currentUserEmail.toLowerCase() === ADMIN_EMAIL.toLowerCase());
+                
+                if (isAdmin) {
+                    document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.getElementById('userNameDisplay').innerText = 'Administrator';
+                    document.getElementById('userAvatar').innerText = 'A';
+                } else {
+                    let namePart = currentUserEmail.split('@')[0];
+                    namePart = namePart.charAt(0).toUpperCase() + namePart.slice(1);
+                    document.getElementById('userNameDisplay').innerText = namePart;
+                    document.getElementById('userAvatar').innerText = namePart.charAt(0).toUpperCase();
+                }
+            } else {
+                // If not logged in, redirect to login page (assuming login.html exists based on index.html)
+                window.location.href = 'login.html';
+            }
+        }
+        
+        window.logOut = async function() {
+            await supabaseClient.auth.signOut();
+            window.location.href = 'login.html';
+        }
+
+        // --- Invoice Form UI Toggle ---
+        window.toggleInvoiceForm = function() {
             const form = document.getElementById('newInvoiceForm');
             if (form.style.display === 'none' || form.style.display === '') {
                 form.style.display = 'block';
@@ -280,30 +449,34 @@
             }
         }
 
-        async function fetchNextInvoiceNumber() {
+        window.fetchNextInvoiceNumber = async function() {
             const type = document.getElementById('invType').value;
             const prefix = type === 'Parts' ? 'P' : 'L';
+            const invInput = document.getElementById('invNo');
+            
+            invInput.value = "Fetching...";
             
             try {
                 // Fetch the current sequence from our tracker table
-                const { data, error } = await supabase.from('invoice_sequences').select('last_value').eq('id', type).single();
+                const { data, error } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', type).single();
                 
                 if (error) {
                     console.error("Error fetching sequence", error);
-                    document.getElementById('invNo').value = prefix + "Error";
+                    invInput.value = prefix + "Error (Run SQL)";
                     return;
                 }
                 
                 // Calculate next
                 const nextVal = data.last_value + 1;
-                document.getElementById('invNo').value = prefix + nextVal;
+                invInput.value = prefix + nextVal;
             } catch (err) {
                 console.error(err);
+                invInput.value = prefix + "Error";
             }
         }
 
         // --- Dynamic Row Logic ---
-        function addItemRow() {
+        window.addItemRow = function() {
             rowCounter++;
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
@@ -314,8 +487,8 @@
                 <td><input type="text" class="item-hsn" placeholder="HSN"></td>
                 <td><input type="number" class="item-qty" value="1" min="1" oninput="calculateRow(${rowCounter})"></td>
                 <td><input type="number" class="item-taxable" placeholder="0.00" step="0.01" oninput="calculateRow(${rowCounter})"></td>
-                <td style="vertical-align: middle;" class="item-igst">0.00</td>
-                <td style="vertical-align: middle; font-weight:bold;" class="item-total">0.00</td>
+                <td style="vertical-align: middle; font-weight:500; color:#374151;" class="item-igst">0.00</td>
+                <td style="vertical-align: middle; font-weight:bold; color:var(--text-main);" class="item-total">0.00</td>
                 <td style="text-align:center;">
                     <button class="btn-icon btn-danger" onclick="removeRow(${rowCounter})" tabindex="-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
@@ -326,7 +499,7 @@
             reindexRows();
         }
 
-        function removeRow(id) {
+        window.removeRow = function(id) {
             const row = document.getElementById(`row_${id}`);
             if (row) row.remove();
             reindexRows();
@@ -342,8 +515,9 @@
             if (rows.length === 0) addItemRow(); // ensure at least 1 row exists
         }
 
-        function calculateRow(id) {
+        window.calculateRow = function(id) {
             const row = document.getElementById(`row_${id}`);
+            if(!row) return;
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
             const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
             
@@ -376,7 +550,7 @@
         }
 
         // --- Save to Database ---
-        async function saveInvoice() {
+        window.saveInvoice = async function() {
             const custName = document.getElementById('invCustName').value.trim();
             if(!custName) return alert("Customer Name is required.");
             
@@ -386,6 +560,13 @@
             const invType = document.getElementById('invType').value;
             const invNo = document.getElementById('invNo').value;
             
+            if(invNo.includes("Error")) {
+                alert("Cannot save: Invoice numbering sequence error. Please run the provided SQL setup script in Supabase.");
+                document.getElementById('btnSaveInvoice').disabled = false;
+                document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
+                return;
+            }
+
             // Build items array and sums
             const rows = document.getElementById('itemsBody').children;
             let itemsData = [];
@@ -415,7 +596,7 @@
                     totalGst += gst;
                     totalAmt += (base + gst);
                     
-                    if (i === 0) { firstDesc = desc; firstHsn = hsn; }
+                    if (itemsData.length === 1) { firstDesc = desc; firstHsn = hsn; }
                 }
             }
             
@@ -443,17 +624,18 @@
                 tax_percent: 18,
                 payment_mode: document.getElementById('invPaymentMode').value,
                 date: document.getElementById('invDate').value,
-                items: itemsData
+                items: itemsData,
+                created_by: currentUserEmail
             };
 
             try {
                 // Insert Invoice
-                const { error } = await supabase.from('accessories_invoices').insert([payload]);
+                const { error } = await supabaseClient.from('accessories_invoices').insert([payload]);
                 if (error) throw error;
 
                 // Update Sequence Tracker
-                const { data: seqData } = await supabase.from('invoice_sequences').select('last_value').eq('id', invType).single();
-                await supabase.from('invoice_sequences').update({ last_value: seqData.last_value + 1 }).eq('id', invType);
+                const { data: seqData } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', invType).single();
+                await supabaseClient.from('invoice_sequences').update({ last_value: seqData.last_value + 1 }).eq('id', invType);
 
                 alert("Invoice saved successfully!");
                 document.getElementById('newInvoiceForm').style.display = 'none';
@@ -478,7 +660,7 @@
         // --- Fetch & Display ---
         async function fetchInvoices() {
             try {
-                const { data, error } = await supabase.from('accessories_invoices').select('*').order('created_at', { ascending: false });
+                const { data, error } = await supabaseClient.from('accessories_invoices').select('*').order('created_at', { ascending: false });
                 if(!error) {
                     allInvoices = data || [];
                     renderInvoiceList();
@@ -494,13 +676,13 @@
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td>${new Date(inv.date).toLocaleDateString('en-GB')}</td>
-                    <td><strong>${inv.invoice_no}</strong></td>
-                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.8rem;">${inv.invoice_type}</span></td>
-                    <td><strong>${inv.customer_name}</strong></td>
+                    <td><strong style="color:var(--text-main); font-size:1rem;">${inv.invoice_no}</strong></td>
+                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:600;">${inv.invoice_type}</span></td>
+                    <td><strong style="font-size:0.95rem;">${inv.customer_name}</strong></td>
                     <td>${inv.gstin || '—'}</td>
-                    <td>₹${inv.base_amt.toFixed(2)}</td>
-                    <td style="color:var(--danger-color);">₹${inv.gst_amt.toFixed(2)}</td>
-                    <td><strong>₹${inv.total_amt.toFixed(2)}</strong></td>
+                    <td><span style="font-weight:500;">₹${inv.base_amt.toFixed(2)}</span></td>
+                    <td style="color:var(--danger-color); font-weight:500;">₹${inv.gst_amt.toFixed(2)}</td>
+                    <td><strong style="font-size:1.05rem; color:#111827;">₹${inv.total_amt.toFixed(2)}</strong></td>
                 `;
                 tbody.appendChild(tr);
             });
@@ -528,7 +710,7 @@
             return str;
         }
 
-        function exportInvoiceWise() {
+        window.exportInvoiceWise = function() {
             if(allInvoices.length === 0) return alert("No data to export.");
             
             let csvRows = [];
@@ -552,7 +734,7 @@
             downloadCSV(csvString, 'GST_Export_Invoice_Wise.csv');
         }
 
-        function exportHSNWise() {
+        window.exportHSNWise = function() {
             if(allInvoices.length === 0) return alert("No data to export.");
             
             // Aggregate logic
