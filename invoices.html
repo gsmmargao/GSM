@@ -96,6 +96,8 @@
         table.main-list th { padding: 12px 20px; background: #f9fafb; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; white-space: nowrap; }
         table.main-list td { padding: 15px 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
         table.main-list tr:hover { background-color: #f9fafb; }
+        
+        .admin-col { display: none; } /* Hidden by default until auth confirms admin */
     </style>
 </head>
 <body>
@@ -210,7 +212,7 @@
         <div class="header">
             <div class="header-left">
                 <h1>GST Invoices</h1>
-                <p>Manage and export Parts and Labour invoices</p>
+                <p>Manage and export Unified GST Invoices</p>
             </div>
             <div class="header-right">
                 <button class="btn btn-export" onclick="exportHSNWise()">
@@ -337,10 +339,11 @@
                             <th>Taxable</th>
                             <th>IGST</th>
                             <th>Total Amount</th>
+                            <th class="admin-col">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="invoiceListBody">
-                        <!-- Fetched from DB -->
+                        <!-- Fetched dynamically -->
                     </tbody>
                 </table>
             </div>
@@ -419,6 +422,8 @@
                 
                 if (isAdmin) {
                     document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
+                    document.querySelectorAll('.admin-col').forEach(el => el.style.display = 'table-cell');
+                    
                     document.getElementById('userNameDisplay').innerText = 'Administrator';
                     document.getElementById('userAvatar').innerText = 'A';
                 } else {
@@ -574,7 +579,7 @@
                 return;
             }
 
-            // Build items array and sums (UPDATED LOGIC)
+            // Build items array and sums
             const rows = document.getElementById('itemsBody').children;
             let itemsData = [];
             let totalBase = 0, totalGst = 0, totalAmt = 0;
@@ -665,14 +670,55 @@
             }
         }
 
-        // --- Fetch & Display ---
+        // --- Multi-Table Fetch & Display ---
         async function fetchInvoices() {
             try {
-                const { data, error } = await supabaseClient.from('accessories_invoices').select('*').order('created_at', { ascending: false });
-                if(!error) {
-                    allInvoices = data || [];
-                    renderInvoiceList();
+                // 1. Fetch from Accessories
+                const { data: accData, error: accError } = await supabaseClient.from('accessories_invoices').select('*');
+                if(accError) console.error(accError);
+
+                // 2. Fetch from Store Plus
+                const { data: spData, error: spError } = await supabaseClient.from('store_plus').select('*');
+                if(spError) console.error(spError);
+
+                let combined = [];
+
+                if (accData) {
+                    combined = combined.concat(accData.map(acc => ({
+                        ...acc,
+                        source_table: 'accessories_invoices'
+                    })));
                 }
+
+                // Standardize Store Plus Data
+                if (spData) {
+                    combined = combined.concat(spData.map(sp => {
+                        let base = parseFloat(sp.amount) || 0;
+                        let gst = base * 0.18; // Auto 18% calculation
+                        return {
+                            id: sp.id,
+                            source_table: 'store_plus',
+                            date: sp.date,
+                            invoice_no: sp.invoiceNo || 'SP-N/A',
+                            invoice_type: 'Store Plus',
+                            customer_name: 'Store Plus Order',
+                            gstin: sp.gstNumber,
+                            base_amt: base,
+                            gst_amt: gst,
+                            total_amt: base + gst,
+                            created_at: sp.created_at,
+                            // Wrap inside items array so exports match perfectly
+                            items: [{ hsn: sp.hsn, base_amt: base, gst_amt: gst, total_amt: base + gst }]
+                        };
+                    }));
+                }
+
+                // Sort purely by newest created_at date
+                combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
+                
+                allInvoices = combined;
+                renderInvoiceList();
+
             } catch(e) { console.error(e); }
         }
 
@@ -680,20 +726,52 @@
             const tbody = document.getElementById('invoiceListBody');
             tbody.innerHTML = '';
             
+            const adminStyle = isAdmin ? '' : 'style="display:none;"';
+            
             allInvoices.forEach(inv => {
                 const tr = document.createElement('tr');
+                
+                let typeColor = '#0369a1';
+                let typeBg = '#e0f2fe';
+                if(inv.invoice_type === 'Store Plus') {
+                    typeColor = '#6d28d9';
+                    typeBg = '#ede9fe';
+                }
+
                 tr.innerHTML = `
-                    <td>${new Date(inv.date).toLocaleDateString('en-GB')}</td>
-                    <td><strong style="color:var(--text-main); font-size:1rem;">${inv.invoice_no}</strong></td>
-                    <td><span style="background:#e0f2fe; color:#0369a1; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:600;">${inv.invoice_type}</span></td>
-                    <td><strong style="font-size:0.95rem;">${inv.customer_name}</strong></td>
-                    <td>${inv.gstin || '—'}</td>
+                    <td>${inv.date ? new Date(inv.date).toLocaleDateString('en-GB') : '—'}</td>
+                    <td><strong style="color:var(--text-main); font-size:1rem;">${escapeHtml(inv.invoice_no)}</strong></td>
+                    <td><span style="background:${typeBg}; color:${typeColor}; padding:2px 8px; border-radius:12px; font-size:0.8rem; font-weight:600;">${inv.invoice_type}</span></td>
+                    <td><strong style="font-size:0.95rem;">${escapeHtml(inv.customer_name)}</strong></td>
+                    <td>${escapeHtml(inv.gstin) || '—'}</td>
                     <td><span style="font-weight:500;">₹${inv.base_amt.toFixed(2)}</span></td>
                     <td style="color:var(--danger-color); font-weight:500;">₹${inv.gst_amt.toFixed(2)}</td>
                     <td><strong style="font-size:1.05rem; color:#111827;">₹${inv.total_amt.toFixed(2)}</strong></td>
+                    <td class="admin-col" ${adminStyle}>
+                        <button class="btn-icon btn-danger" onclick="deleteInvoice('${inv.id}', '${inv.source_table}')" title="Delete Invoice">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                        </button>
+                    </td>
                 `;
                 tbody.appendChild(tr);
             });
+        }
+        
+        window.deleteInvoice = async function(id, source_table) {
+            if(!confirm("⚠️ WARNING: Are you sure you want to permanently delete this invoice? This action cannot be undone.")) return;
+            try {
+                const { error } = await supabaseClient.from(source_table).delete().eq('id', id);
+                if (error) throw error;
+                fetchInvoices();
+            } catch(e) {
+                alert("Failed to delete invoice: " + e.message);
+            }
+        }
+
+        // --- Utility ---
+        function escapeHtml(str) {
+            if (!str) return '';
+            return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
         // --- CSV Exporters ---
@@ -727,11 +805,11 @@
             
             allInvoices.forEach(inv => {
                 csvRows.push([
-                    inv.date,
-                    inv.invoice_no,
+                    inv.date || '',
+                    escapeCSV(inv.invoice_no),
                     inv.invoice_type,
                     escapeCSV(inv.customer_name),
-                    inv.gstin || '',
+                    escapeCSV(inv.gstin) || '',
                     inv.base_amt.toFixed(2),
                     inv.gst_amt.toFixed(2),
                     inv.total_amt.toFixed(2)
@@ -756,9 +834,9 @@
                     items.forEach(item => {
                         let hsn = item.hsn || 'UNSPECIFIED';
                         if (!hsnMap[hsn]) hsnMap[hsn] = { taxable: 0, igst: 0, total: 0 };
-                        hsnMap[hsn].taxable += parseFloat(item.base_amt);
-                        hsnMap[hsn].igst += parseFloat(item.gst_amt);
-                        hsnMap[hsn].total += parseFloat(item.total_amt);
+                        hsnMap[hsn].taxable += parseFloat(item.base_amt) || 0;
+                        hsnMap[hsn].igst += parseFloat(item.gst_amt) || 0;
+                        hsnMap[hsn].total += parseFloat(item.total_amt) || 0;
                     });
                 }
             });
