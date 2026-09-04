@@ -19,46 +19,47 @@
             --danger-color: #ef4444;
         }
 
-        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
+        /* Matched global font sizes */
+        body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* --- Sidebar Styling --- */
         .sidebar { width: var(--sidebar-width); background: var(--sidebar-bg); border-right: 1px solid var(--border-color); display: flex; flex-direction: column; padding: 20px 0; transition: all 0.3s ease; overflow-y: auto; overflow-x: hidden; white-space: nowrap; z-index: 40; flex-shrink: 0; }
         .sidebar.collapsed { width: 0; padding: 0; border-right: none; opacity: 0; pointer-events: none; }
         
-        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 0.95rem; color: var(--text-main); letter-spacing: 0.5px; }
-        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.75rem; line-height: 1; text-align: center;}
+        .logo-area { display: flex; align-items: center; padding: 0 20px 30px 20px; font-weight: 800; font-size: 1.05rem; color: var(--text-main); letter-spacing: 0.5px; }
+        .logo-icon { background: #111827; color: white; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; border-radius: 8px; margin-right: 12px; font-size: 0.85rem; line-height: 1; text-align: center;}
         
-        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 0.9rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
+        .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 1rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
         .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
         .nav-item.active { background: #1f2937; color: white; }
         .nav-item.active svg { opacity: 1; }
         .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
-        .admin-only { display: none; }
+        .admin-only { display: none; color: #b91c1c; }
 
         .user-area { margin: auto 15px 15px 15px; padding-top: 15px; border-top: 1px solid var(--border-color); display: flex; align-items: center; justify-content: space-between; }
         .user-profile { display: flex; align-items: center; gap: 10px; }
-        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 0.9rem; }
-        .user-name-text { font-size: 0.85rem; font-weight: 600; color: var(--text-main); }
+        .user-avatar { width: 32px; height: 32px; background: #e5e7eb; color: var(--text-main); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: bold; font-size: 1rem; }
+        .user-name-text { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
-        .version-text { font-size: 0.7rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
+        .version-text { font-size: 0.8rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content --- */
         .main-content { flex: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; transition: margin 0.3s ease;}
         
-        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.85rem; color: var(--text-muted); flex-shrink: 0;}
+        .top-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; font-size: 0.95rem; color: var(--text-muted); flex-shrink: 0;}
         .top-nav-left { display: flex; align-items: center; gap: 10px; font-weight: 600; color: var(--text-main); }
         .sidebar-toggle-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: background 0.2s; }
         .sidebar-toggle-btn:hover { background: #e5e7eb; color: var(--text-main); }
         
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0;}
-        .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
-        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
+        .header-left h1 { margin: 0 0 5px 0; font-size: 1.6rem; color: var(--text-main); font-weight: 700; }
+        .header-left p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
         .header-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;}
         
-        .search-bar { padding: 8px 12px 8px 35px; border: 1px solid var(--border-color); background: var(--input-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; color: var(--text-main); border-radius: 6px; width: 220px; font-size: 0.85rem; outline: none; }
+        .search-bar { padding: 8px 12px 8px 35px; border: 1px solid var(--border-color); background: var(--input-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; color: var(--text-main); border-radius: 6px; width: 220px; font-size: 0.95rem; outline: none; }
         
-        .btn { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.85rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        .btn { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: inline-flex; align-items: center; gap: 6px; transition: all 0.2s; }
         .btn:hover { background: #f3f4f6; }
         .btn-primary { background: #111827; color: white; border: none; }
         .btn-primary:hover { background: #374151; }
@@ -70,32 +71,32 @@
         /* --- Table Styling --- */
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); overflow-y: auto; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
         table { width: 100%; border-collapse: collapse; text-align: left; }
-        th { padding: 15px 20px; background: #f9fafb; font-size: 0.75rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; position: sticky; top: 0; z-index: 5;}
-        td { padding: 15px 20px; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
+        th { padding: 15px 20px; background: #f9fafb; font-size: 0.85rem; color: var(--text-muted); border-bottom: 1px solid var(--border-color); font-weight: 600; position: sticky; top: 0; z-index: 5;}
+        td { padding: 15px 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
         tr:hover { background-color: #f9fafb; }
 
         /* Modal */
         .modal-overlay { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); display: none; align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(2px);}
         .modal-container { background: var(--card-bg); padding: 30px; border-radius: 12px; width: 450px; max-width: 95%; box-shadow: 0 20px 25px -5px rgba(0,0,0,0.1); }
-        .modal-title { font-size: 1.25rem; font-weight: 700; color: var(--text-main); margin: 0 0 5px 0; }
-        .modal-subtitle { font-size: 0.85rem; color: var(--text-muted); margin: 0 0 20px 0; }
+        .modal-title { font-size: 1.35rem; font-weight: 700; color: var(--text-main); margin: 0 0 5px 0; }
+        .modal-subtitle { font-size: 0.95rem; color: var(--text-muted); margin: 0 0 20px 0; }
         .form-group { display: flex; flex-direction: column; margin-bottom: 15px; }
-        .form-group label { font-size: 0.75rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
-        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.85rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit;}
+        .form-group label { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; font-weight: 600; }
+        .form-group input, .form-group select { padding: 10px 12px; border: 1px solid var(--border-color); border-radius: 6px; font-size: 0.95rem; outline: none; background: var(--input-bg); color: var(--text-main); font-family: inherit;}
         
         .modal-footer { display: flex; justify-content: flex-end; gap: 12px; margin-top: 20px;}
-        .btn-cancel { padding: 8px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: white; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 0.85rem; }
-        .btn-confirm { padding: 8px 16px; border-radius: 6px; border: none; background: #111827; color: white; cursor: pointer; font-weight: 600; font-size: 0.85rem; }
+        .btn-cancel { padding: 10px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: white; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 0.95rem; }
+        .btn-confirm { padding: 10px 16px; border-radius: 6px; border: none; background: #111827; color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
         .btn-confirm:hover { background: #374151; }
     </style>
 </head>
 <body>
 
     <!-- SIDEBAR -->
-    <div class="sidebar" id="sidebar">
+    <div class="sidebar" id="sidebar" onmouseenter="clearSidebarTimer()" onmouseleave="resetSidebarTimer()">
         <div class="logo-area">
             <div class="logo-icon">
-                <div style="font-size: 10px; line-height:1;">GSM</div>
+                <div style="font-size: 11px; line-height:1;">GSM</div>
             </div>
             <div style="line-height: 1.2;">GSM<br>SOLUTION</div>
         </div>
@@ -116,6 +117,13 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             Accessories
         </a>
+        
+        <!-- INVOICES TAB -->
+        <a href="invoices.html" class="nav-item">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+            Invoices
+        </a>
+
         <a href="sales-report.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             Sales Report
@@ -157,6 +165,7 @@
 
         <div style="flex-grow: 1;"></div> 
         
+        <!-- User Profile & Logout Area -->
         <div class="user-area">
             <div class="user-profile">
                 <div class="user-avatar" id="userAvatar">M</div>
@@ -178,6 +187,7 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
+                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -319,12 +329,13 @@
         let allOrdersData = [];
         let allBillingData = []; 
 
+        // --- Sidebar Auto-Collapse & 30 Min Inactivity Logic ---
         let inactivityTimer;
         let sidebarTimer;
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000);
+            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); // 30 minutes
         }
         window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
 
@@ -342,6 +353,18 @@
             }
         }
 
+        window.clearSidebarTimer = function() {
+            clearTimeout(sidebarTimer);
+        }
+        window.resetSidebarTimer = function() {
+            const sb = document.getElementById('sidebar');
+            if (!sb.classList.contains('collapsed')) {
+                sidebarTimer = setTimeout(() => {
+                    sb.classList.add('collapsed');
+                }, 30000);
+            }
+        }
+
         document.addEventListener("DOMContentLoaded", async () => {
             const now = new Date();
             document.getElementById('headerDateTime').innerHTML = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight:bold; color:var(--text-main);">GSM SOLUTION</span>`;
@@ -354,6 +377,7 @@
             supabaseClient.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { fetchCustomersAndOrders(); }).subscribe();
         });
 
+        // --- Authentication & User Profile Logic ---
         async function checkAuth() {
             const { data } = await supabaseClient.auth.getSession();
             if (data.session) {
@@ -370,6 +394,8 @@
                     document.getElementById('userNameDisplay').innerText = name;
                     document.getElementById('userAvatar').innerText = name.charAt(0).toUpperCase();
                 }
+            } else {
+                window.location.href = 'login.html';
             }
         }
         
@@ -380,7 +406,8 @@
 
         async function fetchCustomersAndOrders() {
             try {
-                const { data: cData } = await supabaseClient.from('customers').select('*').order('name', { ascending: true });
+                // Fetch customers and sort by highest pending credit first automatically
+                const { data: cData } = await supabaseClient.from('customers').select('*').order('pending_credit', { ascending: false });
                 allCustomersData = cData || [];
                 
                 const { data: oData } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
@@ -401,23 +428,23 @@
             let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)));
             
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted);">No customers found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No customers found.</td></tr>`;
                 return;
             }
 
             filtered.forEach(cust => {
-                let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:4px 8px; font-size:0.75rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
+                let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:6px 10px; font-size:0.8rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
                 
-                let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:4px 8px; font-size:0.75rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
+                let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:6px 10px; font-size:0.8rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
                 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${cust.name}</strong></td>
                     <td>${cust.contact || '—'}</td>
-                    <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'};">₹${cust.pending_credit || 0}</strong></td>
+                    <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'}; font-size: 1.05rem;">₹${cust.pending_credit || 0}</strong></td>
                     <td>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn" style="padding:4px 8px; font-size:0.75rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact}')">View Ledger</button>
+                            <button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact}')">View Ledger</button>
                             ${settleBtn}
                             ${deleteBtn}
                         </div>
@@ -457,7 +484,7 @@
 
         window.deleteCustomer = async function(id, name) {
             if (!isAdmin) return;
-            if (!confirm(`Are you sure you want to delete customer "${name}"?`)) return;
+            if (!confirm(`⚠️ WARNING: Are you sure you want to delete customer "${name}"?`)) return;
 
             try {
                 const { error } = await supabaseClient.from('customers').delete().eq('id', id);
@@ -544,7 +571,7 @@
             
             const custOrders = allOrdersData.filter(o => o.customerName === name && o.contactNo === contact);
             if (custOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center;">No order history found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">No order history found.</td></tr>`;
             } else {
                 custOrders.forEach(o => {
                     let d = '';
@@ -570,7 +597,7 @@
                             <td>${d}</td>
                             <td><strong>${o.jobNo}</strong></td>
                             <td>${o.modelNo || '—'}</td>
-                            <td><span style="font-size:0.75rem; font-weight:bold; color:${statusColor};">${o.status}</span></td>
+                            <td><span style="font-size:0.8rem; font-weight:bold; color:${statusColor}; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${o.status}</span></td>
                             <td style="color:#10b981; font-weight:bold;">₹${totalPaid.toFixed(2)}</td>
                         </tr>
                     `;
