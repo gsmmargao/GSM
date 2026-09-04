@@ -54,7 +54,7 @@
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; flex-shrink: 0;}
         .header-left h1 { margin: 0 0 5px 0; font-size: 1.5rem; color: var(--text-main); font-weight: 700; }
         .header-left p { margin: 0; color: var(--text-muted); font-size: 0.9rem; }
-        .header-right { display: flex; gap: 12px; align-items: center; }
+        .header-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; justify-content: flex-end;}
         
         .search-bar { padding: 8px 12px 8px 35px; border: 1px solid var(--border-color); background: var(--input-bg) url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="%239ca3af" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>') no-repeat 10px center; color: var(--text-main); border-radius: 6px; width: 220px; font-size: 0.85rem; outline: none; }
         
@@ -62,6 +62,10 @@
         .btn:hover { background: #f3f4f6; }
         .btn-primary { background: #111827; color: white; border: none; }
         .btn-primary:hover { background: #374151; }
+        .btn-success { background: #10b981; color: white; border: none; }
+        .btn-success:hover { background: #059669; }
+        .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-main); }
+        .btn-outline:hover { background: #f3f4f6; }
 
         /* --- Table Styling --- */
         .table-card { background: var(--card-bg); border-radius: 10px; border: 1px solid var(--border-color); overflow-y: auto; flex: 1; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
@@ -192,6 +196,18 @@
             </div>
             <div class="header-right">
                 <input type="text" id="searchCustomerInput" class="search-bar" placeholder="Search customers..." onkeyup="renderCustomersTable()">
+                
+                <!-- Hidden file input for CSV import -->
+                <input type="file" id="csvFileInput" accept=".csv" style="display: none;" onchange="importCustomersCSV(event)">
+                
+                <button class="btn btn-outline" onclick="exportCustomersCSV()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                    Export
+                </button>
+                <button class="btn btn-success" onclick="document.getElementById('csvFileInput').click()">
+                    <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+                    Import CSV
+                </button>
                 <button class="btn btn-primary" onclick="openAddCustomerModal()">+ Add Customer</button>
             </div>
         </div>
@@ -301,7 +317,7 @@
         let isAdmin = false;
         let allCustomersData = [];
         let allOrdersData = [];
-        let allBillingData = []; // NEW: Added to store billing records
+        let allBillingData = []; 
 
         let inactivityTimer;
         let sidebarTimer;
@@ -333,7 +349,6 @@
             await checkAuth();
             fetchCustomersAndOrders();
 
-            // Added real-time listener for the billing table
             supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomersAndOrders(); }).subscribe();
             supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchCustomersAndOrders(); }).subscribe();
             supabaseClient.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { fetchCustomersAndOrders(); }).subscribe();
@@ -371,7 +386,6 @@
                 const { data: oData } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
                 allOrdersData = oData || [];
                 
-                // NEW: Fetch billing data
                 const { data: bData } = await supabaseClient.from('billing').select('*');
                 allBillingData = bData || [];
 
@@ -539,15 +553,12 @@
                     let statusColor = o.status === 'Repair Completed' ? '#3730a3' : (o.status === 'Goods Delivered' ? '#065f46' : '#b45309');
                     if (o.status === 'Repair Refusal' || o.status === 'Cancelled Service Order') statusColor = '#991b1b';
 
-                    // --- NEW TOTAL PAID LOGIC LINKED TO SCHEMA ---
-                    // Find corresponding billing record for this job number
                     const bill = allBillingData.find(b => b.jobNo === o.jobNo);
                     
-                    let advance = parseFloat(o.advancePaid) || 0; // Fallback to order table advance if not billed
+                    let advance = parseFloat(o.advancePaid) || 0; 
                     let billingAmount = 0;
 
                     if (bill) {
-                        // If it has been billed, fetch the amounts directly from the billing table record
                         advance = parseFloat(bill.advancePaid) || advance;
                         billingAmount = parseFloat(bill.amountPaid) || 0;
                     }
@@ -566,6 +577,99 @@
                 });
             }
             document.getElementById('modalCustomerLedger').style.display = 'flex';
+        }
+
+        // --- EXPORT CSV LOGIC ---
+        window.exportCustomersCSV = function() {
+            if (!allCustomersData || allCustomersData.length === 0) {
+                alert("No customers available to export.");
+                return;
+            }
+
+            // CSV Header
+            let csvContent = "Customer Name,Contact Number,Pending Credit (INR)\n";
+
+            // Process data rows
+            allCustomersData.forEach(cust => {
+                // Strip commas from strings to prevent breaking the CSV format
+                let name = (cust.name || "").replace(/,/g, " ");
+                let contact = (cust.contact || "").replace(/,/g, " ");
+                let credit = cust.pending_credit || 0;
+                csvContent += `${name},${contact},${credit}\n`;
+            });
+
+            // Create and trigger download
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            const url = URL.createObjectURL(blob);
+            link.setAttribute("href", url);
+            link.setAttribute("download", `GSM_Customers_${new Date().toISOString().split('T')[0]}.csv`);
+            link.style.visibility = 'hidden';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+
+        // --- IMPORT CSV LOGIC ---
+        window.importCustomersCSV = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = async function(e) {
+                const text = e.target.result;
+                const rows = text.split('\n');
+                const customersToInsert = [];
+
+                // Start from index 1 to skip the header row.
+                for (let i = 1; i < rows.length; i++) {
+                    const row = rows[i].trim();
+                    if (!row) continue; // Skip empty rows
+
+                    const cols = row.split(',');
+                    
+                    // We only require Customer Name to exist.
+                    if (cols.length >= 1) {
+                        let name = cols[0].trim();
+                        let contact = cols[1] ? cols[1].trim() : "";
+                        let credit = cols[2] ? parseFloat(cols[2].trim()) : 0; 
+
+                        if (name) {
+                            customersToInsert.push({
+                                name: name,
+                                contact: contact,
+                                pending_credit: isNaN(credit) ? 0 : credit
+                            });
+                        }
+                    }
+                }
+
+                if (customersToInsert.length === 0) {
+                    alert("No valid customer data found in the selected file.");
+                    event.target.value = ''; // Reset input
+                    return;
+                }
+
+                if (!confirm(`Found ${customersToInsert.length} customers. Do you want to import them?`)) {
+                    event.target.value = ''; // Reset input
+                    return;
+                }
+
+                try {
+                    // Bulk insert to Supabase
+                    const { error } = await supabaseClient.from('customers').insert(customersToInsert);
+                    if (error) throw error;
+                    
+                    alert("Customers imported successfully!");
+                    fetchCustomersAndOrders(); // Refresh table
+                } catch (err) {
+                    alert("Failed to import customers: " + err.message);
+                } finally {
+                    event.target.value = ''; // Reset input to allow re-uploading the same file if needed
+                }
+            };
+            
+            reader.readAsText(file);
         }
     </script>
 </body>
