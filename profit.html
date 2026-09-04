@@ -54,6 +54,7 @@
         .user-name-text { font-size: 0.95rem; font-weight: 600; color: var(--text-main); }
         .logout-btn { background: transparent; border: none; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; padding: 5px; transition: color 0.2s; }
         .logout-btn:hover { color: #ef4444; }
+        .version-text { font-size: 0.8rem; color: #9ca3af; text-align: center; margin-bottom: 10px; }
 
         /* --- Main Content & Header --- */
         .main-content { flex: 1; overflow-y: auto; background: var(--bg-color); z-index: 10; padding: 20px 30px; }
@@ -174,13 +175,10 @@
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><line x1="3" y1="6" x2="21" y2="6"/><path d="M16 10a4 4 0 0 1-8 0"/></svg>
             Accessories
         </a>
-        
-        <!-- INVOICES TAB ADDED HERE -->
         <a href="invoices.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Invoices
         </a>
-
         <a href="sales-report.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
             Sales Report
@@ -367,21 +365,40 @@
         totalExpenses: 0
     };
 
-    // --- Sidebar & Base Logic ---
+    // --- Sidebar & Auto-Logout Logic ---
+    let inactivityTimer;
     let sidebarTimer;
+    
+    function resetInactivityTimer() {
+        clearTimeout(inactivityTimer);
+        inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); // 30 minutes
+    }
+    window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
+
     window.resetSidebarTimer = function() {
         clearTimeout(sidebarTimer);
         sidebarTimer = setTimeout(() => {
-            document.getElementById('sidebar').classList.add('collapsed');
-        }, 30000); // 30s auto collapse
+            const sb = document.getElementById('sidebar');
+            if (sb) sb.classList.add('collapsed');
+        }, 30000); 
     }
     window.clearSidebarTimer = function() { clearTimeout(sidebarTimer); }
     window.toggleSidebar = function() {
-        document.getElementById('sidebar').classList.toggle('collapsed');
-        if(!document.getElementById('sidebar').classList.contains('collapsed')) resetSidebarTimer();
-        else clearSidebarTimer();
+        const sb = document.getElementById('sidebar');
+        if (sb) {
+            sb.classList.toggle('collapsed');
+            if(!sb.classList.contains('collapsed')) resetSidebarTimer();
+            else clearSidebarTimer();
+        }
     }
-    window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetSidebarTimer;
+    
+    // Bind reset to interactions
+    document.addEventListener("DOMContentLoaded", () => {
+        document.body.addEventListener("mousemove", resetSidebarTimer);
+        document.body.addEventListener("keypress", resetSidebarTimer);
+        document.body.addEventListener("click", resetSidebarTimer);
+        document.body.addEventListener("scroll", resetSidebarTimer);
+    });
 
     const dateOptions = { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' };
     document.getElementById('headerDateTime').innerText = new Date().toLocaleDateString('en-GB', dateOptions) + " | GSM SOLUTION";
@@ -392,17 +409,25 @@
 
     async function checkAuth() {
         const { data } = await db.auth.getSession();
-        if (!data.session) window.location.href = 'login.html';
-        else {
-            currentUserEmail = data.session.user.email;
-            let displayEmail = currentUserEmail.split('@')[0];
-            document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
-            document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
-            
-            if (currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase()) {
-                document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
-            }
+        if (!data || !data.session) {
+            window.location.href = 'login.html';
+            return;
         }
+
+        currentUserEmail = data.session.user.email;
+        
+        // Block Non-Admin Access immediately
+        if (currentUserEmail.trim().toLowerCase() !== ADMIN_EMAIL.trim().toLowerCase()) {
+            alert("Unauthorized Access. Redirecting to Order Management.");
+            window.location.href = 'index.html';
+            return;
+        }
+
+        let displayEmail = currentUserEmail.split('@')[0];
+        document.getElementById('userNameDisplay').innerText = displayEmail.charAt(0).toUpperCase() + displayEmail.slice(1);
+        document.getElementById('userAvatar').innerText = displayEmail.charAt(0).toUpperCase();
+
+        document.querySelectorAll('.admin-only').forEach(el => el.style.display = 'flex');
     }
     
     async function logOut() {
@@ -555,7 +580,7 @@
                     div.className = 'expense-item';
                     div.innerHTML = `
                         <div class="expense-info">
-                            <h4>${item.title}</h4>
+                            <h4>${item.category || item.title}</h4>
                             <p>${item.description || ''}</p>
                         </div>
                         <div class="expense-amount-date">
