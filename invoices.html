@@ -31,7 +31,7 @@
         
         .nav-item { padding: 10px 20px; margin: 2px 10px; color: var(--text-muted); text-decoration: none; display: flex; align-items: center; font-size: 1rem; font-weight: 500; cursor: pointer; border-radius: 6px; transition: all 0.2s ease;}
         .nav-item svg { margin-right: 12px; width: 18px; height: 18px; stroke-width: 2; opacity: 0.7; flex-shrink: 0;}
-        .nav-item.active { background: #1f2937; color: white; }
+        .nav-item.active { background: #111827; color: white; }
         .nav-item.active svg { opacity: 1; }
         .nav-item:hover:not(.active) { background: #f3f4f6; color: var(--text-main); }
         .admin-only { display: none; color: #b91c1c; }
@@ -55,9 +55,19 @@
         .header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 25px; }
         .header-left h1 { margin: 0 0 5px 0; font-size: 1.6rem; color: var(--text-main); font-weight: 700; }
         .header-left p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
-        .header-right { display: flex; gap: 12px; align-items: center; }
+        .header-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
-        .btn { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+        /* Month Controls added to match Profit Book */
+        .month-controls { display: flex; align-items: center; }
+        .month-selector { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
+        .month-btn { background: transparent; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1.05rem; transition: 0.2s; font-weight: bold;}
+        .month-btn:hover { background: #f3f4f6; color: var(--text-main); }
+        .month-btn:first-child { border-right: 1px solid var(--border-color); }
+        .month-btn:last-child { border-left: 1px solid var(--border-color); }
+        .month-display { position: relative; padding: 8px 15px; font-weight: 600; color: var(--text-main); font-size: 0.95rem; display: flex; align-items: center; gap: 8px; cursor: pointer; min-width: 120px; justify-content: center;}
+        .month-display input[type="month"] { position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer; }
+        
+        .btn { padding: 8px 14px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 0.95rem; border: 1px solid var(--border-color); background: var(--input-bg); color: var(--text-main); display: flex; align-items: center; gap: 6px; transition: all 0.2s; white-space: nowrap;}
         .btn:hover { background: #f3f4f6; }
         .btn-primary { background: #111827; color: white; border: none; }
         .btn-primary:hover { background: #374151; }
@@ -215,6 +225,23 @@
                 <p>Manage and export Unified GST Invoices</p>
             </div>
             <div class="header-right">
+                
+                <!-- MONTH SELECTOR UI (Triggers Fetch) -->
+                <div class="month-controls">
+                    <div class="month-selector">
+                        <button class="month-btn" onclick="changeMonth(-1)">‹</button>
+                        <div class="month-display" title="Select Month">
+                            <span id="monthDisplayText">Aug, 2026</span>
+                            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                            <input type="month" id="monthInput" onchange="handleMonthInput()">
+                        </div>
+                        <button class="month-btn" onclick="changeMonth(1)">›</button>
+                    </div>
+                </div>
+
+                <div style="border-left: 1px solid var(--border-color); height: 30px; margin: 0 5px;"></div>
+
+                <!-- EXPORT BUTTONS (Exports matching fetched month) -->
                 <button class="btn btn-export" onclick="exportHSNWise()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Export HSN Wise
@@ -365,7 +392,7 @@
         let allInvoices = [];
         let rowCounter = 0;
 
-        // --- Sidebar Auto-Collapse & Inactivity Logic ---
+        // --- Sidebar Auto-Collapse & 30 Min Inactivity Logic ---
         let inactivityTimer;
         let sidebarTimer;
         
@@ -401,12 +428,40 @@
             }
         }
 
+        // --- Month Selector Logic ---
+        function updateMonthDisplay() {
+            const val = document.getElementById('monthInput').value;
+            if(!val) return;
+            const d = new Date(val + "-01");
+            const text = d.toLocaleDateString('en-US', { month: 'short' }) + ', ' + d.getFullYear();
+            document.getElementById('monthDisplayText').innerText = text;
+        }
+
+        window.changeMonth = function(offset) {
+            let current = new Date(document.getElementById('monthInput').value + "-01");
+            current.setMonth(current.getMonth() + offset);
+            document.getElementById('monthInput').value = `${current.getFullYear()}-${String(current.getMonth() + 1).padStart(2, '0')}`;
+            updateMonthDisplay();
+            fetchInvoices();
+        }
+
+        window.handleMonthInput = function() {
+            updateMonthDisplay();
+            fetchInvoices();
+        }
+
         // --- Initialization ---
         document.addEventListener("DOMContentLoaded", async () => {
             const now = new Date();
             document.getElementById('headerDateTime').innerHTML = `${now.toLocaleDateString('en-GB', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })} &nbsp;&nbsp;|&nbsp;&nbsp; <span style="font-weight:bold; color:var(--text-main);">GSM SOLUTION</span>`;
             
             document.getElementById('invDate').valueAsDate = now;
+            
+            // Set default month to current month
+            const monthInput = document.getElementById('monthInput');
+            monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+            updateMonthDisplay();
+
             addItemRow(); // add initial blank row
             
             await checkAuth();
@@ -520,7 +575,6 @@
             if (rows.length === 0) addItemRow(); // ensure at least 1 row exists
         }
 
-        // UPDATED LOGIC: Taxable value acts as the total taxable base, regardless of qty entered
         window.calculateRow = function(id) {
             const row = document.getElementById(`row_${id}`);
             if(!row) return;
@@ -540,7 +594,6 @@
             calculateGrandTotal();
         }
 
-        // UPDATED LOGIC: Totals calculate using the raw Taxable values
         function calculateGrandTotal() {
             const rows = document.getElementById('itemsBody').children;
             let sumTaxable = 0, sumIGST = 0, sumTotal = 0;
@@ -661,6 +714,7 @@
                 addItemRow();
                 calculateGrandTotal();
                 
+                // Refetch using currently selected month filter
                 fetchInvoices();
             } catch(e) {
                 alert("Error saving invoice: " + e.message);
@@ -670,15 +724,33 @@
             }
         }
 
-        // --- Multi-Table Fetch & Display ---
+        // --- Multi-Table Fetch & Display (Filtered by Month) ---
         async function fetchInvoices() {
+            // Get selected month range
+            const selectedMonth = document.getElementById('monthInput').value; // YYYY-MM
+            if(!selectedMonth) return;
+            
+            const startOfMonth = `${selectedMonth}-01`;
+            const dateObj = new Date(startOfMonth);
+            const nextMonth = new Date(dateObj.getFullYear(), dateObj.getMonth() + 1, 1);
+            const endOfMonthDate = new Date(nextMonth - 1);
+            const endOfMonth = endOfMonthDate.toISOString().split('T')[0];
+
             try {
-                // 1. Fetch from Accessories
-                const { data: accData, error: accError } = await supabaseClient.from('accessories_invoices').select('*');
+                // 1. Fetch from Accessories (Filtered by Date)
+                const { data: accData, error: accError } = await supabaseClient
+                    .from('accessories_invoices')
+                    .select('*')
+                    .gte('date', startOfMonth)
+                    .lte('date', endOfMonth);
                 if(accError) console.error(accError);
 
-                // 2. Fetch from Store Plus
-                const { data: spData, error: spError } = await supabaseClient.from('store_plus').select('*');
+                // 2. Fetch from Store Plus (Filtered by Date)
+                const { data: spData, error: spError } = await supabaseClient
+                    .from('store_plus')
+                    .select('*')
+                    .gte('date', startOfMonth)
+                    .lte('date', endOfMonth);
                 if(spError) console.error(spError);
 
                 let combined = [];
@@ -701,7 +773,7 @@
                             date: sp.date,
                             invoice_no: sp.invoiceNo || 'SP-N/A',
                             invoice_type: 'Store Plus',
-                            customer_name: 'Store Plus Order',
+                            customer_name: sp.customer_name || 'Store Plus Order',
                             gstin: sp.gstNumber,
                             base_amt: base,
                             gst_amt: gst,
@@ -727,6 +799,12 @@
             tbody.innerHTML = '';
             
             const adminStyle = isAdmin ? '' : 'style="display:none;"';
+            
+            if (allInvoices.length === 0) {
+                const colSpan = isAdmin ? 9 : 8;
+                tbody.innerHTML = `<tr><td colspan="${colSpan}" style="text-align: center; color: var(--text-muted); padding: 20px;">No invoices found for the selected month.</td></tr>`;
+                return;
+            }
             
             allInvoices.forEach(inv => {
                 const tr = document.createElement('tr');
@@ -796,8 +874,17 @@
             return str;
         }
 
+        // --- EXPORT LOGIC ---
+        // Generates the file name based on the currently selected month
+        function getExportMonthString() {
+            const val = document.getElementById('monthInput').value;
+            if(!val) return "Export";
+            const d = new Date(val + "-01");
+            return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(', ', '_');
+        }
+
         window.exportInvoiceWise = function() {
-            if(allInvoices.length === 0) return alert("No data to export.");
+            if(allInvoices.length === 0) return alert("No data to export for this month.");
             
             let csvRows = [];
             // Header
@@ -817,11 +904,12 @@
             });
             
             const csvString = csvRows.map(row => row.join(',')).join('\n');
-            downloadCSV(csvString, 'GST_Export_Invoice_Wise.csv');
+            const fileName = `GST_InvoiceWise_${getExportMonthString()}.csv`;
+            downloadCSV(csvString, fileName);
         }
 
         window.exportHSNWise = function() {
-            if(allInvoices.length === 0) return alert("No data to export.");
+            if(allInvoices.length === 0) return alert("No data to export for this month.");
             
             // Aggregate logic
             let hsnMap = {};
@@ -855,7 +943,8 @@
             }
             
             const csvString = csvRows.map(row => row.join(',')).join('\n');
-            downloadCSV(csvString, 'GST_Export_HSN_Wise.csv');
+            const fileName = `GST_HSNWise_${getExportMonthString()}.csv`;
+            downloadCSV(csvString, fileName);
         }
     </script>
 </body>
