@@ -460,6 +460,10 @@
                 <label>Amount (₹)</label>
                 <input type="number" id="outAmount" placeholder="0.00">
             </div>
+            <div class="form-group">
+                <label>Verify Password</label>
+                <input type="password" id="outPassword" placeholder="Enter your login password">
+            </div>
             <div class="modal-actions">
                 <button class="btn" style="background: white; border: 1px solid var(--border-color); color: var(--text-main);" onclick="closeModal()">Cancel</button>
                 <button class="btn btn-primary" onclick="saveCashOut()">Record Cash Out</button>
@@ -539,6 +543,7 @@
         document.getElementById('outDesc').value = '';
         document.getElementById('outAmount').value = '';
         document.getElementById('outCategory').value = 'General';
+        document.getElementById('outPassword').value = '';
     };
 
     // --- Formatting Utils ---
@@ -757,11 +762,13 @@
         const desc = document.getElementById('outDesc').value.trim();
         const category = document.getElementById('outCategory').value;
         const amount = parseFloat(document.getElementById('outAmount').value) || 0;
+        const password = document.getElementById('outPassword').value;
         
         // Grab current date for standard logging
         const currentDate = new Date().toISOString().split('T')[0];
 
         if(!desc || amount <= 0) return alert("Please enter a valid description and amount.");
+        if(!password) return alert("Please enter your password to authorize cash out.");
 
         const entry = {
             date: currentDate,
@@ -773,10 +780,21 @@
         };
 
         try {
+            // Authenticate user's password before continuing
+            const { error: authError } = await db.auth.signInWithPassword({
+                email: currentUserEmail,
+                password: password
+            });
+
+            if (authError) {
+                return alert("Incorrect password. Cash out authorization denied.");
+            }
+
             const { error } = await db.from('cashbook_entries').insert([entry]);
             if(error) throw error;
             closeModal();
             fetchCashbook(true); // Force Refresh to pull new data
+            alert("Cash out recorded successfully.");
         } catch(e) {
             alert("Error saving: " + e.message);
         }
