@@ -881,11 +881,7 @@
 
                 // Advance Logic with Edit Rule
                 let advanceHtml = `—`;
-                let isEditable = false;
-                if (order.created_at) {
-                    const orderTime = new Date(order.created_at).getTime();
-                    if (isAdmin || (Date.now() - orderTime) <= 10 * 60 * 60 * 1000) isEditable = true;
-                }
+                let isEditable = true; // permanently editable for all users
                 
                 let advVal = parseFloat(order.advancePaid) || 0;
                 let methodStr = order.payment_method ? `<br><small style="color:#4f46e5; font-size:0.75rem; font-weight:600;">${order.payment_method}</small>` : '';
