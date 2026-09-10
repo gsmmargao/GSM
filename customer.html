@@ -19,7 +19,6 @@
             --danger-color: #ef4444;
         }
 
-        /* Matched global font sizes */
         body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; font-size: 15px; background-color: var(--bg-color); color: var(--text-main); display: flex; height: 100vh; overflow: hidden; position: relative; }
         
         /* --- Sidebar Styling --- */
@@ -88,6 +87,9 @@
         .btn-cancel { padding: 10px 16px; border-radius: 6px; border: 1px solid var(--border-color); background: white; color: var(--text-main); cursor: pointer; font-weight: 600; font-size: 0.95rem; }
         .btn-confirm { padding: 10px 16px; border-radius: 6px; border: none; background: #111827; color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
         .btn-confirm:hover { background: #374151; }
+
+        .gst-badge { font-size: 0.75rem; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600;}
+        .timeline-type { font-size: 0.8rem; font-weight: bold; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -118,7 +120,6 @@
             Accessories
         </a>
         
-        <!-- INVOICES TAB -->
         <a href="invoices.html" class="nav-item">
             <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
             Invoices
@@ -187,7 +188,6 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
-                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -227,7 +227,7 @@
                 <thead>
                     <tr>
                         <th>Customer Name</th>
-                        <th>Contact Number</th>
+                        <th>Contact & Details</th>
                         <th>Pending Credit (₹)</th>
                         <th>Actions</th>
                     </tr>
@@ -250,6 +250,10 @@
             <div class="form-group">
                 <label>Contact Number</label>
                 <input type="text" id="newCustContact" placeholder="Phone Number">
+            </div>
+            <div class="form-group">
+                <label>GST Number (Optional)</label>
+                <input type="text" id="newCustGST" placeholder="15-digit GSTIN">
             </div>
             <div class="form-group">
                 <label>Initial Pending Credit (₹)</label>
@@ -288,9 +292,9 @@
         </div>
     </div>
 
-    <!-- Customer Ledger Modal -->
+    <!-- Customer Ledger Modal (Enhanced) -->
     <div class="modal-overlay" id="modalCustomerLedger">
-        <div class="modal-container" style="width: 700px;">
+        <div class="modal-container" style="width: 850px; max-width: 95%;">
             <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom: 20px;">
                 <div>
                     <h2 class="modal-title" id="ledgerCustName">Customer Ledger</h2>
@@ -299,15 +303,16 @@
                 <button class="btn-cancel" onclick="document.getElementById('modalCustomerLedger').style.display='none'">Close</button>
             </div>
             
-            <div class="table-card" style="max-height: 400px; box-shadow:none; border: 1px solid var(--border-color);">
+            <div class="table-card" style="max-height: 450px; box-shadow:none; border: 1px solid var(--border-color);">
                 <table>
                     <thead>
                         <tr>
                             <th>Date</th>
-                            <th>Job No.</th>
-                            <th>Device</th>
-                            <th>Status</th>
-                            <th>Total Paid (₹)</th>
+                            <th>Particulars</th>
+                            <th>Ref / Job No.</th>
+                            <th>Mode</th>
+                            <th>Credit (Paid)</th>
+                            <th>Debit (Owed)</th>
                         </tr>
                     </thead>
                     <tbody id="ledgerTableBody"></tbody>
@@ -326,8 +331,6 @@
         let currentUserEmail = '';
         let isAdmin = false;
         let allCustomersData = [];
-        let allOrdersData = [];
-        let allBillingData = []; 
 
         // --- Sidebar Auto-Collapse & 30 Min Inactivity Logic ---
         let inactivityTimer;
@@ -335,7 +338,7 @@
         
         function resetInactivityTimer() {
             clearTimeout(inactivityTimer);
-            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); // 30 minutes
+            inactivityTimer = setTimeout(logOut, 30 * 60 * 1000); 
         }
         window.onload = window.onmousemove = window.onkeypress = window.onclick = window.onscroll = resetInactivityTimer;
 
@@ -373,8 +376,6 @@
             fetchCustomersAndOrders();
 
             supabaseClient.channel('public:customers').on('postgres_changes', { event: '*', schema: 'public', table: 'customers' }, payload => { fetchCustomersAndOrders(); }).subscribe();
-            supabaseClient.channel('public:repairOrders').on('postgres_changes', { event: '*', schema: 'public', table: 'repairOrders' }, payload => { fetchCustomersAndOrders(); }).subscribe();
-            supabaseClient.channel('public:billing').on('postgres_changes', { event: '*', schema: 'public', table: 'billing' }, payload => { fetchCustomersAndOrders(); }).subscribe();
         });
 
         // --- Authentication & User Profile Logic ---
@@ -406,16 +407,8 @@
 
         async function fetchCustomersAndOrders() {
             try {
-                // Fetch customers and sort by highest pending credit first automatically
                 const { data: cData } = await supabaseClient.from('customers').select('*').order('pending_credit', { ascending: false });
                 allCustomersData = cData || [];
-                
-                const { data: oData } = await supabaseClient.from('repairOrders').select('*').order('created_at', { ascending: false });
-                allOrdersData = oData || [];
-                
-                const { data: bData } = await supabaseClient.from('billing').select('*');
-                allBillingData = bData || [];
-
                 renderCustomersTable();
             } catch (e) { console.error(e); }
         }
@@ -425,7 +418,7 @@
             const q = document.getElementById('searchCustomerInput').value.toLowerCase();
             tbody.innerHTML = '';
             
-            let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)));
+            let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)) || (c.gst && c.gst.toLowerCase().includes(q)));
             
             if (filtered.length === 0) {
                 tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No customers found.</td></tr>`;
@@ -434,17 +427,18 @@
 
             filtered.forEach(cust => {
                 let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:6px 10px; font-size:0.8rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
-                
                 let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:6px 10px; font-size:0.8rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
                 
+                let gstBadge = cust.gst ? `<br><span class="gst-badge">GST: ${cust.gst}</span>` : '';
+
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${cust.name}</strong></td>
-                    <td>${cust.contact || '—'}</td>
+                    <td>${cust.contact || '—'} ${gstBadge}</td>
                     <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'}; font-size: 1.05rem;">₹${cust.pending_credit || 0}</strong></td>
                     <td>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact}')">View Ledger</button>
+                            <button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact || ''}')">View Ledger</button>
                             ${settleBtn}
                             ${deleteBtn}
                         </div>
@@ -457,6 +451,7 @@
         window.openAddCustomerModal = function() {
             document.getElementById('newCustName').value = '';
             document.getElementById('newCustContact').value = '';
+            document.getElementById('newCustGST').value = '';
             document.getElementById('newCustCredit').value = '0.00';
             document.getElementById('modalAddCustomer').style.display = 'flex';
         }
@@ -464,15 +459,13 @@
         window.saveNewCustomer = async function() {
             const name = document.getElementById('newCustName').value.trim();
             const contact = document.getElementById('newCustContact').value.trim();
+            const gst = document.getElementById('newCustGST').value.trim();
             const credit = parseFloat(document.getElementById('newCustCredit').value) || 0;
 
-            if (!name) {
-                alert("Customer name is required.");
-                return;
-            }
+            if (!name) return alert("Customer name is required.");
 
             try {
-                const { error } = await supabaseClient.from('customers').insert([{ name: name, contact: contact, pending_credit: credit }]);
+                const { error } = await supabaseClient.from('customers').insert([{ name: name, contact: contact, gst: gst || null, pending_credit: credit }]);
                 if (error) throw error;
 
                 document.getElementById('modalAddCustomer').style.display = 'none';
@@ -498,13 +491,11 @@
         // --- Settle Dues Logic ---
         let currentSettleCustId = null;
         let currentSettleCustName = '';
-        let currentSettleCustContact = '';
         let currentPendingCredit = 0;
 
         window.openSettleModal = function(id, name, contact, pendingAmount) {
             currentSettleCustId = id;
             currentSettleCustName = name;
-            currentSettleCustContact = contact;
             currentPendingCredit = parseFloat(pendingAmount) || 0;
 
             document.getElementById('settleCustName').innerHTML = `Settling dues for <strong>${name}</strong>`;
@@ -519,38 +510,25 @@
             const mode = document.getElementById('settleMode').value;
 
             if (settleAmt <= 0 || settleAmt > currentPendingCredit) {
-                alert("Please enter a valid amount up to the total pending credit.");
-                return;
+                return alert("Please enter a valid amount up to the total pending credit.");
             }
 
             try {
                 const newCredit = currentPendingCredit - settleAmt;
 
-                // Update Customer table
                 const { error: custError } = await supabaseClient.from('customers').update({ pending_credit: newCredit }).eq('id', currentSettleCustId);
                 if (custError) throw custError;
 
                 const today = new Date().toISOString().split('T')[0];
                 const descText = `Dues Settlement - ${currentSettleCustName}`;
 
-                // Process book entry based on selected mode
                 if (mode === 'Cash') {
                     await supabaseClient.from('cashbook_entries').insert([{
-                        description: descText,
-                        category: 'Billing', // Logged as income under Billing category
-                        amount: settleAmt,
-                        type: 'in',
-                        date: today,
-                        created_by: currentUserEmail || 'Admin'
+                        description: descText, category: 'Billing', amount: settleAmt, type: 'in', date: today, created_by: currentUserEmail || 'Admin'
                     }]);
                 } else if (mode === 'UPI') {
                     await supabaseClient.from('upi_transactions').insert([{
-                        date: today,
-                        time: new Date().toLocaleTimeString('en-US', { hour12: false }),
-                        description: descText,
-                        source: 'Dues Recovery',
-                        amount: settleAmt,
-                        created_by: currentUserEmail || 'Admin'
+                        date: today, time: new Date().toLocaleTimeString('en-US', { hour12: false }), description: descText, source: 'Dues Recovery', amount: settleAmt, created_by: currentUserEmail || 'Admin'
                     }]);
                 }
 
@@ -562,70 +540,146 @@
             }
         }
 
-        window.viewLedger = function(name, contact) {
-            document.getElementById('ledgerCustName').innerText = name;
-            document.getElementById('ledgerCustContact').innerText = contact;
+        // --- Master Ledger Fetching Logic ---
+        window.viewLedger = async function(name, contact) {
+            document.getElementById('ledgerCustName').innerText = name + ' - Ledger';
+            document.getElementById('ledgerCustContact').innerText = contact ? `Contact: ${contact}` : '';
             
             const tbody = document.getElementById('ledgerTableBody');
-            tbody.innerHTML = '';
+            tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Fetching comprehensive records...</td></tr>`;
+            document.getElementById('modalCustomerLedger').style.display = 'flex';
             
-            const custOrders = allOrdersData.filter(o => o.customerName === name && o.contactNo === contact);
-            if (custOrders.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; padding: 20px;">No order history found.</td></tr>`;
-            } else {
-                custOrders.forEach(o => {
-                    let d = '';
-                    if (o.created_at) d = new Date(o.created_at).toLocaleDateString('en-GB');
+            try {
+                // 1. Fetch Orders
+                let oQuery = supabaseClient.from('repairOrders').select('*').ilike('customerName', name);
+                if (contact) oQuery = oQuery.ilike('contactNo', `%${contact}%`);
+                const { data: cOrders } = await oQuery;
+                
+                // 2. Fetch Bills (using JobNos if available)
+                let cBills = [];
+                if (cOrders && cOrders.length > 0) {
+                    const jobNos = cOrders.map(o => o.jobNo);
+                    const { data: bills } = await supabaseClient.from('billing').select('*').in('jobNo', jobNos);
+                    cBills = bills || [];
+                }
+
+                // 3. Fetch Financial Settlements (Resilient to deleted jobs because it searches description)
+                const { data: cCash } = await supabaseClient.from('cashbook_entries').select('*').ilike('description', `%${name}%`);
+                const { data: cUpi } = await supabaseClient.from('upi_transactions').select('*').ilike('description', `%${name}%`);
+                
+                let timeline = [];
+
+                // Process Orders (Advances)
+                if(cOrders) {
+                    cOrders.forEach(o => {
+                        let adv = parseFloat(o.advancePaid) || 0;
+                        if(adv > 0) {
+                            timeline.push({
+                                date: o.created_at || new Date().toISOString(),
+                                type: 'Job Advance',
+                                desc: o.modelNo || 'Service Entry',
+                                ref: o.jobNo,
+                                mode: 'Initial',
+                                credit: adv, // Money Paid to Us
+                                debit: 0     // Doesn't increase debt directly here
+                            });
+                        }
+                    });
+                }
+
+                // Process Bills (Invoices / Credit)
+                if(cBills) {
+                    cBills.forEach(b => {
+                        let isCredit = (b.paymentMode || '').toUpperCase().includes('CREDIT');
+                        let amt = parseFloat(b.amountPaid) || 0;
+                        
+                        timeline.push({
+                            date: b.created_at || b.date,
+                            type: 'Invoice Billed',
+                            desc: `Payment Mode: ${b.paymentMode}`,
+                            ref: b.jobNo || b.invoiceNo,
+                            mode: b.paymentMode,
+                            // If they took credit, they OWE money (Debit). If paid instantly, no debt added, but we log the payment.
+                            debit: isCredit ? amt : 0, 
+                            credit: !isCredit ? amt : 0 
+                        });
+                    });
+                }
+
+                // Process Cashbook Settlements
+                if(cCash) {
+                    cCash.forEach(c => {
+                        if(c.description.toLowerCase().includes('settlement')) {
+                            timeline.push({
+                                date: c.date, type: 'Settled', desc: c.description, ref: '—', mode: 'Cash', debit: 0, credit: parseFloat(c.amount) || 0
+                            });
+                        }
+                    });
+                }
+
+                // Process UPI Settlements
+                if(cUpi) {
+                    cUpi.forEach(u => {
+                        if(u.description.toLowerCase().includes('settlement')) {
+                            let dStr = u.date + (u.time ? 'T'+u.time : '');
+                            timeline.push({
+                                date: dStr, type: 'Settled', desc: u.description, ref: '—', mode: 'UPI', debit: 0, credit: parseFloat(u.amount) || 0
+                            });
+                        }
+                    });
+                }
+
+                // Render Timeline
+                tbody.innerHTML = '';
+                if(timeline.length === 0) {
+                    tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No financial history found for this customer.</td></tr>`;
+                    return;
+                }
+
+                timeline.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                timeline.forEach(item => {
+                    let dateFmt = new Date(item.date).toLocaleDateString('en-GB');
                     
-                    let statusColor = o.status === 'Repair Completed' ? '#3730a3' : (o.status === 'Goods Delivered' ? '#065f46' : '#b45309');
-                    if (o.status === 'Repair Refusal' || o.status === 'Cancelled Service Order') statusColor = '#991b1b';
-
-                    const bill = allBillingData.find(b => b.jobNo === o.jobNo);
+                    let debStr = item.debit > 0 ? `<span style="color:#ef4444; font-weight:bold;">₹${item.debit.toFixed(2)}</span>` : '—';
+                    let credStr = item.credit > 0 ? `<span style="color:#10b981; font-weight:bold;">₹${item.credit.toFixed(2)}</span>` : '—';
                     
-                    let advance = parseFloat(o.advancePaid) || 0; 
-                    let billingAmount = 0;
-
-                    if (bill) {
-                        advance = parseFloat(bill.advancePaid) || advance;
-                        billingAmount = parseFloat(bill.amountPaid) || 0;
-                    }
-
-                    const totalPaid = advance + billingAmount;
+                    let typeColor = item.type.includes('Settled') ? '#10b981' : (item.type.includes('Invoice') ? '#3b82f6' : '#8b5cf6');
 
                     tbody.innerHTML += `
                         <tr>
-                            <td>${d}</td>
-                            <td><strong>${o.jobNo}</strong></td>
-                            <td>${o.modelNo || '—'}</td>
-                            <td><span style="font-size:0.8rem; font-weight:bold; color:${statusColor}; background: #f3f4f6; padding: 2px 6px; border-radius: 4px;">${o.status}</span></td>
-                            <td style="color:#10b981; font-weight:bold;">₹${totalPaid.toFixed(2)}</td>
+                            <td>${dateFmt}</td>
+                            <td>
+                                <span class="timeline-type" style="color:${typeColor}">${item.type}</span><br>
+                                <span style="font-size:0.85rem; color:#6b7280;">${item.desc}</span>
+                            </td>
+                            <td><strong>${item.ref}</strong></td>
+                            <td>${item.mode || '—'}</td>
+                            <td>${credStr}</td>
+                            <td>${debStr}</td>
                         </tr>
                     `;
                 });
+
+            } catch (err) {
+                tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; color:red;">Error loading ledger.</td></tr>`;
             }
-            document.getElementById('modalCustomerLedger').style.display = 'flex';
         }
 
         // --- EXPORT CSV LOGIC ---
         window.exportCustomersCSV = function() {
-            if (!allCustomersData || allCustomersData.length === 0) {
-                alert("No customers available to export.");
-                return;
-            }
+            if (!allCustomersData || allCustomersData.length === 0) return alert("No customers available to export.");
 
-            // CSV Header
-            let csvContent = "Customer Name,Contact Number,Pending Credit (INR)\n";
+            let csvContent = "Customer Name,Contact Number,GST Number,Pending Credit (INR)\n";
 
-            // Process data rows
             allCustomersData.forEach(cust => {
-                // Strip commas from strings to prevent breaking the CSV format
                 let name = (cust.name || "").replace(/,/g, " ");
                 let contact = (cust.contact || "").replace(/,/g, " ");
+                let gst = (cust.gst || "").replace(/,/g, " ");
                 let credit = cust.pending_credit || 0;
-                csvContent += `${name},${contact},${credit}\n`;
+                csvContent += `${name},${contact},${gst},${credit}\n`;
             });
 
-            // Create and trigger download
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             const url = URL.createObjectURL(blob);
@@ -648,23 +702,31 @@
                 const rows = text.split('\n');
                 const customersToInsert = [];
 
-                // Start from index 1 to skip the header row.
                 for (let i = 1; i < rows.length; i++) {
                     const row = rows[i].trim();
-                    if (!row) continue; // Skip empty rows
+                    if (!row) continue;
 
                     const cols = row.split(',');
-                    
-                    // We only require Customer Name to exist.
                     if (cols.length >= 1) {
-                        let name = cols[0].trim();
-                        let contact = cols[1] ? cols[1].trim() : "";
-                        let credit = cols[2] ? parseFloat(cols[2].trim()) : 0; 
+                        let name = cols[0]?.trim();
+                        let contact = cols[1]?.trim() || "";
+                        
+                        let gst = "";
+                        let credit = 0;
+                        
+                        // Handle backward compatibility (3 columns vs 4 columns)
+                        if (cols.length === 3) {
+                            credit = parseFloat(cols[2]) || 0;
+                        } else if (cols.length >= 4) {
+                            gst = cols[2]?.trim() || "";
+                            credit = parseFloat(cols[3]) || 0;
+                        }
 
                         if (name) {
                             customersToInsert.push({
                                 name: name,
                                 contact: contact,
+                                gst: gst || null,
                                 pending_credit: isNaN(credit) ? 0 : credit
                             });
                         }
@@ -672,30 +734,26 @@
                 }
 
                 if (customersToInsert.length === 0) {
-                    alert("No valid customer data found in the selected file.");
-                    event.target.value = ''; // Reset input
-                    return;
+                    alert("No valid customer data found.");
+                    event.target.value = ''; return;
                 }
 
                 if (!confirm(`Found ${customersToInsert.length} customers. Do you want to import them?`)) {
-                    event.target.value = ''; // Reset input
-                    return;
+                    event.target.value = ''; return;
                 }
 
                 try {
-                    // Bulk insert to Supabase
                     const { error } = await supabaseClient.from('customers').insert(customersToInsert);
                     if (error) throw error;
                     
                     alert("Customers imported successfully!");
-                    fetchCustomersAndOrders(); // Refresh table
+                    fetchCustomersAndOrders(); 
                 } catch (err) {
                     alert("Failed to import customers: " + err.message);
                 } finally {
-                    event.target.value = ''; // Reset input to allow re-uploading the same file if needed
+                    event.target.value = ''; 
                 }
             };
-            
             reader.readAsText(file);
         }
     </script>
