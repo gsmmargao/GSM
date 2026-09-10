@@ -465,7 +465,7 @@
         const db = window.supabase.createClient('https://cbsmsclmyyxgwwztqwsc.supabase.co', 'sb_publishable_wAIQBEnR8-o5R6Ic48efGQ_zomyZiJ-');
         const ADMIN_EMAIL = 'gsmmargao@gmail.com'; 
         let currentUserEmail = '';
-        let isAdmin = false; // <--- FIX 1: ADDED ISADMIN VARIABLE
+        let isAdmin = false; 
         let catalogItems = [];
         let allInvoices = [];
         let allCustomersData = [];
@@ -474,6 +474,7 @@
         // Editing Tracking
         let editingInvoiceId = null;
         let editingInvoiceNo = null;
+        let editingInvoiceType = 'Regular'; // Preserves type assigned by other tabs (Parts/Labour)
 
         // Pagination vars
         let currentPage = 1;
@@ -521,7 +522,7 @@
             if (!data.session) return window.location.href = 'login.html';
             
             currentUserEmail = data.session.user.email;
-            isAdmin = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase(); // <--- FIX 2: SET ISADMIN
+            isAdmin = currentUserEmail.trim().toLowerCase() === ADMIN_EMAIL.trim().toLowerCase(); 
 
             // Unhide Admin-only elements & manage display name
             if (isAdmin) {
@@ -590,17 +591,20 @@
             }
         });
 
-        // --- Payment Toggle ---
+        // --- Payment Toggle (Safely handles unknown modes mapped from other tabs) ---
         window.setPaymentMode = function(mode) {
             selectedPaymentMode = mode;
             document.querySelectorAll('.pay-btn').forEach(btn => btn.classList.remove('active'));
-            document.getElementById('pay' + mode).classList.add('active');
+            
+            const btnId = 'pay' + mode.replace(/\s+/g, '');
+            const btn = document.getElementById(btnId);
+            if (btn) btn.classList.add('active');
             
             const splitRow = document.getElementById('splitInputsRow');
             if (mode === 'Split') {
-                splitRow.classList.add('active');
+                if(splitRow) splitRow.classList.add('active');
             } else {
-                splitRow.classList.remove('active');
+                if(splitRow) splitRow.classList.remove('active');
             }
         }
 
@@ -706,18 +710,31 @@
             `;
             container.appendChild(row);
 
+            // Safely map data from other tabs into the UI fields
             if (existingItem) {
-                row.querySelector('.search-select-input').value = existingItem.desc;
-                row.querySelector('.item-hsn').value = existingItem.hsn || '';
+                let parsedItem = existingItem;
+                if (typeof existingItem === 'string') {
+                    try { parsedItem = JSON.parse(existingItem); } catch(e) {}
+                }
                 
-                const rate = existingItem.unit_rate !== undefined ? existingItem.unit_rate : existingItem.total_amt;
-                const qty = existingItem.qty !== undefined ? existingItem.qty : 1;
+                row.querySelector('.search-select-input').value = parsedItem.desc || '';
+                row.querySelector('.item-hsn').value = parsedItem.hsn || '';
                 
-                row.querySelector('.item-rate').value = rate;
+                let qty = parsedItem.qty !== undefined ? parsedItem.qty : 1;
+                
+                // Invoices tab saves line-level 'total_amt'. Accessories expects unit_rate incl GST.
+                let rate = 0;
+                if (parsedItem.unit_rate !== undefined) {
+                    rate = parsedItem.unit_rate;
+                } else if (parsedItem.total_amt !== undefined) {
+                    rate = parsedItem.total_amt / qty;
+                }
+                
+                row.querySelector('.item-rate').value = rate.toFixed(2);
                 row.querySelector('.item-qty').value = qty;
-                row.querySelector('.item-serial').value = existingItem.serial || '';
+                row.querySelector('.item-serial').value = parsedItem.serial || '';
                 
-                const catItem = catalogItems.find(c => c.description === existingItem.desc);
+                const catItem = catalogItems.find(c => c.description === parsedItem.desc);
                 if (catItem) {
                     row.querySelector('.item-select').value = catItem.id;
                 }
@@ -728,6 +745,7 @@
         window.resetForm = function() {
             editingInvoiceId = null;
             editingInvoiceNo = null;
+            editingInvoiceType = 'Regular';
 
             document.getElementById('inv-name').value = '';
             document.getElementById('inv-mobile').value = '';
@@ -907,7 +925,21 @@
         window.fetchInvoices = async function() {
             const { data, error } = await db.from('accessories_invoices').select('*').order('created_at', { ascending: false });
             if (error) return console.error(error);
-            allInvoices = data || [];
+            
+            // Unify data formatting so missing/stringified items never crash JS again
+            allInvoices = (data || []).map(inv => {
+                let parsedItems = [];
+                try {
+                    parsedItems = typeof inv.items === 'string' ? JSON.parse(inv.items) : (inv.items || []);
+                } catch(e) {}
+                
+                return {
+                    ...inv,
+                    items: parsedItems,
+                    source_table: 'accessories_invoices'
+                };
+            });
+            
             currentPage = 1; 
             renderInvoiceTable();
         }
@@ -916,7 +948,6 @@
             const tbody = document.getElementById('invoicesTableBody');
             tbody.innerHTML = '';
             
-            // <--- FIX 3: ADDED parseFloat() BEFORE .toFixed(2) FOR SUPABASE NUMBER SAFETY
             const adminStyle = isAdmin ? '' : 'style="display:none;"';
             
             if(allInvoices.length === 0) {
@@ -965,7 +996,7 @@
                         <td><span class="pill ${pillClass}">${modeText}</span></td>
                         <td style="display:flex; gap:8px; justify-content:center;" class="admin-col" ${adminStyle}>
                             <button class="btn-icon" onclick='printInvoice(${JSON.stringify(inv).replace(/'/g, "&#39;")})'>
-                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x="6" y="14" width="12" height="8"></rect></svg>
+                                <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 6 2 18 2 18 9"></polyline><path d="M6 18H4a2 2 0 0 1-2-2v-5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v5a2 2 0 0 1-2 2h-2"></path><rect x x="6" y="14" width="12" height="8"></rect></svg>
                             </button>
                             ${editBtn}
                             ${deleteBtn}
@@ -989,6 +1020,9 @@
             
             editingInvoiceId = inv.id;
             editingInvoiceNo = inv.invoice_no;
+            
+            // Preserve the original invoice type assigned by the other tab (Parts/Labour/Regular)
+            editingInvoiceType = inv.invoice_type || 'Regular';
 
             document.getElementById('inv-name').value = inv.customer_name;
             document.getElementById('inv-mobile').value = inv.mobile;
@@ -1002,7 +1036,10 @@
                 document.getElementById('inv-split-upi').value = '';
                 document.getElementById('inv-split-credit').value = '';
             } else {
-                setPaymentMode(modeStr);
+                // Normalize string just in case it originated from another tab with varying cases
+                let normalizedMode = modeStr.charAt(0).toUpperCase() + modeStr.slice(1).toLowerCase();
+                if(normalizedMode.toUpperCase() === 'UPI') normalizedMode = 'UPI';
+                setPaymentMode(normalizedMode);
             }
 
             const container = document.getElementById('invoiceItemsContainer');
@@ -1088,6 +1125,7 @@
 
             let finalAmount = grandTotal;
             let cashAmt = 0, upiAmt = 0, creditAmt = 0;
+            let finalPaymentModeStr = selectedPaymentMode.toUpperCase();
 
             if (selectedPaymentMode === 'Split') {
                 cashAmt = parseFloat(document.getElementById('inv-split-cash').value) || 0;
@@ -1098,10 +1136,16 @@
                 if(Math.abs(splitTotal - grandTotal) > 0.01) {
                     return alert(`Split amount (₹${splitTotal.toFixed(2)}) does not match the invoice total (₹${grandTotal.toFixed(2)}).`);
                 }
+                
+                let modesArr = [];
+                if (cashAmt > 0) modesArr.push("CASH");
+                if (upiAmt > 0) modesArr.push("UPI");
+                if (creditAmt > 0) modesArr.push("CREDIT");
+                finalPaymentModeStr = modesArr.length > 1 ? modesArr.join(' + ') : (modesArr[0] || 'NONE');
             } else {
-                if (selectedPaymentMode === 'Cash') cashAmt = finalAmount;
-                if (selectedPaymentMode === 'UPI') upiAmt = finalAmount;
-                if (selectedPaymentMode === 'Credit') creditAmt = finalAmount;
+                if (selectedPaymentMode.toUpperCase() === 'CASH') cashAmt = finalAmount;
+                else if (selectedPaymentMode.toUpperCase() === 'UPI') upiAmt = finalAmount;
+                else if (selectedPaymentMode.toUpperCase() === 'CREDIT') creditAmt = finalAmount;
             }
 
             const btnSave = document.getElementById('btnSubmitInv');
@@ -1143,15 +1187,9 @@
 
                 const summaryDesc = itemsArray.map(i => `${i.qty}x ${i.desc}`).join(', ');
 
-                let modesArr = [];
-                if (cashAmt > 0) modesArr.push("CASH");
-                if (upiAmt > 0) modesArr.push("UPI");
-                if (creditAmt > 0) modesArr.push("CREDIT");
-                const finalPaymentModeStr = modesArr.length > 1 ? modesArr.join(' + ') : (modesArr[0] || 'NONE');
-
                 const invData = {
                     invoice_no: invoiceNoStr,
-                    invoice_type: 'Regular',
+                    invoice_type: editingInvoiceType, // Protects Parts/Labour type mapping
                     customer_name: name,
                     mobile: mobile,
                     gstin: gstin,
@@ -1164,7 +1202,7 @@
                     total_amt: grandTotal,
                     tax_percent: itemsArray[0].tax_percent, 
                     payment_mode: finalPaymentModeStr,
-                    created_by: document.getElementById('userNameDisplay').innerText,
+                    created_by: editingInvoiceId ? undefined : document.getElementById('userNameDisplay').innerText,
                     date: date
                 };
 
