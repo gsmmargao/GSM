@@ -475,7 +475,7 @@
             
             if (q.length < 2) { suggestDiv.style.display = 'none'; return; }
             
-            let matches = allCustomersData.filter(c => type === 'name' ? c.name.toLowerCase().includes(q) : c.contact.includes(q));
+            let matches = allCustomersData.filter(c => type === 'name' ? c.name.toLowerCase().includes(q) : (c.contact && c.contact.includes(q)));
             
             if (matches.length > 0) {
                 suggestDiv.innerHTML = matches.map(c => `<div class="autocomplete-item" onclick="selectCustomer('${getSafeStr(c.name)}', '${getSafeStr(c.contact)}')"><strong>${escapeHtml(c.name)}</strong> - ${escapeHtml(c.contact)}</div>`).join('');
@@ -668,51 +668,59 @@
                 // Fetch the bill details before deleting
                 const { data: bill, error: billErr } = await db.from('billing').select('*').eq('invoiceNo', invoiceNo).maybeSingle();
                 if (billErr) throw billErr;
+                if (!bill) throw new Error("Could not find this bill in the database.");
                 
-                if (bill) {
-                    // Revert Credit if applicable
-                    if (bill.paymentMode && bill.paymentMode.toUpperCase().includes('CREDIT')) {
-                        const creditAmt = parseFloat(bill.amountPaid) || 0;
+                // 1. ATTEMPT TO REVERT CREDIT FIRST
+                if (bill.paymentMode && bill.paymentMode.toUpperCase().includes('CREDIT')) {
+                    const creditAmt = parseFloat(bill.amountPaid) || 0;
+                    
+                    if (creditAmt > 0 && bill.jobNo) {
+                        // Look up repair order for customer info
+                        const { data: repairData } = await db.from('repairOrders').select('customerName, contactNo').ilike('jobNo', bill.jobNo).maybeSingle();
                         
-                        if (creditAmt > 0 && bill.jobNo) {
-                            // Retrieve customer linked to this job
-                            const { data: repairData } = await db.from('repairOrders').select('customerName, contactNo').ilike('jobNo', bill.jobNo).maybeSingle();
+                        if (!repairData || !repairData.customerName) {
+                            if(!confirm(`Could not find the original repair order for Job No '${bill.jobNo}'. Credit CANNOT be reverted automatically.\n\nDo you want to force-delete this bill anyway?`)) return;
+                        } else {
+                            const cName = repairData.customerName.trim();
+                            const cContact = repairData.contactNo ? repairData.contactNo.trim() : '';
                             
-                            if (repairData) {
-                                const cName = repairData.customerName;
-                                const cContact = repairData.contactNo;
+                            // Try Name AND Contact first (wildcard to ignore slight spacing issues)
+                            let query = db.from('customers').select('id, pending_credit').ilike('name', cName);
+                            if (cContact) query = query.ilike('contact', `%${cContact}%`);
+                            
+                            let { data: extCust } = await query.limit(1).maybeSingle();
                                 
-                                // FIX: Use .ilike() for case-insensitive matching
-                                const { data: extCust } = await db.from('customers')
-                                    .select('id, pending_credit')
-                                    .ilike('name', cName)
-                                    .ilike('contact', cContact)
-                                    .maybeSingle();
+                            // Fallback: If not found, try searching by just Name
+                            if (!extCust) {
+                                const { data: fallbackCust } = await db.from('customers').select('id, pending_credit').ilike('name', cName).limit(1).maybeSingle();
+                                extCust = fallbackCust;
+                            }
+                                
+                            if (extCust) {
+                                let newCredit = parseFloat(extCust.pending_credit || 0) - creditAmt;
+                                if (newCredit < 0) newCredit = 0; // Prevent negative balance
+                                
+                                // Perform the update and strictly catch failure
+                                const { error: updateErr } = await db.from('customers')
+                                    .update({ pending_credit: newCredit })
+                                    .eq('id', extCust.id);
                                     
-                                if (extCust) {
-                                    let newCredit = parseFloat(extCust.pending_credit || 0) - creditAmt;
-                                    if (newCredit < 0) newCredit = 0; // Prevent negative balance
-                                    
-                                    // FIX: Catch errors strictly here
-                                    const { error: updateErr } = await db.from('customers')
-                                        .update({ pending_credit: newCredit })
-                                        .eq('id', extCust.id);
-                                        
-                                    if (updateErr) throw new Error("Failed to revert customer credit: " + updateErr.message);
-                                }
+                                if (updateErr) throw new Error("Database failed to update customer credit: " + updateErr.message);
+                            } else {
+                                if(!confirm(`Could not find customer '${cName}' in the customers table. Credit CANNOT be reverted automatically.\n\nDo you want to force-delete this bill anyway?`)) return;
                             }
                         }
                     }
                 }
 
-                // Clean up Ledgers strictly based on description logic
+                // 2. CLEAN UP LEDGERS
                 const searchString = `Invoice #${invoiceNo}%`;
                 await Promise.all([
                     db.from('cashbook_entries').delete().ilike('description', searchString),
                     db.from('upi_transactions').delete().ilike('description', searchString)
                 ]);
 
-                // Delete the Bill
+                // 3. DELETE THE BILL
                 const { error: delError } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
                 if (delError) throw delError;
                 
@@ -720,7 +728,7 @@
                 window.fetchCustomersData();
                 
             } catch (err) {
-                alert("Error deleting bill: " + err.message);
+                alert("Delete Aborted: " + err.message);
             }
         }
 
@@ -751,7 +759,7 @@
                     creditAmt = finalAmount;
                     const custName = document.getElementById('b-credit-name').value.trim();
                     const custContact = document.getElementById('b-credit-contact').value.trim();
-                    if(!custName || !custContact) return alert("Customer Name and Contact No. are required for Credit payments.");
+                    if(!custName) return alert("Customer Name is required for Credit payments.");
                 }
             }
 
@@ -794,18 +802,24 @@
                     const custName = document.getElementById('b-credit-name').value.trim();
                     const custContact = document.getElementById('b-credit-contact').value.trim();
                     
-                    // FIX: Use .ilike() here too so we don't accidentally create duplicate ghost customers
-                    const { data: extCust } = await db.from('customers')
-                        .select('id, pending_credit')
-                        .ilike('name', custName)
-                        .ilike('contact', custContact)
-                        .maybeSingle();
+                    // Match Name + Contact first
+                    let query = db.from('customers').select('id, pending_credit').ilike('name', custName);
+                    if (custContact) query = query.ilike('contact', `%${custContact}%`);
+                    
+                    let { data: extCust } = await query.limit(1).maybeSingle();
+                        
+                    // Fallback to finding just by Name
+                    if (!extCust) {
+                        const { data: fallbackCust } = await db.from('customers').select('id, pending_credit').ilike('name', custName).limit(1).maybeSingle();
+                        extCust = fallbackCust;
+                    }
                         
                     if (extCust) {
+                        // Update existing customer
                         await db.from('customers').update({ pending_credit: parseFloat(extCust.pending_credit || 0) + creditAmt }).eq('id', extCust.id);
                     } else {
-                        // Creates customer if not existing
-                        await db.from('customers').insert([{ name: custName, contact: custContact, pending_credit: creditAmt }]);
+                        // Create new customer
+                        await db.from('customers').insert([{ name: custName, contact: custContact || null, pending_credit: creditAmt }]);
                         fetchCustomersData(); // Refresh local list
                     }
                 }
