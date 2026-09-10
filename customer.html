@@ -88,7 +88,7 @@
         .btn-confirm { padding: 10px 16px; border-radius: 6px; border: none; background: #111827; color: white; cursor: pointer; font-weight: 600; font-size: 0.95rem; }
         .btn-confirm:hover { background: #374151; }
 
-        .gst-badge { font-size: 0.75rem; background: #e0e7ff; color: #3730a3; padding: 2px 6px; border-radius: 4px; margin-top: 4px; display: inline-block; font-weight: 600;}
+        .gst-badge { font-size: 0.85rem; background: #e0e7ff; color: #3730a3; padding: 4px 8px; border-radius: 4px; display: inline-block; font-weight: 600;}
         .timeline-type { font-size: 0.8rem; font-weight: bold; background: #f3f4f6; padding: 2px 6px; border-radius: 4px; }
     </style>
 </head>
@@ -227,7 +227,8 @@
                 <thead>
                     <tr>
                         <th>Customer Name</th>
-                        <th>Contact & Details</th>
+                        <th>Contact Number</th>
+                        <th>GST Number</th>
                         <th>Pending Credit (₹)</th>
                         <th>Actions</th>
                     </tr>
@@ -421,7 +422,7 @@
             let filtered = allCustomersData.filter(c => c.name.toLowerCase().includes(q) || (c.contact && c.contact.includes(q)) || (c.gst && c.gst.toLowerCase().includes(q)));
             
             if (filtered.length === 0) {
-                tbody.innerHTML = `<tr><td colspan="4" style="text-align:center; color:var(--text-muted); padding: 20px;">No customers found.</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="5" style="text-align:center; color:var(--text-muted); padding: 20px;">No customers found.</td></tr>`;
                 return;
             }
 
@@ -429,12 +430,13 @@
                 let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:6px 10px; font-size:0.8rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
                 let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:6px 10px; font-size:0.8rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
                 
-                let gstBadge = cust.gst ? `<br><span class="gst-badge">GST: ${cust.gst}</span>` : '';
+                let gstDisplay = cust.gst ? `<span class="gst-badge">${cust.gst}</span>` : '<span style="color:#9ca3af;">—</span>';
 
                 const tr = document.createElement('tr');
                 tr.innerHTML = `
                     <td><strong>${cust.name}</strong></td>
-                    <td>${cust.contact || '—'} ${gstBadge}</td>
+                    <td>${cust.contact || '<span style="color:#9ca3af;">—</span>'}</td>
+                    <td>${gstDisplay}</td>
                     <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'}; font-size: 1.05rem;">₹${cust.pending_credit || 0}</strong></td>
                     <td>
                         <div style="display:flex; gap:8px;">
@@ -563,13 +565,12 @@
                     cBills = bills || [];
                 }
 
-                // 3. Fetch Financial Settlements (Resilient to deleted jobs because it searches description)
+                // 3. Fetch Financial Settlements
                 const { data: cCash } = await supabaseClient.from('cashbook_entries').select('*').ilike('description', `%${name}%`);
                 const { data: cUpi } = await supabaseClient.from('upi_transactions').select('*').ilike('description', `%${name}%`);
                 
                 let timeline = [];
 
-                // Process Orders (Advances)
                 if(cOrders) {
                     cOrders.forEach(o => {
                         let adv = parseFloat(o.advancePaid) || 0;
@@ -580,14 +581,13 @@
                                 desc: o.modelNo || 'Service Entry',
                                 ref: o.jobNo,
                                 mode: 'Initial',
-                                credit: adv, // Money Paid to Us
-                                debit: 0     // Doesn't increase debt directly here
+                                credit: adv,
+                                debit: 0
                             });
                         }
                     });
                 }
 
-                // Process Bills (Invoices / Credit)
                 if(cBills) {
                     cBills.forEach(b => {
                         let isCredit = (b.paymentMode || '').toUpperCase().includes('CREDIT');
@@ -599,14 +599,12 @@
                             desc: `Payment Mode: ${b.paymentMode}`,
                             ref: b.jobNo || b.invoiceNo,
                             mode: b.paymentMode,
-                            // If they took credit, they OWE money (Debit). If paid instantly, no debt added, but we log the payment.
                             debit: isCredit ? amt : 0, 
                             credit: !isCredit ? amt : 0 
                         });
                     });
                 }
 
-                // Process Cashbook Settlements
                 if(cCash) {
                     cCash.forEach(c => {
                         if(c.description.toLowerCase().includes('settlement')) {
@@ -617,7 +615,6 @@
                     });
                 }
 
-                // Process UPI Settlements
                 if(cUpi) {
                     cUpi.forEach(u => {
                         if(u.description.toLowerCase().includes('settlement')) {
@@ -629,7 +626,6 @@
                     });
                 }
 
-                // Render Timeline
                 tbody.innerHTML = '';
                 if(timeline.length === 0) {
                     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center; padding: 20px;">No financial history found for this customer.</td></tr>`;
@@ -714,7 +710,6 @@
                         let gst = "";
                         let credit = 0;
                         
-                        // Handle backward compatibility (3 columns vs 4 columns)
                         if (cols.length === 3) {
                             credit = parseFloat(cols[2]) || 0;
                         } else if (cols.length >= 4) {
