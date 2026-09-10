@@ -124,9 +124,10 @@
         .items-table input { width: 100%; padding: 8px; border: 1px solid var(--border-color); border-radius: 4px; box-sizing: border-box; font-family: inherit;}
         .items-table input:focus { outline: none; border-color: var(--primary-accent); }
         
-        .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px; }
+        .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px; margin: 0 2px; }
         .btn-icon:hover { color: var(--text-main); }
         .btn-danger:hover { color: var(--danger-color); }
+        .btn-edit:hover { color: var(--primary-accent); }
         
         .totals-section { display: flex; justify-content: flex-end; margin-bottom: 20px; }
         .totals-box { width: 300px; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -281,16 +282,16 @@
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Export Invoice Wise
                 </button>
-                <button class="btn btn-primary" onclick="toggleInvoiceForm()">
+                <button class="btn btn-primary" onclick="toggleInvoiceForm(false)">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
                     New Invoice
                 </button>
             </div>
         </div>
 
-        <!-- New Invoice Form -->
+        <!-- New/Edit Invoice Form -->
         <div class="form-card" id="newInvoiceForm">
-            <h3 style="margin-top:0; font-size:1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom:10px; color: var(--text-main);">Create New Invoice</h3>
+            <h3 id="formTitle" style="margin-top:0; font-size:1.1rem; border-bottom: 1px solid var(--border-color); padding-bottom:10px; color: var(--text-main);">Create New Invoice</h3>
             
             <div class="form-grid-3">
                 <div class="form-group">
@@ -379,7 +380,7 @@
                 </div>
                 <div></div>
                 <div style="display:flex; justify-content: flex-end; align-items: flex-end; gap: 10px;">
-                    <button class="btn" onclick="toggleInvoiceForm()">Cancel</button>
+                    <button class="btn" onclick="toggleInvoiceForm(true)">Cancel</button>
                     <button class="btn btn-primary" id="btnSaveInvoice" onclick="saveInvoice()">Save Invoice</button>
                 </div>
             </div>
@@ -399,7 +400,7 @@
                             <th>Taxable</th>
                             <th>IGST</th>
                             <th>Total Amount</th>
-                            <th class="admin-col">Actions</th>
+                            <th class="admin-col" style="text-align: center;">Actions</th>
                         </tr>
                     </thead>
                     <tbody id="invoiceListBody">
@@ -425,6 +426,10 @@
         let allInvoices = [];
         let cachedCustomers = [];
         let customerSearchTimeout = null;
+
+        // Globals for editing
+        let currentEditId = null;
+        let currentEditSource = null;
 
         // --- Sidebar Auto-Collapse & 30 Min Inactivity Logic ---
         let inactivityTimer;
@@ -645,17 +650,49 @@
         }
 
         // --- Invoice Form UI Toggle ---
-        window.toggleInvoiceForm = function() {
+        window.toggleInvoiceForm = function(isCancelBtn = false) {
             const form = document.getElementById('newInvoiceForm');
-            if (form.style.display === 'none' || form.style.display === '') {
+            if (form.style.display === 'none' || form.style.display === '' || isCancelBtn) {
+                if(!isCancelBtn && form.style.display === 'block') {
+                    // Clicking New Invoice button when form is already open
+                    form.style.display = 'none';
+                    return;
+                }
+                
+                if (isCancelBtn) {
+                    form.style.display = 'none';
+                    currentEditId = null;
+                    currentEditSource = null;
+                    return;
+                }
+
+                // Initialize New form
                 form.style.display = 'block';
+                currentEditId = null;
+                currentEditSource = null;
+                document.getElementById('formTitle').innerText = "Create New Invoice";
+                
+                // Clear fields
+                document.getElementById('invCustName').value = '';
+                document.getElementById('invMobile').value = '';
+                document.getElementById('invGSTIN').value = '';
+                document.getElementById('invDate').valueAsDate = new Date();
+                
+                document.getElementById('itemsBody').innerHTML = '';
+                addItemRow();
+                calculateGrandTotal();
+                
                 fetchNextInvoiceNumber();
             } else {
                 form.style.display = 'none';
+                currentEditId = null;
+                currentEditSource = null;
             }
         }
 
         window.fetchNextInvoiceNumber = async function() {
+            if (currentEditId) return; // Do not fetch new auto-incrementing ID if editing
+            
             const type = document.getElementById('invType').value;
             const prefix = type === 'Parts' ? 'P' : 'L';
             const invInput = document.getElementById('invNo');
@@ -678,6 +715,75 @@
                 invInput.value = prefix + "Error";
             }
         }
+
+        // --- Edit Logic ---
+        window.editInvoice = function(id, source_table) {
+            // Restrict Store Plus table edit schema mismatches here
+            if (source_table !== 'accessories_invoices') {
+                alert("Please edit Store Plus invoices natively from the Store Plus tab to avoid data mismatch.");
+                return;
+            }
+
+            const inv = allInvoices.find(i => i.id === id && i.source_table === source_table);
+            if (!inv) return;
+
+            currentEditId = id;
+            currentEditSource = source_table;
+
+            document.getElementById('newInvoiceForm').style.display = 'block';
+            document.getElementById('formTitle').innerText = "Edit Invoice - " + inv.invoice_no;
+
+            // Pre-fill header
+            document.getElementById('invType').value = inv.invoice_type || 'Parts';
+            document.getElementById('invNo').value = inv.invoice_no;
+            document.getElementById('invDate').value = inv.date;
+            document.getElementById('invCustName').value = inv.customer_name || '';
+            document.getElementById('invMobile').value = inv.mobile || '';
+            document.getElementById('invGSTIN').value = inv.gstin || '';
+            document.getElementById('invPaymentMode').value = inv.payment_mode || 'Cash';
+
+            // Pre-fill items
+            const tbody = document.getElementById('itemsBody');
+            tbody.innerHTML = '';
+            
+            let items = [];
+            try {
+                items = typeof inv.items === 'string' ? JSON.parse(inv.items) : inv.items;
+            } catch(e) {}
+
+            if (items && items.length > 0) {
+                items.forEach(item => {
+                    const tr = document.createElement('tr');
+                    const itemTaxable = item.taxable || item.base_amt || 0;
+                    tr.innerHTML = `
+                        <td style="vertical-align: middle; font-weight:600; color:var(--text-muted);" class="sr-no"></td>
+                        <td><input type="text" class="item-desc" placeholder="Item Name" value="${escapeHtml(item.desc || '')}"></td>
+                        <td><input type="text" class="item-hsn" placeholder="HSN" value="${escapeHtml(item.hsn || '')}"></td>
+                        <td><input type="number" class="item-qty" value="${item.qty || 1}" min="1" oninput="calculateRowElement(this)"></td>
+                        <td><input type="number" class="item-taxable" placeholder="0.00" step="0.01" value="${itemTaxable}" oninput="calculateRowElement(this)"></td>
+                        <td style="vertical-align: middle; font-weight:500; color:#374151;" class="item-igst">0.00</td>
+                        <td style="vertical-align: middle; font-weight:bold; color:var(--text-main);" class="item-total">0.00</td>
+                        <td style="text-align:center;">
+                            <button class="btn-icon btn-danger" onclick="removeRowElement(this)" tabindex="-1">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
+                            </button>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+                reindexRows();
+                
+                // Recalculate visually
+                const allQtyInputs = tbody.querySelectorAll('.item-qty');
+                allQtyInputs.forEach(input => calculateRowElement(input));
+            } else {
+                addItemRow();
+            }
+
+            // Scroll gently up
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
 
         // --- Dynamic Row & Real-Time Calculation Logic ---
         // Base taxable is treated as the entered Taxable amount directly (Qty does NOT multiply)
@@ -751,19 +857,19 @@
             document.getElementById('sumGrandTotal').innerText = '₹' + sumTotal.toFixed(2);
         }
 
-        // --- Save to Database ---
+        // --- Save / Update to Database ---
         window.saveInvoice = async function() {
             const custName = document.getElementById('invCustName').value.trim();
             if(!custName) return alert("Customer Name is required.");
             
             document.getElementById('btnSaveInvoice').disabled = true;
-            document.getElementById('btnSaveInvoice').innerText = "Saving...";
+            document.getElementById('btnSaveInvoice').innerText = currentEditId ? "Updating..." : "Saving...";
 
             const invType = document.getElementById('invType').value;
             const invNo = document.getElementById('invNo').value;
             
             if(invNo.includes("Error")) {
-                alert("Cannot save: Invoice numbering sequence error. Please run the SQL setup script in Supabase.");
+                alert("Cannot save: Invoice numbering sequence error. Please check your Supabase DB sequence table.");
                 document.getElementById('btnSaveInvoice').disabled = false;
                 document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
                 return;
@@ -782,7 +888,7 @@
                 const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
                 
                 if (qty > 0 && taxable > 0) {
-                    const base = taxable;
+                    const base = taxable; // As per specific instruction: Taxable directly determines base amount without Qty multiplication
                     const gst = base * 0.18;
                     
                     itemsData.push({
@@ -806,7 +912,7 @@
             if (itemsData.length === 0) {
                 alert("Please add at least one valid item with quantity and taxable value.");
                 document.getElementById('btnSaveInvoice').disabled = false;
-                document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
+                document.getElementById('btnSaveInvoice').innerText = currentEditId ? "Update Invoice" : "Save Invoice";
                 return;
             }
 
@@ -832,26 +938,39 @@
             };
 
             try {
-                const { error } = await supabaseClient.from('accessories_invoices').insert([payload]);
-                if (error) throw error;
+                if (currentEditId) {
+                    // Update existing
+                    const { error } = await supabaseClient.from(currentEditSource).update(payload).eq('id', currentEditId);
+                    if (error) throw error;
+                    alert("Invoice updated successfully!");
+                } else {
+                    // Insert brand new
+                    const { error } = await supabaseClient.from('accessories_invoices').insert([payload]);
+                    if (error) throw error;
 
-                const { data: seqData } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', invType).single();
-                await supabaseClient.from('invoice_sequences').update({ last_value: seqData.last_value + 1 }).eq('id', invType);
+                    // Update auto-increment sequence ONLY on new inserts
+                    const { data: seqData } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', invType).single();
+                    await supabaseClient.from('invoice_sequences').update({ last_value: seqData.last_value + 1 }).eq('id', invType);
 
-                alert("Invoice saved successfully!");
+                    alert("Invoice saved successfully!");
+                }
+
+                // Reset and close form
                 document.getElementById('newInvoiceForm').style.display = 'none';
-                
-                // Reset form
+                currentEditId = null;
+                currentEditSource = null;
+
                 document.getElementById('invCustName').value = '';
                 document.getElementById('invMobile').value = '';
                 document.getElementById('invGSTIN').value = '';
                 document.getElementById('itemsBody').innerHTML = '';
+                
                 addItemRow();
                 calculateGrandTotal();
-                
                 fetchInvoices();
+
             } catch(e) {
-                alert("Error saving invoice: " + e.message);
+                alert("Error processing invoice: " + e.message);
             } finally {
                 document.getElementById('btnSaveInvoice').disabled = false;
                 document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
@@ -939,10 +1058,19 @@
                 
                 let typeColor = '#0369a1';
                 let typeBg = '#e0f2fe';
-                if(inv.invoice_type === 'Store Plus') {
+                let isNative = inv.source_table === 'accessories_invoices';
+
+                if(!isNative) {
                     typeColor = '#6d28d9';
                     typeBg = '#ede9fe';
                 }
+
+                // Only show Edit button for native invoices
+                let editBtnHtml = isNative ? `
+                    <button class="btn-icon btn-edit" onclick="editInvoice('${inv.id}', '${inv.source_table}')" title="Edit Invoice">
+                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                    </button>
+                ` : `<span style="display:inline-block; width: 26px;"></span>`;
 
                 tr.innerHTML = `
                     <td>${inv.date ? new Date(inv.date).toLocaleDateString('en-GB') : '—'}</td>
@@ -953,7 +1081,8 @@
                     <td><span style="font-weight:500;">₹${inv.base_amt.toFixed(2)}</span></td>
                     <td style="color:var(--danger-color); font-weight:500;">₹${inv.gst_amt.toFixed(2)}</td>
                     <td><strong style="font-size:1.05rem; color:#111827;">₹${inv.total_amt.toFixed(2)}</strong></td>
-                    <td class="admin-col" ${adminStyle}>
+                    <td class="admin-col" style="text-align: center; white-space: nowrap;" ${adminStyle}>
+                        ${editBtnHtml}
                         <button class="btn-icon btn-danger" onclick="deleteInvoice('${inv.id}', '${inv.source_table}')" title="Delete Invoice">
                             <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                         </button>
