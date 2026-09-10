@@ -57,7 +57,7 @@
         .header-left p { margin: 0; color: var(--text-muted); font-size: 0.95rem; }
         .header-right { display: flex; gap: 12px; align-items: center; flex-wrap: wrap; }
         
-        /* Month Controls added to match Profit Book */
+        /* Month Controls */
         .month-controls { display: flex; align-items: center; }
         .month-selector { display: flex; align-items: center; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 6px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.02);}
         .month-btn { background: transparent; border: none; padding: 8px 15px; cursor: pointer; color: var(--text-muted); font-size: 1.05rem; transition: 0.2s; font-weight: bold;}
@@ -107,7 +107,7 @@
         table.main-list td { padding: 15px 20px; font-size: 0.95rem; border-bottom: 1px solid var(--border-color); color: var(--text-main); vertical-align: middle; }
         table.main-list tr:hover { background-color: #f9fafb; }
         
-        .admin-col { display: none; } /* Hidden by default until auth confirms admin */
+        .admin-col { display: none; }
     </style>
 </head>
 <body>
@@ -207,7 +207,6 @@
         
         <div class="top-nav">
             <div class="top-nav-left">
-                <!-- Open/Collapse Sidebar Button -->
                 <button class="sidebar-toggle-btn" onclick="toggleSidebar()" title="Toggle Sidebar">
                     <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"></line><line x1="3" y1="6" x2="21" y2="6"></line><line x1="3" y1="18" x2="21" y2="18"></line></svg>
                 </button>
@@ -226,7 +225,6 @@
             </div>
             <div class="header-right">
                 
-                <!-- MONTH SELECTOR UI (Triggers Fetch) -->
                 <div class="month-controls">
                     <div class="month-selector">
                         <button class="month-btn" onclick="changeMonth(-1)">‹</button>
@@ -241,7 +239,6 @@
 
                 <div style="border-left: 1px solid var(--border-color); height: 30px; margin: 0 5px;"></div>
 
-                <!-- EXPORT BUTTONS (Exports matching fetched month) -->
                 <button class="btn btn-export" onclick="exportHSNWise()">
                     <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                     Export HSN Wise
@@ -390,7 +387,6 @@
         let isAdmin = false;
 
         let allInvoices = [];
-        let rowCounter = 0;
 
         // --- Sidebar Auto-Collapse & 30 Min Inactivity Logic ---
         let inactivityTimer;
@@ -457,12 +453,11 @@
             
             document.getElementById('invDate').valueAsDate = now;
             
-            // Set default month to current month
             const monthInput = document.getElementById('monthInput');
             monthInput.value = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
             updateMonthDisplay();
 
-            addItemRow(); // add initial blank row
+            addItemRow(); // Add initial blank row
             
             await checkAuth();
             fetchInvoices();
@@ -488,7 +483,6 @@
                     document.getElementById('userAvatar').innerText = namePart.charAt(0).toUpperCase();
                 }
             } else {
-                // If not logged in, redirect to login page
                 window.location.href = 'login.html';
             }
         }
@@ -517,7 +511,6 @@
             invInput.value = "Fetching...";
             
             try {
-                // Fetch the current sequence from our tracker table
                 const { data, error } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', type).single();
                 
                 if (error) {
@@ -526,7 +519,6 @@
                     return;
                 }
                 
-                // Calculate next
                 const nextVal = data.last_value + 1;
                 invInput.value = prefix + nextVal;
             } catch (err) {
@@ -535,22 +527,21 @@
             }
         }
 
-        // --- Dynamic Row Logic ---
+        // --- Robust Dynamic Row & Real-Time Calculation Logic ---
         window.addItemRow = function() {
-            rowCounter++;
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
-            tr.id = `row_${rowCounter}`;
+            
             tr.innerHTML = `
-                <td style="vertical-align: middle; font-weight:600; color:var(--text-muted);">${rowCounter}</td>
+                <td style="vertical-align: middle; font-weight:600; color:var(--text-muted);" class="sr-no"></td>
                 <td><input type="text" class="item-desc" placeholder="Item Name"></td>
                 <td><input type="text" class="item-hsn" placeholder="HSN"></td>
-                <td><input type="number" class="item-qty" value="1" min="1" oninput="calculateRow(${rowCounter})"></td>
-                <td><input type="number" class="item-taxable" placeholder="0.00" step="0.01" oninput="calculateRow(${rowCounter})"></td>
+                <td><input type="number" class="item-qty" value="1" min="1" oninput="calculateRowElement(this)"></td>
+                <td><input type="number" class="item-taxable" placeholder="0.00" step="0.01" oninput="calculateRowElement(this)"></td>
                 <td style="vertical-align: middle; font-weight:500; color:#374151;" class="item-igst">0.00</td>
                 <td style="vertical-align: middle; font-weight:bold; color:var(--text-main);" class="item-total">0.00</td>
                 <td style="text-align:center;">
-                    <button class="btn-icon btn-danger" onclick="removeRow(${rowCounter})" tabindex="-1">
+                    <button class="btn-icon btn-danger" onclick="removeRowElement(this)" tabindex="-1">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path></svg>
                     </button>
                 </td>
@@ -559,56 +550,55 @@
             reindexRows();
         }
 
-        window.removeRow = function(id) {
-            const row = document.getElementById(`row_${id}`);
-            if (row) row.remove();
+        window.removeRowElement = function(btn) {
+            const tr = btn.closest('tr');
+            if (tr) tr.remove();
             reindexRows();
             calculateGrandTotal();
         }
 
         function reindexRows() {
             const rows = document.getElementById('itemsBody').children;
-            for(let i=0; i<rows.length; i++) {
-                rows[i].firstElementChild.innerText = i + 1;
+            for(let i = 0; i < rows.length; i++) {
+                const srCell = rows[i].querySelector('.sr-no');
+                if (srCell) srCell.innerText = i + 1;
             }
-            rowCounter = rows.length; // reset counter logically
-            if (rows.length === 0) addItemRow(); // ensure at least 1 row exists
+            if (rows.length === 0) addItemRow();
         }
 
-        window.calculateRow = function(id) {
-            const row = document.getElementById(`row_${id}`);
-            if(!row) return;
-            
-            // Qty is parsed but no longer multiplies the base amount
+        window.calculateRowElement = function(inputElement) {
+            const row = inputElement.closest('tr');
+            if (!row) return;
+
             const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
-            
-            // Base amount is exactly the entered Taxable value
-            const baseAmount = taxable;
-            const igst = baseAmount * 0.18; // Fixed 18% IGST
-            const total = baseAmount + igst;
-            
-            row.querySelector('.item-igst').innerText = igst.toFixed(2);
-            row.querySelector('.item-total').innerText = total.toFixed(2);
-            
+            const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+
+            const lineTaxable = qty * unitTaxable;
+            const lineIgst = lineTaxable * 0.18; // 18% IGST
+            const lineTotal = lineTaxable + lineIgst;
+
+            row.querySelector('.item-igst').innerText = lineIgst.toFixed(2);
+            row.querySelector('.item-total').innerText = lineTotal.toFixed(2);
+
             calculateGrandTotal();
         }
 
         function calculateGrandTotal() {
             const rows = document.getElementById('itemsBody').children;
             let sumTaxable = 0, sumIGST = 0, sumTotal = 0;
-            
+
             for(let row of rows) {
-                const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
-                
-                // Base amount is exactly the entered Taxable value
-                const base = taxable;
-                
+                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
+                const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+
+                const base = qty * unitTaxable;
+                const gst = base * 0.18;
+
                 sumTaxable += base;
-                sumIGST += (base * 0.18);
-                sumTotal += (base + (base * 0.18));
+                sumIGST += gst;
+                sumTotal += (base + gst);
             }
-            
+
             document.getElementById('sumTaxable').innerText = '₹' + sumTaxable.toFixed(2);
             document.getElementById('sumIGST').innerText = '₹' + sumIGST.toFixed(2);
             document.getElementById('sumGrandTotal').innerText = '₹' + sumTotal.toFixed(2);
@@ -626,48 +616,48 @@
             const invNo = document.getElementById('invNo').value;
             
             if(invNo.includes("Error")) {
-                alert("Cannot save: Invoice numbering sequence error. Please run the provided SQL setup script in Supabase.");
+                alert("Cannot save: Invoice numbering sequence error. Please run the SQL setup script in Supabase.");
                 document.getElementById('btnSaveInvoice').disabled = false;
                 document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
                 return;
             }
 
-            // Build items array and sums
             const rows = document.getElementById('itemsBody').children;
             let itemsData = [];
             let totalBase = 0, totalGst = 0, totalAmt = 0;
             let firstDesc = "", firstHsn = "";
             
-            for(let i=0; i<rows.length; i++) {
+            for(let i = 0; i < rows.length; i++) {
                 const row = rows[i];
                 const desc = row.querySelector('.item-desc').value.trim();
                 const hsn = row.querySelector('.item-hsn').value.trim();
                 const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+                const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
                 
-                if (qty > 0 && taxable > 0) {
-                    // Base amount is exactly the entered Taxable value
-                    let base = taxable;
-                    let gst = base * 0.18;
+                if (qty > 0 && unitTaxable > 0) {
+                    const lineBase = qty * unitTaxable;
+                    const lineGst = lineBase * 0.18;
+                    
                     itemsData.push({
-                        desc: desc || 'Item ' + (i+1),
+                        desc: desc || 'Item ' + (i + 1),
                         hsn: hsn,
-                        qty: qty, // Qty recorded for invoice description
-                        taxable: taxable,
-                        base_amt: base,
-                        gst_amt: gst,
-                        total_amt: base + gst
+                        qty: qty,
+                        unit_taxable: unitTaxable,
+                        base_amt: lineBase,
+                        gst_amt: lineGst,
+                        total_amt: lineBase + lineGst
                     });
-                    totalBase += base;
-                    totalGst += gst;
-                    totalAmt += (base + gst);
+                    
+                    totalBase += lineBase;
+                    totalGst += lineGst;
+                    totalAmt += (lineBase + lineGst);
                     
                     if (itemsData.length === 1) { firstDesc = desc; firstHsn = hsn; }
                 }
             }
             
             if (itemsData.length === 0) {
-                alert("Please add at least one valid item with qty and taxable value.");
+                alert("Please add at least one valid item with quantity and taxable value.");
                 document.getElementById('btnSaveInvoice').disabled = false;
                 document.getElementById('btnSaveInvoice').innerText = "Save Invoice";
                 return;
@@ -695,11 +685,9 @@
             };
 
             try {
-                // Insert Invoice
                 const { error } = await supabaseClient.from('accessories_invoices').insert([payload]);
                 if (error) throw error;
 
-                // Update Sequence Tracker
                 const { data: seqData } = await supabaseClient.from('invoice_sequences').select('last_value').eq('id', invType).single();
                 await supabaseClient.from('invoice_sequences').update({ last_value: seqData.last_value + 1 }).eq('id', invType);
 
@@ -714,7 +702,6 @@
                 addItemRow();
                 calculateGrandTotal();
                 
-                // Refetch using currently selected month filter
                 fetchInvoices();
             } catch(e) {
                 alert("Error saving invoice: " + e.message);
@@ -724,10 +711,9 @@
             }
         }
 
-        // --- Multi-Table Fetch & Display (Filtered by Month) ---
+        // --- Multi-Table Fetch & Display ---
         async function fetchInvoices() {
-            // Get selected month range
-            const selectedMonth = document.getElementById('monthInput').value; // YYYY-MM
+            const selectedMonth = document.getElementById('monthInput').value;
             if(!selectedMonth) return;
             
             const startOfMonth = `${selectedMonth}-01`;
@@ -737,7 +723,6 @@
             const endOfMonth = endOfMonthDate.toISOString().split('T')[0];
 
             try {
-                // 1. Fetch from Accessories (Filtered by Date)
                 const { data: accData, error: accError } = await supabaseClient
                     .from('accessories_invoices')
                     .select('*')
@@ -745,7 +730,6 @@
                     .lte('date', endOfMonth);
                 if(accError) console.error(accError);
 
-                // 2. Fetch from Store Plus (Filtered by Date)
                 const { data: spData, error: spError } = await supabaseClient
                     .from('store_plus')
                     .select('*')
@@ -762,11 +746,10 @@
                     })));
                 }
 
-                // Standardize Store Plus Data
                 if (spData) {
                     combined = combined.concat(spData.map(sp => {
                         let base = parseFloat(sp.amount) || 0;
-                        let gst = base * 0.18; // Auto 18% calculation
+                        let gst = base * 0.18;
                         return {
                             id: sp.id,
                             source_table: 'store_plus',
@@ -779,13 +762,11 @@
                             gst_amt: gst,
                             total_amt: base + gst,
                             created_at: sp.created_at,
-                            // Wrap inside items array so exports match perfectly
                             items: [{ hsn: sp.hsn, base_amt: base, gst_amt: gst, total_amt: base + gst }]
                         };
                     }));
                 }
 
-                // Sort purely by newest created_at date
                 combined.sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
                 
                 allInvoices = combined;
@@ -852,7 +833,6 @@
             return String(str).replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
         }
 
-        // --- CSV Exporters ---
         function downloadCSV(csvContent, filename) {
             const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
@@ -874,8 +854,6 @@
             return str;
         }
 
-        // --- EXPORT LOGIC ---
-        // Generates the file name based on the currently selected month
         function getExportMonthString() {
             const val = document.getElementById('monthInput').value;
             if(!val) return "Export";
@@ -887,7 +865,6 @@
             if(allInvoices.length === 0) return alert("No data to export for this month.");
             
             let csvRows = [];
-            // Header
             csvRows.push(['Date', 'Invoice No', 'Type', 'Customer Name', 'GSTIN', 'Total Taxable', 'Total IGST', 'Grand Total']);
             
             allInvoices.forEach(inv => {
@@ -911,7 +888,6 @@
         window.exportHSNWise = function() {
             if(allInvoices.length === 0) return alert("No data to export for this month.");
             
-            // Aggregate logic
             let hsnMap = {};
             
             allInvoices.forEach(inv => {
@@ -930,7 +906,6 @@
             });
 
             let csvRows = [];
-            // Header
             csvRows.push(['HSN Code', 'Taxable Value', 'IGST Amount', 'Total Value']);
             
             for (let [hsn, data] of Object.entries(hsnMap)) {
