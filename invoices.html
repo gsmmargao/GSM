@@ -757,7 +757,10 @@
             if (items && items.length > 0) {
                 items.forEach(item => {
                     const tr = document.createElement('tr');
-                    const itemTaxable = item.taxable || item.base_amt || 0;
+                    
+                    // Allow properly loading '0' values from saved item
+                    const itemTaxable = item.taxable !== undefined ? item.taxable : (item.base_amt !== undefined ? item.base_amt : 0);
+                    
                     tr.innerHTML = `
                         <td style="vertical-align: middle; font-weight:600; color:var(--text-muted);" class="sr-no"></td>
                         <td><input type="text" class="item-desc" placeholder="Item Name" value="${escapeHtml(item.desc || '')}"></td>
@@ -887,10 +890,14 @@
                 const row = rows[i];
                 const desc = row.querySelector('.item-desc').value.trim();
                 const hsn = row.querySelector('.item-hsn').value.trim();
-                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+                const qtyStr = row.querySelector('.item-qty').value;
+                const taxableStr = row.querySelector('.item-taxable').value.trim();
                 
-                if (qty > 0 && taxable > 0) {
+                const qty = parseFloat(qtyStr) || 0;
+                const taxable = parseFloat(taxableStr) || 0;
+                
+                // Allow items to save even if value is 0, provided they have a description or a manually typed 0
+                if (qty > 0 && (desc !== "" || taxableStr !== "")) {
                     const base = taxable; // As per specific instruction: Taxable directly determines base amount without Qty multiplication
                     const gst = base * 0.18;
                     
@@ -913,7 +920,7 @@
             }
             
             if (itemsData.length === 0) {
-                alert("Please add at least one valid item with quantity and taxable value.");
+                alert("Please add at least one valid item.");
                 document.getElementById('btnSaveInvoice').disabled = false;
                 document.getElementById('btnSaveInvoice').innerText = currentEditId ? "Update Invoice" : "Save Invoice";
                 return;
