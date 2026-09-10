@@ -544,7 +544,6 @@
         // --- Customers Fetch & Auto-Suggest Logic ---
         async function preloadCustomers() {
             try {
-                // Queries customer database and falls back gracefully across table schemas
                 const { data, error } = await supabaseClient
                     .from('customers')
                     .select('name, customer_name, mobile, phone, gstin, gst_no, gstin_no')
@@ -577,7 +576,6 @@
             customerSearchTimeout = setTimeout(async () => {
                 let matches = [];
 
-                // 1. In-memory cached lookup
                 if (cachedCustomers.length > 0) {
                     matches = cachedCustomers.filter(c => {
                         return type === 'name'
@@ -586,7 +584,6 @@
                     }).slice(0, 7);
                 }
 
-                // 2. Direct database query fallback if cache is empty or yielded few hits
                 if (matches.length === 0) {
                     try {
                         let queryBuilder = supabaseClient.from('customers').select('*').limit(7);
@@ -682,7 +679,8 @@
             }
         }
 
-        // --- Robust Dynamic Row & Real-Time Calculation Logic ---
+        // --- Dynamic Row & Real-Time Calculation Logic ---
+        // Base taxable is treated as the entered Taxable amount directly (Qty does NOT multiply)
         window.addItemRow = function() {
             const tbody = document.getElementById('itemsBody');
             const tr = document.createElement('tr');
@@ -725,15 +723,12 @@
             const row = inputElement.closest('tr');
             if (!row) return;
 
-            const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-            const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+            const baseAmount = parseFloat(row.querySelector('.item-taxable').value) || 0;
+            const igst = baseAmount * 0.18;
+            const total = baseAmount + igst;
 
-            const lineTaxable = qty * unitTaxable;
-            const lineIgst = lineTaxable * 0.18;
-            const lineTotal = lineTaxable + lineIgst;
-
-            row.querySelector('.item-igst').innerText = lineIgst.toFixed(2);
-            row.querySelector('.item-total').innerText = lineTotal.toFixed(2);
+            row.querySelector('.item-igst').innerText = igst.toFixed(2);
+            row.querySelector('.item-total').innerText = total.toFixed(2);
 
             calculateGrandTotal();
         }
@@ -743,10 +738,7 @@
             let sumTaxable = 0, sumIGST = 0, sumTotal = 0;
 
             for(let row of rows) {
-                const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
-
-                const base = qty * unitTaxable;
+                const base = parseFloat(row.querySelector('.item-taxable').value) || 0;
                 const gst = base * 0.18;
 
                 sumTaxable += base;
@@ -787,25 +779,25 @@
                 const desc = row.querySelector('.item-desc').value.trim();
                 const hsn = row.querySelector('.item-hsn').value.trim();
                 const qty = parseFloat(row.querySelector('.item-qty').value) || 0;
-                const unitTaxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
+                const taxable = parseFloat(row.querySelector('.item-taxable').value) || 0;
                 
-                if (qty > 0 && unitTaxable > 0) {
-                    const lineBase = qty * unitTaxable;
-                    const lineGst = lineBase * 0.18;
+                if (qty > 0 && taxable > 0) {
+                    const base = taxable;
+                    const gst = base * 0.18;
                     
                     itemsData.push({
                         desc: desc || 'Item ' + (i + 1),
                         hsn: hsn,
                         qty: qty,
-                        unit_taxable: unitTaxable,
-                        base_amt: lineBase,
-                        gst_amt: lineGst,
-                        total_amt: lineBase + lineGst
+                        taxable: taxable,
+                        base_amt: base,
+                        gst_amt: gst,
+                        total_amt: base + gst
                     });
                     
-                    totalBase += lineBase;
-                    totalGst += lineGst;
-                    totalAmt += (lineBase + lineGst);
+                    totalBase += base;
+                    totalGst += gst;
+                    totalAmt += (base + gst);
                     
                     if (itemsData.length === 1) { firstDesc = desc; firstHsn = hsn; }
                 }
