@@ -127,7 +127,10 @@
         .btn-icon { background: none; border: none; cursor: pointer; color: var(--text-muted); padding: 5px; margin: 0 2px; }
         .btn-icon:hover { color: var(--text-main); }
         .btn-danger:hover { color: var(--danger-color); }
-        .btn-edit:hover { color: var(--primary-accent); }
+        
+        /* Dedicated Edit Button Style to ensure visibility */
+        .btn-edit { color: var(--primary-accent); } 
+        .btn-edit:hover { color: #2563eb; }
         
         .totals-section { display: flex; justify-content: flex-end; margin-bottom: 20px; }
         .totals-box { width: 300px; background: #f9fafb; padding: 15px; border-radius: 8px; border: 1px solid var(--border-color); }
@@ -718,9 +721,9 @@
 
         // --- Edit Logic ---
         window.editInvoice = function(id, source_table) {
-            // Restrict Store Plus table edit schema mismatches here
+            // Give a polite alert if they try to edit Store Plus invoices here
             if (source_table !== 'accessories_invoices') {
-                alert("Please edit Store Plus invoices natively from the Store Plus tab to avoid data mismatch.");
+                alert("This is a Store Plus generated invoice. Please edit it natively from your 'Store Plus' tab to prevent data mismatch.");
                 return;
             }
 
@@ -1058,6 +1061,8 @@
                 
                 let typeColor = '#0369a1';
                 let typeBg = '#e0f2fe';
+
+                // We allow editing ALL records via UI button, but click logic protects 'store_plus'
                 let isNative = inv.source_table === 'accessories_invoices';
 
                 if(!isNative) {
@@ -1065,12 +1070,12 @@
                     typeBg = '#ede9fe';
                 }
 
-                // Only show Edit button for native invoices
-                let editBtnHtml = isNative ? `
+                // Show Blue Edit Button for everything, if it's Store Plus, it just alerts them when they click it.
+                let editBtnHtml = `
                     <button class="btn-icon btn-edit" onclick="editInvoice('${inv.id}', '${inv.source_table}')" title="Edit Invoice">
                         <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
                     </button>
-                ` : `<span style="display:inline-block; width: 26px;"></span>`;
+                `;
 
                 tr.innerHTML = `
                     <td>${inv.date ? new Date(inv.date).toLocaleDateString('en-GB') : '—'}</td>
