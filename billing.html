@@ -665,8 +665,9 @@
             if (!confirm(`Are you sure you want to delete Invoice ${invoiceNo}? This will also wipe matching cashbook and UPI entries, and revert associated credit.`)) return;
             
             try {
-                // Fetch the bill details before deleting to check for Credit
-                const { data: bill } = await db.from('billing').select('*').eq('invoiceNo', invoiceNo).maybeSingle();
+                // Fetch the bill details before deleting
+                const { data: bill, error: billErr } = await db.from('billing').select('*').eq('invoiceNo', invoiceNo).maybeSingle();
+                if (billErr) throw billErr;
                 
                 if (bill) {
                     // Revert Credit if applicable
@@ -681,11 +682,23 @@
                                 const cName = repairData.customerName;
                                 const cContact = repairData.contactNo;
                                 
-                                const { data: extCust } = await db.from('customers').select('id, pending_credit').eq('name', cName).eq('contact', cContact).maybeSingle();
+                                // FIX: Use .ilike() for case-insensitive matching
+                                const { data: extCust } = await db.from('customers')
+                                    .select('id, pending_credit')
+                                    .ilike('name', cName)
+                                    .ilike('contact', cContact)
+                                    .maybeSingle();
+                                    
                                 if (extCust) {
                                     let newCredit = parseFloat(extCust.pending_credit || 0) - creditAmt;
                                     if (newCredit < 0) newCredit = 0; // Prevent negative balance
-                                    await db.from('customers').update({ pending_credit: newCredit }).eq('id', extCust.id);
+                                    
+                                    // FIX: Catch errors strictly here
+                                    const { error: updateErr } = await db.from('customers')
+                                        .update({ pending_credit: newCredit })
+                                        .eq('id', extCust.id);
+                                        
+                                    if (updateErr) throw new Error("Failed to revert customer credit: " + updateErr.message);
                                 }
                             }
                         }
@@ -694,15 +707,18 @@
 
                 // Clean up Ledgers strictly based on description logic
                 const searchString = `Invoice #${invoiceNo}%`;
-                await db.from('cashbook_entries').delete().ilike('description', searchString);
-                await db.from('upi_transactions').delete().ilike('description', searchString);
+                await Promise.all([
+                    db.from('cashbook_entries').delete().ilike('description', searchString),
+                    db.from('upi_transactions').delete().ilike('description', searchString)
+                ]);
 
                 // Delete the Bill
-                const { error } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
-                if (error) throw error;
+                const { error: delError } = await db.from('billing').delete().eq('invoiceNo', invoiceNo);
+                if (delError) throw delError;
                 
                 window.fetchBilling();
                 window.fetchCustomersData();
+                
             } catch (err) {
                 alert("Error deleting bill: " + err.message);
             }
@@ -766,7 +782,7 @@
                     amountPaid: finalAmount,
                     paymentMode: finalPaymentModeStr,
                     upiAmount: upiAmt,
-                    cardAmount: 0, // Deprecated Card
+                    cardAmount: 0, 
                     createdBy: currentUserEmail || 'Admin' 
                 };
 
@@ -778,7 +794,13 @@
                     const custName = document.getElementById('b-credit-name').value.trim();
                     const custContact = document.getElementById('b-credit-contact').value.trim();
                     
-                    const { data: extCust } = await db.from('customers').select('id, pending_credit').eq('name', custName).eq('contact', custContact).maybeSingle();
+                    // FIX: Use .ilike() here too so we don't accidentally create duplicate ghost customers
+                    const { data: extCust } = await db.from('customers')
+                        .select('id, pending_credit')
+                        .ilike('name', custName)
+                        .ilike('contact', custContact)
+                        .maybeSingle();
+                        
                     if (extCust) {
                         await db.from('customers').update({ pending_credit: parseFloat(extCust.pending_credit || 0) + creditAmt }).eq('id', extCust.id);
                     } else {
