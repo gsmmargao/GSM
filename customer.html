@@ -268,6 +268,37 @@
         </div>
     </div>
 
+    <!-- Edit Customer Modal -->
+    <div class="modal-overlay" id="modalEditCustomer">
+        <div class="modal-container">
+            <h2 class="modal-title">Edit Customer</h2>
+            <p class="modal-subtitle">Update customer profile details.</p>
+            
+            <input type="hidden" id="editCustId">
+            <div class="form-group">
+                <label>Customer Name <span>*</span></label>
+                <input type="text" id="editCustName" placeholder="Full Name">
+            </div>
+            <div class="form-group">
+                <label>Contact Number</label>
+                <input type="text" id="editCustContact" placeholder="Phone Number">
+            </div>
+            <div class="form-group">
+                <label>GST Number (Optional)</label>
+                <input type="text" id="editCustGST" placeholder="15-digit GSTIN">
+            </div>
+            <div class="form-group">
+                <label>Pending Credit (₹)</label>
+                <input type="number" id="editCustCredit" step="0.01">
+            </div>
+            
+            <div class="modal-footer">
+                <button class="btn-cancel" onclick="document.getElementById('modalEditCustomer').style.display='none'">Cancel</button>
+                <button class="btn-confirm" onclick="confirmEditCustomer()">Update Customer</button>
+            </div>
+        </div>
+    </div>
+
     <!-- Settle Dues Modal -->
     <div class="modal-overlay" id="modalSettleDues">
         <div class="modal-container">
@@ -283,6 +314,7 @@
                 <select id="settleMode">
                     <option value="Cash">Cash</option>
                     <option value="UPI">UPI</option>
+                    <option value="GSPN">GSPN (Clear Dues Only)</option>
                 </select>
             </div>
             
@@ -427,8 +459,9 @@
             }
 
             filtered.forEach(cust => {
+                let editBtn = `<button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="openEditModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact || ''}', '${cust.gst || ''}', ${cust.pending_credit || 0})">Edit</button>`;
                 let deleteBtn = isAdmin ? `<button class="btn" style="background:#fee2e2; color:#b91c1c; border-color:#fca5a5; padding:6px 10px; font-size:0.8rem;" onclick="deleteCustomer('${cust.id}', '${cust.name.replace(/'/g, "\\'")}')">Delete</button>` : '';
-                let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:6px 10px; font-size:0.8rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact}', ${cust.pending_credit})">Settle Dues</button>` : '';
+                let settleBtn = cust.pending_credit > 0 ? `<button class="btn" style="background:#ecfdf5; color:#059669; border-color:#6ee7b7; padding:6px 10px; font-size:0.8rem;" onclick="openSettleModal('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact || ''}', ${cust.pending_credit})">Settle Dues</button>` : '';
                 
                 let gstDisplay = cust.gst ? `<span class="gst-badge">${cust.gst}</span>` : '<span style="color:#9ca3af;">—</span>';
 
@@ -440,7 +473,8 @@
                     <td><strong style="color: ${cust.pending_credit > 0 ? '#ef4444' : '#10b981'}; font-size: 1.05rem;">₹${cust.pending_credit || 0}</strong></td>
                     <td>
                         <div style="display:flex; gap:8px;">
-                            <button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="viewLedger('${cust.name.replace(/'/g, "\\'")}', '${cust.contact || ''}')">View Ledger</button>
+                            <button class="btn btn-outline" style="padding:6px 10px; font-size:0.8rem;" onclick="viewLedger('${cust.id}', '${cust.name.replace(/'/g, "\\'")}', '${cust.contact || ''}', ${cust.pending_credit || 0})">View Ledger</button>
+                            ${editBtn}
                             ${settleBtn}
                             ${deleteBtn}
                         </div>
@@ -477,6 +511,40 @@
             }
         }
 
+        window.openEditModal = function(id, name, contact, gst, credit) {
+            document.getElementById('editCustId').value = id;
+            document.getElementById('editCustName').value = name;
+            document.getElementById('editCustContact').value = contact;
+            document.getElementById('editCustGST').value = gst;
+            document.getElementById('editCustCredit').value = credit;
+            document.getElementById('modalEditCustomer').style.display = 'flex';
+        }
+
+        window.confirmEditCustomer = async function() {
+            const id = document.getElementById('editCustId').value;
+            const name = document.getElementById('editCustName').value.trim();
+            const contact = document.getElementById('editCustContact').value.trim();
+            const gst = document.getElementById('editCustGST').value.trim();
+            const credit = parseFloat(document.getElementById('editCustCredit').value) || 0;
+
+            if (!name) return alert("Customer name is required.");
+
+            try {
+                const { error } = await supabaseClient.from('customers').update({
+                    name: name,
+                    contact: contact,
+                    gst: gst || null,
+                    pending_credit: credit
+                }).eq('id', id);
+
+                if (error) throw error;
+                document.getElementById('modalEditCustomer').style.display = 'none';
+                fetchCustomersAndOrders();
+            } catch (e) {
+                alert("Failed to update customer: " + e.message);
+            }
+        }
+
         window.deleteCustomer = async function(id, name) {
             if (!isAdmin) return;
             if (!confirm(`⚠️ WARNING: Are you sure you want to delete customer "${name}"?`)) return;
@@ -495,13 +563,13 @@
         let currentSettleCustName = '';
         let currentPendingCredit = 0;
 
-        window.openSettleModal = function(id, name, contact, pendingAmount) {
+        window.openSettleModal = function(id, name, contact, totalPendingCredit, prefillAmount = null) {
             currentSettleCustId = id;
             currentSettleCustName = name;
-            currentPendingCredit = parseFloat(pendingAmount) || 0;
+            currentPendingCredit = parseFloat(totalPendingCredit) || 0;
 
             document.getElementById('settleCustName').innerHTML = `Settling dues for <strong>${name}</strong>`;
-            document.getElementById('settleAmount').value = currentPendingCredit;
+            document.getElementById('settleAmount').value = prefillAmount !== null ? prefillAmount : currentPendingCredit;
             document.getElementById('settleMode').value = 'Cash';
 
             document.getElementById('modalSettleDues').style.display = 'flex';
@@ -524,6 +592,7 @@
                 const today = new Date().toISOString().split('T')[0];
                 const descText = `Dues Settlement - ${currentSettleCustName}`;
 
+                // GSPN Mode essentially skips adding to Cashbook/UPI, it just clears the dues.
                 if (mode === 'Cash') {
                     await supabaseClient.from('cashbook_entries').insert([{
                         description: descText, category: 'Billing', amount: settleAmt, type: 'in', date: today, created_by: currentUserEmail || 'Admin'
@@ -543,7 +612,7 @@
         }
 
         // --- Master Ledger Fetching Logic ---
-        window.viewLedger = async function(name, contact) {
+        window.viewLedger = async function(id, name, contact, totalPendingCredit) {
             document.getElementById('ledgerCustName').innerText = name + ' - Ledger';
             document.getElementById('ledgerCustContact').innerText = contact ? `Contact: ${contact}` : '';
             
@@ -637,7 +706,13 @@
                 timeline.forEach(item => {
                     let dateFmt = new Date(item.date).toLocaleDateString('en-GB');
                     
-                    let debStr = item.debit > 0 ? `<span style="color:#ef4444; font-weight:bold;">₹${item.debit.toFixed(2)}</span>` : '—';
+                    let settleIndividuallyBtn = '';
+                    if (item.debit > 0 && totalPendingCredit > 0) {
+                        let prefillAmt = Math.min(item.debit, totalPendingCredit);
+                        settleIndividuallyBtn = `<br><button class="btn btn-outline" style="padding:2px 6px; font-size:0.7rem; margin-top:4px; color:#059669; border-color:#6ee7b7;" onclick="openSettleModal('${id}', '${name.replace(/'/g, "\\'")}', '${contact}', ${totalPendingCredit}, ${prefillAmt}); document.getElementById('modalCustomerLedger').style.display='none';">Settle</button>`;
+                    }
+
+                    let debStr = item.debit > 0 ? `<span style="color:#ef4444; font-weight:bold;">₹${item.debit.toFixed(2)}</span>${settleIndividuallyBtn}` : '—';
                     let credStr = item.credit > 0 ? `<span style="color:#10b981; font-weight:bold;">₹${item.credit.toFixed(2)}</span>` : '—';
                     
                     let typeColor = item.type.includes('Settled') ? '#10b981' : (item.type.includes('Invoice') ? '#3b82f6' : '#8b5cf6');
