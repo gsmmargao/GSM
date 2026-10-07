@@ -1149,13 +1149,18 @@
             return d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' }).replace(', ', '_');
         }
 
+        // --- EXPORT LOGIC (UPDATED WITH SEGREGATED CGST & SGST) ---
         window.exportInvoiceWise = function() {
             if(allInvoices.length === 0) return alert("No data to export for this month.");
             
             let csvRows = [];
-            csvRows.push(['Date', 'Invoice No', 'Type', 'Customer Name', 'GSTIN', 'Total Taxable', 'Total IGST', 'Grand Total']);
+            // Added CGST and SGST columns
+            csvRows.push(['Date', 'Invoice No', 'Type', 'Customer Name', 'GSTIN', 'Total Taxable', 'CGST (9%)', 'SGST (9%)', 'Total GST (18%)', 'Grand Total']);
             
             allInvoices.forEach(inv => {
+                let cgst = inv.gst_amt / 2;
+                let sgst = inv.gst_amt / 2;
+
                 csvRows.push([
                     inv.date || '',
                     escapeCSV(inv.invoice_no),
@@ -1163,6 +1168,8 @@
                     escapeCSV(inv.customer_name),
                     escapeCSV(inv.gstin) || '',
                     inv.base_amt.toFixed(2),
+                    cgst.toFixed(2),
+                    sgst.toFixed(2),
                     inv.gst_amt.toFixed(2),
                     inv.total_amt.toFixed(2)
                 ]);
@@ -1185,22 +1192,28 @@
                 if (items && items.length > 0) {
                     items.forEach(item => {
                         let hsn = item.hsn || 'UNSPECIFIED';
-                        if (!hsnMap[hsn]) hsnMap[hsn] = { taxable: 0, igst: 0, total: 0 };
+                        if (!hsnMap[hsn]) hsnMap[hsn] = { taxable: 0, gst: 0, total: 0 };
                         hsnMap[hsn].taxable += parseFloat(item.base_amt) || 0;
-                        hsnMap[hsn].igst += parseFloat(item.gst_amt) || 0;
+                        hsnMap[hsn].gst += parseFloat(item.gst_amt) || 0;
                         hsnMap[hsn].total += parseFloat(item.total_amt) || 0;
                     });
                 }
             });
 
             let csvRows = [];
-            csvRows.push(['HSN Code', 'Taxable Value', 'IGST Amount', 'Total Value']);
+            // Segregated the single IGST column into CGST and SGST as required for local GST reports
+            csvRows.push(['HSN Code', 'Taxable Value', 'CGST Amount (9%)', 'SGST Amount (9%)', 'Total GST Amount', 'Total Value']);
             
             for (let [hsn, data] of Object.entries(hsnMap)) {
+                let cgst = data.gst / 2;
+                let sgst = data.gst / 2;
+
                 csvRows.push([
                     escapeCSV(hsn),
                     data.taxable.toFixed(2),
-                    data.igst.toFixed(2),
+                    cgst.toFixed(2),
+                    sgst.toFixed(2),
+                    data.gst.toFixed(2),
                     data.total.toFixed(2)
                 ]);
             }
